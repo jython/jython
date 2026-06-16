@@ -13,6 +13,7 @@
 # -----------------------------------------------------------------------------
 
 cygwin=false
+jdb_requested=false
 
 # ----- Identify OS we are running under --------------------------------------
 case "`uname`" in
@@ -73,25 +74,30 @@ if [ -z "$JYTHON_OPTS" ] ; then
 fi
 
 CP_DELIMITER=":"
+EXTRA_CP=""
 
-CP=$JYTHON_HOME/jython-dev.jar
+build_jython_classpath() {
+  CP=$1/jython-dev.jar
 
-if [ -f "$CP" ] ; then
-  # We are running in the development environment.
-  # Add -test JAR to class path.
-  CP="$CP$CP_DELIMITER$JYTHON_HOME/jython-test.jar"
-  # Add necessary jar dir for command-line execution
-  CP="$CP$CP_DELIMITER$JYTHON_HOME/javalib/*"
-elif [ ! -f "$JYTHON_HOME"/jython.jar ] ; then
-  echo "$0: $JYTHON_HOME contains neither jython-dev.jar nor jython.jar." >&2
-  echo "Try running this script from the 'bin' directory of an installed Jython or " >&2
-  echo 'setting $JYTHON_HOME.' >&2
-  exit 1
-else
-  # We are running in the deployment environment.
-  # Class path is just the main JAR (not tests).
-  CP=$JYTHON_HOME/jython.jar
-fi
+  if [ -f "$CP" ] ; then
+    # We are running in the development environment.
+    # Add -test JAR to class path.
+    CP="$CP$CP_DELIMITER$1/jython-test.jar"
+    # Add necessary jar dir for command-line execution
+    CP="$CP$CP_DELIMITER$1/javalib/*"
+  elif [ ! -f "$1"/jython.jar ] ; then
+    echo "$0: $1 contains neither jython-dev.jar nor jython.jar." >&2
+    echo "Try running this script from the 'bin' directory of an installed Jython or " >&2
+    echo 'setting $JYTHON_HOME.' >&2
+    exit 1
+  else
+    # We are running in the deployment environment.
+    # Class path is just the main JAR (not tests).
+    CP=$1/jython.jar
+  fi
+}
+
+build_jython_classpath "$JYTHON_HOME"
 
 if $cygwin; then
   # switch delimiter only after building a Unix style $CP
@@ -100,6 +106,10 @@ if $cygwin; then
   # ensure sys.executable is the Windows executable wrapper
   PRG=`cygpath -w "$PRG"`.exe
 fi
+
+JYTHON_HOME_FOR_JAVA="$JYTHON_HOME"
+PRG_FOR_JAVA="$PRG"
+JDB_TMPDIR=""
 
 # ----- Execute the requested command -----------------------------------------
 
@@ -134,10 +144,10 @@ while [ $# -gt 0 ] ; do
           echo "(Prepend -J in front of these options when using 'jython' command)" 
           exit
         elif [ "${val}" = "-classpath" ]; then
-            CP="$CP$CP_DELIMITER$2"
+            EXTRA_CP="$EXTRA_CP$CP_DELIMITER$2"
             shift
         elif [ "${val}" = "-cp" ]; then
-            CP="$CP$CP_DELIMITER$2"
+            EXTRA_CP="$EXTRA_CP$CP_DELIMITER$2"
             shift
       else
           if [ "${val:0:16}" = "-Dfile.encoding=" ]; then
@@ -182,6 +192,7 @@ while [ $# -gt 0 ] ; do
       ;;
     # Run under JDB
     --jdb)
+      jdb_requested=true
       if [ -z "$JAVA_HOME" ] ; then
 	JAVA_CMD=(jdb)
       else
@@ -222,7 +233,99 @@ python_args=("${python_args[@]}" "$@")
 # Put the python_args back into the position arguments $1, $2 etc
 set -- "${python_args[@]}"
 
+setup_jdb_path_alias() {
+  if ! $jdb_requested || $cygwin; then
+    return
+  fi
+
+  # Some jdb implementations, notably OpenJDK/Temurin 8, split the debuggee
+  # command line on spaces after receiving it from this launcher. Use a
+  # temporary no-space symlink for Jython paths so the classpath and
+  # -Dpython.* values survive jdb's second-stage JVM launch.
+  case "$JYTHON_HOME$PRG" in
+    *" "*)
+      JDB_TMPDIR=`mktemp -dt jython-jdb.XXXXXX` || exit 1
+      JDB_HOME_TARGET=`cd "$JYTHON_HOME" && pwd` || exit 1
+      ln -s "$JDB_HOME_TARGET" "$JDB_TMPDIR/jython" || exit 1
+      JYTHON_HOME_FOR_JAVA="$JDB_TMPDIR/jython"
+      build_jython_classpath "$JYTHON_HOME_FOR_JAVA"
+
+      PRG_FOR_JAVA="$JYTHON_HOME_FOR_JAVA/bin/`basename "$PRG"`"
+      if [ ! -e "$PRG_FOR_JAVA" ]; then
+        mkdir "$JDB_TMPDIR/bin" || exit 1
+        case "$PRG" in
+          /*) JDB_PRG_TARGET="$PRG" ;;
+          *) JDB_PRG_TARGET="`pwd`/$PRG" ;;
+        esac
+        ln -s "$JDB_PRG_TARGET" "$JDB_TMPDIR/bin/`basename "$PRG"`" || exit 1
+        PRG_FOR_JAVA="$JDB_TMPDIR/bin/`basename "$PRG"`"
+      fi
+      trap 'rm -rf "$JDB_TMPDIR"' EXIT
+      ;;
+  esac
+}
+
+java_major_version() {
+  local output version major
+  output=$("${JAVA_CMD[@]}" -version 2>&1)
+  version=`expr "$output" : '.*version "\([^"]*\)"'`
+  case "$version" in
+    1.*)
+      major=${version#1.}
+      major=${major%%.*}
+      ;;
+    *)
+      major=${version%%[!0-9]*}
+      ;;
+  esac
+  echo "$major"
+}
+
+append_java_arg() {
+  if $jdb_requested; then
+    java_args=("${java_args[@]}" "-R$1")
+  else
+    java_args=("${java_args[@]}" "$1")
+  fi
+}
+
+if [ -z "$help_requested" ]; then
+  java_major=`java_major_version`
+  if [ -n "$java_major" ]; then
+    if [ "$java_major" -ge 9 ] 2>/dev/null; then
+      case " $JAVA_OPTS ${java_args[*]} " in
+        *--add-opens=java.base/java.io*) ;;
+        *) append_java_arg --add-opens=java.base/java.io=ALL-UNNAMED ;;
+      esac
+      case " $JAVA_OPTS ${java_args[*]} " in
+        *--add-opens=java.base/sun.nio.ch*) ;;
+        *) append_java_arg --add-opens=java.base/sun.nio.ch=ALL-UNNAMED ;;
+      esac
+    fi
+    if [ "$java_major" -ge 25 ] 2>/dev/null; then
+      case " $JAVA_OPTS ${java_args[*]} " in
+        *--enable-native-access*) ;;
+        *) append_java_arg --enable-native-access=ALL-UNNAMED ;;
+      esac
+      case " $JAVA_OPTS ${java_args[*]} " in
+        *--sun-misc-unsafe-memory-access*) ;;
+        *) append_java_arg --sun-misc-unsafe-memory-access=allow ;;
+      esac
+    fi
+  fi
+fi
+
 JAVA_OPTS="$JAVA_OPTS $JAVA_MEM $JAVA_STACK"
+
+if [ -n "$profile_requested" ]; then
+  java_major=`java_major_version`
+  if [ -n "$java_major" ] && [ "$java_major" -ge 13 ] 2>/dev/null; then
+    echo "--profile is not supported on Java $java_major; the bundled Java Interactive Profiler is only compatible with Java 12 and earlier." >&2
+    exit 2
+  fi
+fi
+
+setup_jdb_path_alias
 
 if $cygwin; then
   JAVA_HOME=`cygpath --mixed "$JAVA_HOME"`
@@ -244,12 +347,18 @@ fi
 
 if [ -n "$profile_requested" -o -z "$boot_requested" ] ; then
   [ -n "$profile_requested" ] && echo "Running with instrumented profiler"
-  java_args=("${java_args[@]}" -classpath "$CP$CP_DELIMITER$CLASSPATH")
+  if [ -n "$profile_requested" ]; then
+    java_major=`java_major_version`
+    if [ -n "$java_major" ] && [ "$java_major" -lt 13 ] 2>/dev/null; then
+      java_args=("${java_args[@]}" -Xverify:none)
+    fi
+  fi
+  java_args=("${java_args[@]}" -classpath "$CP$EXTRA_CP$CP_DELIMITER$CLASSPATH")
 else
-  if [ -z "$help_requested" -a -z "$print_requested" ] ; then
+  if [ -z "$help_requested" -a -z "$print_requested" ] && ! $jdb_requested ; then
     JAVA_CMD=(exec "${JAVA_CMD[@]}")
   fi
-  java_args=("${java_args[@]}" -Xbootclasspath/a:"$CP")
+  java_args=("${java_args[@]}" -Xbootclasspath/a:"$CP$EXTRA_CP")
   [ -n "$CLASSPATH" ] && java_args=("${java_args[@]}" -classpath "$CLASSPATH")
 fi
 
@@ -257,14 +366,15 @@ if [ -n "$print_requested" ] ; then
   JAVA_CMD=(echo $JAVA_CMD)
 fi
 
-"${JAVA_CMD[@]}" $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME" \
-  -Dpython.executable="$PRG" org.python.util.jython $JYTHON_OPTS "$@"
+"${JAVA_CMD[@]}" $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME_FOR_JAVA" \
+  -Dpython.executable="$PRG_FOR_JAVA" org.python.util.jython $JYTHON_OPTS "$@"
 JYTHON_STATUS=$?
 
 if [ -n "$profile_requested" ] ; then
   echo "Profiling results:"
   cat profile.txt
 elif [ -n "$help_requested" ] ; then
+  echo "" >&2
   echo "Jython launcher options:" >&2
   echo "-Jarg    : pass argument through to Java VM (e.g. -J-Xmx512m)" >&2
   echo "--jdb    : run under JDB" >&2
