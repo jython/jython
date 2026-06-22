@@ -1,0 +1,53 @@
+# Run ant regrtest -f verbose.tests on Jython 2.7 on Java versions (GitHub action)
+
+# We expect this to fail (at the time of writing) and the purpose
+# is to tell us on which OSes and versions of Java that happens,
+# with details.
+
+name: Java versions regrtest 2.7 (verbose.tests)
+
+# Only run manually as we don't want to block every PR.
+on:
+  push:
+    # This is here so we can test the jobs on push
+    branches:
+      - 'test-java-17-25-short'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  java-versions-regrtest:
+    strategy:
+      max-parallel: 2
+      matrix:
+        version: [17, 25]
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    continue-on-error: true
+
+    steps:
+    - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
+    - run: echo "Java ${{ matrix.version }} on ${{ matrix.os }}."
+
+    # Some tests require exactly-expected line endings
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v6
+
+    - name: Set up JDK
+      uses: actions/setup-java@v5
+      with:
+        java-version: ${{ matrix.version }}
+        distribution: 'temurin'
+
+    - name: Developer build with Ant
+      run: ant -noinput -buildfile build.xml developer-build
+
+    - name: Specified regression tests with Ant
+      run: dist/bin/jython -m test.regrtest -v -f verbose.tests
+
