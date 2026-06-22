@@ -57,5 +57,5 @@ jobs:
       run: ant -noinput -buildfile build.xml developer-build
 
     - name: Specified regression tests with Ant
-      run: dist/bin/jython -m test.regrtest -v -f ${{ tests_file }}
+      run: dist/bin/jython -m test.regrtest -v -f ${{ inputs.tests_file }}
 
