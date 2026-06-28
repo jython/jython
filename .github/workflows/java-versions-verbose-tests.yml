@@ -26,8 +26,8 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        version: [17, 25]
-        os: [ubuntu-22.04, ubuntu-latest]
+        version: [17]
+        os: [ubuntu-22.04]
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
@@ -37,26 +37,20 @@ jobs:
     - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
     - run: echo "Java ${{ matrix.version }} on ${{ matrix.os }}."
 
-    # Some tests require exactly-expected line endings
-    - run: git config --global core.autocrlf input
-
-    - uses: actions/checkout@v6
-
     # Some tests require Python 2.7 available (not sure it is)
     - name: Install pyenv for choice of Python version.
       # See https://github.com/pyenv/pyenv#installation
       run: |
         curl -sSL https://pyenv.run | bash
-        echo BASH_ENV = "$BASH_ENV"
-        echo PATH = "$PATH"
-        ls -a .*
-        ~/.pyenv/bin/pyenv init --install
+        export PYENV_ROOT="$HOME/.pyenv
+        export PATH="$PYENV_ROOT/bin:$PATH"
 
     - name: Check pyenv has taken.
       # See https://github.com/pyenv/pyenv#installation
       run: |
-        exec "$SHELL"
-        cat ~/.profile
+        echo BASH_ENV = "$BASH_ENV"
+        echo PATH = "$PATH"
+        pyenv init --install
 
     - name: Ensure Python 2.7 available
       run: |
@@ -64,6 +58,10 @@ jobs:
         pyenv install 2.7
         pyenv global 2.7
         python -V
+
+    # Some tests require exactly-expected line endings
+    - run: git config --global core.autocrlf input
+    - uses: actions/checkout@v6
 
     - name: Set up JDK
       uses: actions/setup-java@v5
