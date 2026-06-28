@@ -43,7 +43,16 @@ jobs:
     - uses: actions/checkout@v6
 
     # Some tests require Python 2.7 available (not sure it is)
+    - name: Install pyenv for choice of Python version.
+      # See https://github.com/pyenv/pyenv#installation
+      run: curl -sSL https://pyenv.run | bash
+      run: ~/.pyenv/bin/pyenv init --install
+      run: exec "$SHELL"
+
     - name: Ensure Python 2.7 available
+      run: pyenv versions
+      run: pyenv install 2.7
+      run: pyenv global 2.7
       run: python -V
 
     - name: Set up JDK
