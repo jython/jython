@@ -42,7 +42,7 @@ jobs:
       # See https://github.com/pyenv/pyenv#installation
       run: |
         curl -sSL https://pyenv.run | bash
-        export PYENV_ROOT="$HOME/.pyenv
+        export PYENV_ROOT="$HOME/.pyenv"
         export PATH="$PYENV_ROOT/bin:$PATH"
 
     - name: Check pyenv has taken.
