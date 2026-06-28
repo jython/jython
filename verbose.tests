@@ -1,6 +1,6 @@
 # verbose.tests
 # List of tests referenced by GitHub action java-versions-verbose-tests.yml
-# Test with: -m test.regrtest -v -f verbose.tests
+# Test with: dist/bin/jython -m test.regrtest -v -f verbose.tests
 
 test_cmd_line
 test_float_jy
