@@ -27,7 +27,7 @@ jobs:
       max-parallel: 2
       matrix:
         version: [17, 25]
-        os: ubuntu-22.04
+        os: [ubuntu-22.04, ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
