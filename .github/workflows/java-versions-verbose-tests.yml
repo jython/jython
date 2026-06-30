@@ -26,7 +26,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        version: [17]
+        version: [25]
         os: [ubuntu-22.04]
 
     runs-on: ${{ matrix.os }}
@@ -42,29 +42,15 @@ jobs:
       # See https://github.com/pyenv/pyenv#installation
       run: |
         curl -sSL https://pyenv.run | bash
-        ls -al ~
-        echo "Manual equivalent of pyenv init --install"
-        #~/.pyenv/bin/pyenv init --install
-        # Modify (create) .bashrc
-        #echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
-        #echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
-        #echo 'eval "$(pyenv init - bash)"' >> ~/.bashrc
-        # Modify (create) .bash_profile
-        #echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bash_profile
-        #echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bash_profile
-        #echo 'eval "$(pyenv init - bash)"' >> ~/.bash_profile
+        # Manual equivalent of "pyenv init --install".
         # Add to subsequent environments through GITHUB_ variables (files)
         echo "PYENV_ROOT=$HOME/.pyenv" >> "$GITHUB_ENV"
         echo "$HOME/.pyenv/bin" >> "$GITHUB_PATH"
-        # Which are visible?
-        echo BASH_ENV = "$BASH_ENV"
-        echo PYENV_ROOT = "$PYENV_ROOT"
-        echo PATH = "$PATH"
+        echo "$HOME/.pyenv/shims" >> "$GITHUB_PATH"
 
     - name: Check pyenv has taken.
       # See https://github.com/pyenv/pyenv#installation
       run: |
-        ls -al ~
         echo BASH_ENV = "$BASH_ENV"
         echo PYENV_ROOT = "$PYENV_ROOT"
         echo PATH = "$PATH"
@@ -91,5 +77,7 @@ jobs:
       run: ant -noinput -buildfile build.xml developer-build
 
     - name: Specified regression tests with Ant
-      run: dist/bin/jython -m test.regrtest -v -f ${{ inputs.tests_file }}
+      run: |
+        python -V
+        dist/bin/jython -m test.regrtest -v -f ${{ inputs.tests_file }}
 
