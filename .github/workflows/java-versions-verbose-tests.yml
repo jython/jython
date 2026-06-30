@@ -26,8 +26,8 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        version: [25]
-        os: [ubuntu-22.04]
+        version: [25, 17]
+        os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
