@@ -42,20 +42,19 @@ jobs:
       # See https://github.com/pyenv/pyenv#installation
       run: |
         curl -sSL https://pyenv.run | bash
-        export PYENV_ROOT="$HOME/.pyenv"
-        export PATH="$PYENV_ROOT/bin:$PATH"
+        ~/.pyenv/bin/pyenv init --install
 
     - name: Check pyenv has taken.
       # See https://github.com/pyenv/pyenv#installation
       run: |
         echo BASH_ENV = "$BASH_ENV"
         echo PATH = "$PATH"
-        pyenv init --install
+        pyenv versions
 
     - name: Ensure Python 2.7 available
       run: |
-        pyenv versions
         pyenv install 2.7
+        pyenv versions
         pyenv global 2.7
         python -V
 
