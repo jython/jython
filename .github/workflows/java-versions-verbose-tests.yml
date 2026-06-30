@@ -42,11 +42,16 @@ jobs:
       # See https://github.com/pyenv/pyenv#installation
       run: |
         curl -sSL https://pyenv.run | bash
+        ls -al .*
+        echo "Running pyenv init --install"
         ~/.pyenv/bin/pyenv init --install
+        echo "What did we modify?"
+        ls -al .*
 
     - name: Check pyenv has taken.
       # See https://github.com/pyenv/pyenv#installation
       run: |
+        ls -al .*
         echo BASH_ENV = "$BASH_ENV"
         echo PATH = "$PATH"
         pyenv versions
