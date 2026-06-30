@@ -55,7 +55,7 @@ jobs:
         #echo 'eval "$(pyenv init - bash)"' >> ~/.bash_profile
         # Add to subsequent environments through GITHUB_ variables (files)
         echo "PYENV_ROOT=$HOME/.pyenv" >> "$GITHUB_ENV"
-        echo "$PYENV_ROOT/bin:$PATH" >> "$GITHUB_PATH"
+        echo "$HOME/.pyenv/bin" >> "$GITHUB_PATH"
         # Which are visible?
         echo BASH_ENV = "$BASH_ENV"
         echo PYENV_ROOT = "$PYENV_ROOT"
