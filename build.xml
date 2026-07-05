@@ -925,6 +925,7 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Title" value="Jython fat jar"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
                 <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
+                <attribute name="Add-Opens" value="java.base/java.io java.base/sun.nio.ch"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -950,6 +951,7 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Title" value="Jython fat jar with stdlib"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
                 <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
+                <attribute name="Add-Opens" value="java.base/java.io java.base/sun.nio.ch"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -994,6 +996,8 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
+                <attribute name="Add-Opens" value="java.base/java.io java.base/sun.nio.ch"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -1024,6 +1028,8 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython Test JAR"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
+                <attribute name="Add-Opens" value="java.base/java.io java.base/sun.nio.ch"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -1202,9 +1208,7 @@ The text for an official release would continue like ...
              $dist.dir/javalib/*, to be available when using jython-dev.jar
         -->
         <copy todir="${dist.dir}/javalib">
-            <fileset dir="${basedir}/extlibs">
-                <exclude name="profile.properties"/>
-            </fileset>
+            <fileset dir="${basedir}/extlibs"/>
             <fileset dir="${build.dir}">
                 <include name="*.jar"/>
                 <include name="*.properties"/>
@@ -1448,7 +1452,7 @@ The text for an official release would continue like ...
     </target>
 
     <target name="launchertest" depends="developer-build" if="os.family.unix">
-      <exec executable="${test.shell.dir}/test-jython.sh">
+      <exec executable="${test.shell.dir}/test-jython.sh" failonerror="true">
         <arg value="${dist.dir}"/>
       </exec>
     </target>
@@ -1457,7 +1461,7 @@ The text for an official release would continue like ...
         description="identify the versions of Jython and its platform (needs developer-build)"/>
 
     <target name="versions-unix" if="os.family.unix">
-        <exec executable="${dist.dir}/bin/jython">
+        <exec executable="${dist.dir}/bin/jython" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
             <arg value="-c"/>
             <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
@@ -1466,7 +1470,7 @@ The text for an official release would continue like ...
 
     <target name="versions-windows" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
-        <exec executable="${dist.dir}/bin/jython.exe">
+        <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
             <arg value="-c"/>
             <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
         </exec>
@@ -1477,7 +1481,7 @@ The text for an official release would continue like ...
 
     <target name="regrtest-unix" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
-        <exec executable="${dist.dir}/bin/jython">
+        <exec executable="${dist.dir}/bin/jython" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <!-- Only run the tests that are expected to work on Jython -->
@@ -1491,7 +1495,7 @@ The text for an official release would continue like ...
 
     <target name="regrtest-windows" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
-        <exec executable="${dist.dir}/bin/jython.exe">
+        <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <!-- Only run the tests that are expected to work on Jython -->
             <arg value="--expected"/>
@@ -1508,7 +1512,7 @@ The text for an official release would continue like ...
 
     <target name="regrtest-unix-file" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
-        <exec executable="${dist.dir}/bin/jython">
+        <exec executable="${dist.dir}/bin/jython" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <arg value="--junit-xml"/>
@@ -1524,7 +1528,7 @@ The text for an official release would continue like ...
 
     <target name="regrtest-windows-file" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
-        <exec executable="${dist.dir}/bin/jython.exe">
+        <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <arg value="--junit-xml"/>
             <arg value="${junit.reports}"/>
