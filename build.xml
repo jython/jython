@@ -1296,6 +1296,10 @@ The text for an official release would continue like ...
     <target name="test" depends="clean-test, javatest, launchertest, regrtest, modjytest"
         description="run all the tests"/>
 
+    <target name="test-built"
+            depends="init, clean-test, javatest-built, launchertest-built, regrtest-built, modjytest-built"
+            description="run all the tests against an existing built dist without rebuilding"/>
+
     <target name="singlejavatest" depends="compile-test, expose"
         description="run a single JUnit test (specify with -Dtest=classname)">
         <junit haltonfailure="true" fork="true">
@@ -1341,7 +1345,13 @@ The text for an official release would continue like ...
             description="run all the JUnit tests">
     </target>
 
-    <target name="javatest-basepath" depends="developer-build">
+    <target name="javatest-built" depends="javatest-basepath-built, javatest-import-built"
+            description="run all the JUnit tests against an existing built dist">
+    </target>
+
+    <target name="javatest-basepath" depends="developer-build, javatest-basepath-built"/>
+
+    <target name="javatest-basepath-built" depends="init">
         <mkdir dir="${junit.reports}"/>
         <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
@@ -1361,8 +1371,11 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="javatest-import" depends="developer-build"
+    <target name="javatest-import" depends="developer-build, javatest-import-built"
             description="run all the JUnit tests that need tests/python in the path.">
+    </target>
+
+    <target name="javatest-import-built" depends="init">
         <mkdir dir="${junit.reports}"/>
         <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
@@ -1444,14 +1457,18 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="modjytest" depends="developer-build">
+    <target name="modjytest" depends="developer-build, modjytest-built"/>
+
+    <target name="modjytest-built" depends="init">
         <ant dir="tests/modjy">
             <property name="jython_home" value="${dist.dir}"/>
             <property name="mockrunner_home" value="${extlibs.dir}/mockrunner-0.4.1"/>
         </ant>
     </target>
 
-    <target name="launchertest" depends="developer-build" if="os.family.unix">
+    <target name="launchertest" depends="developer-build, launchertest-built" if="os.family.unix"/>
+
+    <target name="launchertest-built" depends="init" if="os.family.unix">
       <exec executable="${test.shell.dir}/test-jython.sh" failonerror="true">
         <arg value="${dist.dir}"/>
       </exec>
@@ -1476,8 +1493,11 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest" depends="developer-build, regrtest-unix, regrtest-windows"
+    <target name="regrtest" depends="developer-build, regrtest-built"
         description="run Python tests expected to work on Jython"/>
+
+    <target name="regrtest-built" depends="init, regrtest-unix, regrtest-windows"
+        description="run Python tests against an existing built dist"/>
 
     <target name="regrtest-unix" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
