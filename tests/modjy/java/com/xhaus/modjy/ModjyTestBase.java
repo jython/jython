@@ -21,6 +21,7 @@
 package com.xhaus.modjy;
 
 import junit.framework.TestSuite;
+import junit.framework.TestResult;
 
 import org.jdom.output.XMLOutputter;
 import org.python.core.PyObject;
@@ -253,6 +254,9 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter {
         suite.addTestSuite(ModjyTestPostData.class);
         suite.addTestSuite(PyServletTest.class);
         suite.addTestSuite(PyFilterTest.class);
-        junit.textui.TestRunner.run(suite);
+        TestResult result = junit.textui.TestRunner.run(suite);
+        if (!result.wasSuccessful()) {
+            System.exit(1);
+        }
     }
 }
