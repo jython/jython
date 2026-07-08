@@ -872,20 +872,40 @@ class EnvironmentVarGuard(UserDict.DictMixin):
     def __init__(self):
         self._environ = os.environ
         self._changed = {}
+        self._case_insensitive = getattr(os, '_name', os.name) == 'nt'
+
+    def _changed_key(self, envvar):
+        if self._case_insensitive:
+            # Windows environment variable names are case-insensitive even when
+            # Python code uses different spellings. In Jython this matters for
+            # tests that deliberately touch both lowercase and uppercase proxy
+            # variables such as http_proxy and HTTP_PROXY: they are the same
+            # process environment entry on Windows. If EnvironmentVarGuard
+            # records those spellings independently, cleanup can restore one
+            # spelling and then delete it again while "restoring" the other
+            # spelling that appeared absent after the first unset. Canonicalize
+            # only the guard's bookkeeping key so all spellings share one saved
+            # original value, but keep applying changes through the spelling the
+            # caller supplied.
+            return envvar.upper()
+        return envvar
+
+    def _remember_change(self, envvar):
+        key = self._changed_key(envvar)
+        if key not in self._changed:
+            self._changed[key] = envvar, self._environ.get(envvar)
 
     def __getitem__(self, envvar):
         return self._environ[envvar]
 
     def __setitem__(self, envvar, value):
         # Remember the initial value on the first access
-        if envvar not in self._changed:
-            self._changed[envvar] = self._environ.get(envvar)
+        self._remember_change(envvar)
         self._environ[envvar] = value
 
     def __delitem__(self, envvar):
         # Remember the initial value on the first access
-        if envvar not in self._changed:
-            self._changed[envvar] = self._environ.get(envvar)
+        self._remember_change(envvar)
         if envvar in self._environ:
             del self._environ[envvar]
 
@@ -902,12 +922,12 @@ class EnvironmentVarGuard(UserDict.DictMixin):
         return self
 
     def __exit__(self, *ignore_exc):
-        for (k, v) in self._changed.items():
+        for (k, (envvar, v)) in self._changed.items():
             if v is None:
-                if k in self._environ:
-                    del self._environ[k]
+                if envvar in self._environ:
+                    del self._environ[envvar]
             else:
-                self._environ[k] = v
+                self._environ[envvar] = v
         os.environ = self._environ
 
 

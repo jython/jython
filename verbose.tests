@@ -1,0 +1,18 @@
+# verbose.tests
+# List of tests referenced by GitHub action java-versions-verbose-tests.yml
+# Test with: dist/bin/jython -m test.regrtest -v -f verbose.tests
+
+test_cmd_line
+test_float_jy
+test_httplib
+test_import_jy
+test_java_integration
+test_java_visibility  # warning: Ignoring option --illegal-access=warn;
+test_json
+test_jy_internals
+test_jython_launcher
+test_socket           # fails Linux (socket in use on rerun)
+test_socket_jy        # fails Linux (socket in use on rerun)
+test_subprocess
+test_threading
+test_urllib2_localnet

@@ -16,11 +16,20 @@ Jython 2.7.5
 
 New Features
 
+    - Java 25 is supported when running Jython built for its lowest supported
+      Java bytecode level. The launchers add the Java 25 native-access options
+      needed by Jython's native dependencies, and so must some tests. Related
+      fixes include locale expectations, float repr accuracy, skipping
+      SecurityManager tests, and other test improvements.
+
+    - Windows code page 65001 detection and support as UTF-8.
+
     - Servlet support is updated to use the jakarta namespace. As part of this
       change, the classes org.python.util.PyServlet, org.python.util.PyFilter
       and org.python.util.PyServletInitializer have been relocated to a new
       package org.python.servlet. Users should double-check that this change is
       adjusted in their config if necessary.
+
       The relocation allows adding the old classes (with javax.servlet imports)
       to the classpath on top of jython.jar without name conflict. In many cases
       this should suffice to retain workability of a legacy setup if needed.
@@ -28,11 +37,13 @@ New Features
     - Upgrade of jffi to 1.3.15 eliminates the need for sun.misc.Unsafe, which is
       deprecated for removal in Java 26. See https://github.com/jnr/jffi/issues/165
 
+
 Jython 2.7.5a1 Bugs fixed
     - [ GH-416 ] Solve serialization backward incompatibility of oversized methods and functions
     - [ GH-234 ] Clarification on compile (Module or method too large)
-    - [ GH-388 ] @ExposedType annotation should be @Documented
+    - [ GH-413 ] Java 25 compatibility regressions.
     - [ GH-404 ] Windows code page 65001 (UTF-8) not supported by Jython
+    - [ GH-388 ] @ExposedType annotation should be @Documented
     - [ GH-384 ] Console encoding inferred incorrectly on Java 21
     - [ GH-382 ] Java EE Servlet Namespace Has Been Changed From javax.servlet to jakarta.servlet
     - [ GH-356 ] _ast.astlist.__add__ leads to Java exception

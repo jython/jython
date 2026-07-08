@@ -487,6 +487,8 @@ class JavaDelegationTest(unittest.TestCase):
         self.assertNotEquals(x, z)
         self.assertTrue(not (x == z))
 
+@unittest.skipIf(test_support.get_java_version() >= (25,),
+        "Security Manager cannot be enabled on Java 25+")
 class SecurityManagerTest(unittest.TestCase):
 
     def test_nonexistent_import_with_security(self):
@@ -649,6 +651,14 @@ def find_jython_jars():
     return jars
 
 
+def java_command():
+    cmd = [os.path.join(System.getProperty("java.home"), "bin", "java")]
+    if test_support.get_java_version() >= (25,):
+        cmd.extend(["--enable-native-access=ALL-UNNAMED",
+                    "--sun-misc-unsafe-memory-access=allow"])
+    return cmd
+
+
 class JavaSource(SimpleJavaFileObject):
 
     def __init__(self, name, source):
@@ -754,11 +764,11 @@ class SerializationTest(unittest.TestCase):
             jars = find_jython_jars()
             jars.append(proxies_jar_path)
             classpath = os.pathsep.join(jars)
-            cmd = [os.path.join(System.getProperty("java.home"), "bin", "java"),
-                   "-Dpython.path=" + os.path.dirname(__file__),
-                    "-classpath", classpath,
-                    "javatests.ProxyDeserialization",
-                    cat_path]
+            cmd = java_command()
+            cmd.extend(["-Dpython.path=" + os.path.dirname(__file__),
+                        "-classpath", classpath,
+                        "javatests.ProxyDeserialization",
+                        cat_path])
             self.assertEqual(subprocess.check_output(cmd, universal_newlines=True), "meow\n")
         finally:
             org.python.core.Options.proxyDebugDirectory = old_proxy_debug_dir
@@ -815,9 +825,9 @@ public class BarkTheDog {
             # PySystemState (and Jython runtime) is initialized for
             # the proxy
             classpath += os.pathsep + tempdir
-            cmd = [os.path.join(System.getProperty("java.home"), "bin", "java"),
-                   "-Dpython.path=" + os.path.dirname(__file__),
-                   "-classpath", classpath, "BarkTheDog"]
+            cmd = java_command()
+            cmd.extend(["-Dpython.path=" + os.path.dirname(__file__),
+                        "-classpath", classpath, "BarkTheDog"])
             self.assertRegexpMatches(
                 subprocess.check_output(cmd, universal_newlines=True,
                                         stderr=subprocess.STDOUT),
