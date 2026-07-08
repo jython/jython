@@ -19,6 +19,8 @@ from _socket import _check_threadpool_for_pending_threads, NIO_GROUP
 
 PORT = 50100
 HOST = 'localhost'
+UNREACHABLE_HOST = java.lang.System.getProperty(
+    'jython.test.socket.unreachableHost', '192.0.2.42')
 MSG = 'Michael Gilfix was here\n'
 EIGHT_BIT_MSG = 'Bh\xed Al\xe1in \xd3 Cinn\xe9ide anseo\n'
 os_name = platform.java_ver()[3][0]
@@ -220,6 +222,16 @@ class ThreadedUDPSocketTest(SocketUDPTest, ThreadableTest):
     def clientSetUp(self):
         self.cli = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.cli.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def clientTearDown(self):
+        # Do not leave datagram channels for JVM finalization. On Windows,
+        # especially when regrtest is writing JUnit XML for the whole suite,
+        # delayed Netty socket cleanup can leave enough old selector/channel
+        # state around for the following threaded UDP tests to block forever
+        # waiting for a datagram that was sent by the client side.
+        self.cli.close()
+        self.cli = None
+        ThreadableTest.clientTearDown(self)
 
 class SocketConnectedTest(ThreadedTCPSocketTest):
 
@@ -1358,6 +1370,9 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
     def testBlockingConnect(self):
         # Testing blocking connect
         conn, addr = self.serv.accept()
+        # Close the accepted server-side socket explicitly. Relying on
+        # finalization to release the fixed test port can race later tests.
+        conn.close()
 
     def _testBlockingConnect(self):
         # Testing blocking connect
@@ -1480,6 +1495,9 @@ class TCPFileObjectClassOpenCloseTests(SocketConnectedTest):
         # This test is necessary on java/jython
         msg = self.cli_conn.recv(1024)
         self.assertEqual(msg, MSG)
+        # Close the accepted server-side socket explicitly. Relying on
+        # finalization to release the fixed test port can race later tests.
+        self.cli_conn.close()
 
     def _testCloseFileDoesNotCloseSocket(self):
         self.cli_file = self.serv_conn.makefile('wb')
@@ -1492,6 +1510,9 @@ class TCPFileObjectClassOpenCloseTests(SocketConnectedTest):
     def testCloseSocketDoesNotCloseFile(self):
         msg = self.cli_conn.recv(1024)
         self.assertEqual(msg, MSG)
+        # Close the accepted server-side socket explicitly. Relying on
+        # finalization to release the fixed test port can race later tests.
+        self.cli_conn.close()
 
     def _testCloseSocketDoesNotCloseFile(self):
         self.cli_file = self.serv_conn.makefile('wb')
@@ -1537,6 +1558,9 @@ class FileAndDupOpenCloseTests(SocketConnectedTest):
 
         msg = self.cli_conn.recv(len('and ' + MSG))
         self.assertEqual(msg, 'and ' + MSG)
+        # Close the accepted server-side socket explicitly. Relying on
+        # finalization to release the fixed test port can race later tests.
+        self.cli_conn.close()
 
     def _testCloseDoesNotCloseOthers(self):
         self.dup_conn1 = self.serv_conn.dup()
@@ -1731,7 +1755,7 @@ class TCPClientTimeoutTest(SocketTCPTest):
     def testConnectTimeout(self):
         cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         cli.settimeout(0.1)
-        host = '192.0.2.42'  # address in TEST-NET-1, guaranteed to not be routeable
+        host = UNREACHABLE_HOST
         try:
             cli.connect((host, 5000))
         except socket.timeout, st:
@@ -1747,7 +1771,7 @@ used, but if it is on your network this failure is bogus.''' % host)
         _saved_timeout = socket.getdefaulttimeout()
         socket.setdefaulttimeout(0.1)
         cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        host = '192.0.2.42'  # address in TEST-NET-1, guaranteed to not be routeable
+        host = UNREACHABLE_HOST
         try:
             cli.connect((host, 5000))
         except socket.timeout, st:
@@ -2598,6 +2622,13 @@ class ConfigurableClientSocketTest(SocketTCPTest, ThreadableTest):
         # proceed and then perform the blocking call to accept
         self.serverExplicitReady()
         self.cli_conn, _ = self.serv.accept()
+
+    def tearDown(self):
+        # Close the accepted server-side socket explicitly. Relying on
+        # finalization to release the fixed test port can race the next test.
+        self.cli_conn.close()
+        self.cli_conn = None
+        SocketTCPTest.tearDown(self)
 
     def clientSetUp(self):
         self.cli = self.config_client()

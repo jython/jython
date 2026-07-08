@@ -1490,14 +1490,19 @@ class RequestTests(unittest.TestCase):
 
 def test_main(verbose=None):
     from test import test_urllib2
-    test_support.run_doctest(test_urllib2, verbose)
-    test_support.run_doctest(urllib2, verbose)
-    tests = (TrivialTests,
-             OpenerDirectorTests,
-             HandlerTests,
-             MiscTests,
-             RequestTests)
-    test_support.run_unittest(*tests)
+    with test_support.swap_attr(urllib2, '_opener', None):
+        with test_support.EnvironmentVarGuard() as env:
+            for name in ('http_proxy', 'https_proxy', 'ftp_proxy', 'no_proxy',
+                         'HTTP_PROXY', 'HTTPS_PROXY', 'FTP_PROXY', 'NO_PROXY'):
+                env.unset(name)
+            test_support.run_doctest(test_urllib2, verbose)
+            test_support.run_doctest(urllib2, verbose)
+            tests = (TrivialTests,
+                     OpenerDirectorTests,
+                     HandlerTests,
+                     MiscTests,
+                     RequestTests)
+            test_support.run_unittest(*tests)
 
 if __name__ == "__main__":
     test_main(verbose=True)
