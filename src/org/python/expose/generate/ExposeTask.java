@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Set;
 
 import org.apache.tools.ant.BuildException;
@@ -37,7 +38,7 @@ public class ExposeTask extends GlobMatchingTask {
         for (File f : toExpose) {
             ExposedTypeProcessor etp;
             try {
-                etp = new ExposedTypeProcessor(new FileInputStream(f));
+                etp = new ExposedTypeProcessor(Files.newInputStream(f.toPath()));
             } catch (IOException e) {
                 throw new BuildException("Unable to read '" + f + "' to expose it", e);
             } catch (InvalidExposingException iee) {
@@ -66,20 +67,11 @@ public class ExposeTask extends GlobMatchingTask {
     private void write(String destClass, byte[] newClassfile) {
         File dest = new File(destDir, destClass.replace('.', '/') + ".class");
         dest.getParentFile().mkdirs();// TODO - check for success
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(dest);
+        try (FileOutputStream out = new FileOutputStream(dest)) {
             out.write(newClassfile);
         } catch (IOException e) {
             throw new BuildException("Unable to write to '" + dest + "'", e);
-        } finally {
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    // Le sigh...
-                }
-            }
         }
+        // Le sigh...
     }
 }

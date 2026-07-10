@@ -66,11 +66,7 @@ class Linker {
     }
 
     private List<StyleRun> stylesForFile(String path) {
-        List<StyleRun> styles = fileStyles.get(path);
-        if (styles == null) {
-            styles = new ArrayList<StyleRun>();
-            fileStyles.put(path, styles);
-        }
+        List<StyleRun> styles = fileStyles.computeIfAbsent(path, k -> new ArrayList<StyleRun>());
         return styles;
     }
 

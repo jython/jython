@@ -945,7 +945,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
     final boolean str___contains__(PyObject o) {
         String other = asU16BytesOrNull(o);
         if (other != null) {
-            return getString().indexOf(other) >= 0;
+            return getString().contains(other);
         } else if (o instanceof PyUnicode) {
             return decode().__contains__(o);
         } else {
@@ -3015,9 +3015,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     private static String padding(int n, char pad) {
         char[] chars = new char[n];
-        for (int i = 0; i < n; i++) {
-            chars[i] = pad;
-        }
+        Arrays.fill(chars, pad);
         return new String(chars);
     }
 

@@ -55,7 +55,7 @@ public class bz2 implements ClassDictInit {
     public static PyString decompress(PyString data) {
         PyString returnString = null;
 
-        if (data.toString().equals("")) {
+        if (data.toString().isEmpty()) {
             return Py.EmptyString;
         }
         try {

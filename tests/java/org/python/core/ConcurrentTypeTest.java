@@ -244,9 +244,9 @@ public class ConcurrentTypeTest {
             assertEquals("Runner " + r.instance, null, e);
             PyObject staticConstant = r.globals.__finditem__("staticConstant");
             assertNotNull(staticConstant);
-            assertEquals(staticConstant.asInt(), 42);
+            assertEquals(42, staticConstant.asInt());
             PyObject x = r.globals.__finditem__("x");
-            assertEquals(x.asInt(), 42);
+            assertEquals(42, x.asInt());
         }
     }
 
@@ -309,9 +309,9 @@ public class ConcurrentTypeTest {
             PyObject e = r.globals.__finditem__("e");
             assertEquals("Runner " + r.instance, null, e);
             PyObject m = r.globals.__finditem__("m");
-            assertEquals(m.toString(), "forty-two");
+            assertEquals("forty-two", m.toString());
             PyObject x = r.globals.__finditem__("x");
-            assertEquals(x.toString(), "forty-two");
+            assertEquals("forty-two", x.toString());
             PyType f = (PyType) r.globals.__finditem__("Foo");
             types.add(f);
             Object c = JyAttribute.getAttr(f, JyAttribute.JAVA_PROXY_ATTR);

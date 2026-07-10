@@ -363,9 +363,7 @@ public class Time implements ClassDictInit
         if (shortdays == null) {
             shortdays = new String[7];
             String[] names = datesyms.getShortWeekdays();
-            for (int i = 0; i < 6; i++) {
-                shortdays[i] = names[i + 2];
-            }
+            System.arraycopy(names, 2, shortdays, 0, 6);
             shortdays[6] = names[1];
         }
         try {
@@ -381,9 +379,7 @@ public class Time implements ClassDictInit
         if (shortmonths == null) {
             shortmonths = new String[12];
             String[] names = datesyms.getShortMonths();
-            for (int i = 0; i < 12; i++) {
-                shortmonths[i] = names[i];
-            }
+            System.arraycopy(names, 0, shortmonths, 0, 12);
         }
         try {
             return shortmonths[month0to11];

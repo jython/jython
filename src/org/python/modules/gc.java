@@ -1896,7 +1896,7 @@ public class gc {
     private static void syncCollect(int[] stat, boolean debugStat) {
         abortedCyclicFinalizers = 0;
         lockPostFinalization = true;
-        Reference<? extends Object> trash;
+        Reference<?> trash;
         try {
             trash = gcTrash.remove(initWaitTime);
             if (trash != null && (gcFlags & VERBOSE_COLLECT) != 0) {
@@ -2293,7 +2293,7 @@ public class gc {
     private static List<WeakReferenceGC> collectSyncViaSentinel(int[] stat, Set<WeakReferenceGC> cyclic) {
         WeakReference<GCSentinel> sentRef =
                 new WeakReference<>(new GCSentinel(Thread.currentThread()), gcTrash);
-        Reference<? extends Object> trash;
+        Reference<?> trash;
         System.gc();
         List<WeakReferenceGC> collectBuffer = null;
         if (needsCollectBuffer()) {
@@ -2964,7 +2964,7 @@ public class gc {
 
     private static int traverseByReflectionIntern(Object ob,
             IdentityHashMap<Object, Object> alreadyTraversed, Visitproc visit, Object arg) {
-        Class<? extends Object> cls = ob.getClass();
+        Class<?> cls = ob.getClass();
         int result = 0;
         Object element;
         if (cls.isArray() && canLinkToPyObject(cls.getComponentType(), false)) {

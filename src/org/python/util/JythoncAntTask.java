@@ -356,7 +356,7 @@ public class JythoncAntTask extends MatchingTask {
    * get the compiler option, null if none.
    */
   public String getCompilerOptions() {
-    StringBuffer aStringBuffer = new StringBuffer();
+    StringBuilder aStringBuffer = new StringBuilder();
     if( destDir != null ) {
       aStringBuffer.append("-d \"");
       aStringBuffer.append( destDir );
@@ -517,7 +517,7 @@ public class JythoncAntTask extends MatchingTask {
       }
     } catch (Exception e) {
         // Have to catch this because of the semantics of calling main()
-        String msg = "Exception while calling " + JYTHON_CLASS + ". Details: " + e.toString();
+        String msg = "Exception while calling " + JYTHON_CLASS + ". Details: " + e;
         throw new BuildException(msg, e);
     }
   }

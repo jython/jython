@@ -235,7 +235,7 @@ public class PyReflectedFunction extends PyObject implements Traverseproc {
             buf.append(sep);
         }
         if (min < max) {
-            buf.append(Integer.toString(min)).append('-').append(max);
+            buf.append(min).append('-').append(max);
         } else {
             buf.append(min);
         }
@@ -294,7 +294,7 @@ public class PyReflectedFunction extends PyObject implements Traverseproc {
             case 3:
                 return "3rd";
             default:
-                return Integer.toString(n + 1) + "th";
+                return (n + 1) + "th";
         }
     }
 

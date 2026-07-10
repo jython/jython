@@ -181,7 +181,7 @@ public final class PyScriptEngineScope extends PyObject {
         return new PyDictionary(getMap());
     }
 
-    public class ScopeIterator extends PyIterator {
+    public static class ScopeIterator extends PyIterator {
         private int _index;
         private int _size;
         private PyObject _keys;

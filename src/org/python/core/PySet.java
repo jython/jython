@@ -14,7 +14,7 @@ import org.python.util.Generic;
 public class PySet extends BaseSet {
 
     public static final PyType TYPE = PyType.fromClass(PySet.class);
-    {
+    static {
         // Ensure set is not Hashable
         TYPE.object___setattr__("__hash__", Py.None);
     }

@@ -246,7 +246,7 @@ public abstract class importer<T> extends PyObject {
     /**
      * Container for PyModule code - whether or not it's a package - and its path.
      */
-    protected class ModuleCodeData {
+    protected static class ModuleCodeData {
         public PyCode code;
         public boolean isPackage;
         public String path;
