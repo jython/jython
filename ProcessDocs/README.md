@@ -26,6 +26,7 @@ and consider contributing that here.
 1. [Contributor agreement](contributor_agreement.md)
 1. [Coding standard](coding_standard.md)
 1. Lifecycle of a change (adapt from CPython)
+1. [Regenerating the Jython Windows Launcher](jython_exe.md)
 1. [Releasing a version](releasing.md)
 
 
