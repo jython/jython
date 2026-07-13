@@ -20,9 +20,11 @@ import shutil
 import shlex
 import subprocess
 import sys
+import py_compile
+import compileall
+import runpy
 import tempfile
 from collections import OrderedDict
-
 
 is_windows = os.name == "nt" or (os.name == "java" and os._name == "nt")
 
@@ -487,6 +489,15 @@ setting JYTHON_HOME.""".format(self.jython_home))
         if self.uname == u"cygwin" and "python.console" not in self.args.properties:
             args.append(u"-Dpython.console=org.python.core.PlainConsole")
 
+        # Conditionally auto-supply python.cpython2
+        if "python.cpython2" not in self.args.properties:
+            exe_name = os.path.basename(self.executable).lower()
+            # If we are the frozen jython.exe, we know we are backed by the right version
+            # If running raw, check whether the hosting interpreter is Python 2.7.x
+            if exe_name == u"jython.exe" or sys.version_info[:2] == (2, 7):
+                cpython_path = os.path.abspath(sys.executable.decode(ENCODING))
+                args.append(u"-Dpython.cpython2=%s" % self.convert_path(cpython_path))
+
         if self.args.profile:
             if self.java_major_version < 13:
                 args.append(u"-Xverify:none")
@@ -644,9 +655,48 @@ def maybe_quote(s):
     arg.append(QUOTE)
     return ''.join(arg)
 
+def handle_native_cpython_tasks(sys_args):
+    """ Intercepts explicit compilation flags and executes them natively 
+        using the PyInstaller-bundled Python 2.7 interpreter, bypassing the JVM.
+    """
+    if len(sys_args) < 2:
+        return
+
+    # Handle explicit single/multi-file compilation
+    if sys_args[1] == u"--pyc_compile":
+        # Format: jython.exe --pyc_compile file1.py [file2.py ...]
+        # Map back to sys.argv for py_compile's main function
+        sys.argv = [sys.argv[0]] + sys.argv[2:]
+        
+        # Convert unicode paths to encoded byte strings for py_compile
+        encoded_args = encode_list(sys.argv[1:])
+        
+        for file_path in encoded_args:
+            try:
+                py_compile.compile(file_path)
+            except Exception as e:
+                print >> sys.stderr, "Failed to compile %s: %s" % (file_path, str(e))
+        sys.exit(0)
+
+    # Handle explicit directory batch compilation
+    if sys_args[1] == u"--pyc_compileall":
+        # Format: jython.exe --pyc_compileall [options] dir1 [dir2 ...]
+        # compileall.main() naturally parses standard CLI arguments like -q, -f, etc.
+        sys.argv = [sys.argv[0]] + sys.argv[2:]
+        
+        # compileall expects standard byte strings in sys.argv
+        sys.argv = encode_list(sys.argv)
+        
+        # Execute compileall's standard CLI main function
+        result = compileall.main()
+        sys.exit(0 if result else 1)
+
 def main(sys_args):
     # The entire program must work in Unicode
     sys_args = decode_list(sys_args)
+
+	# To enable compiling pyc files when used as jython.exe
+    handle_native_cpython_tasks(sys_args)
 
     # sys_args[0] is this script (which we'll replace with 'java' eventually).
     # Insert options for the java command from the environment.

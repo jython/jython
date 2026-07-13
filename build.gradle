@@ -511,8 +511,14 @@ task mergePythonLib(
 
     // Copy Jython Lib, with precedence over CPython files of the same name
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    from libJython
-    exclude '**/*.class'
+    from(libJython) {
+        exclude '**/*.class'
+    }
+    from(libJython) {
+        // re-include these in a separate block to avoid interference with exclude
+        include 'test/large_methods_272$py.class'
+        include 'test/large_module_272$py.class'
+    }
 
     // Allow Gradle to infer the need to regenerate the outputs
     inputs.dir libJython
@@ -567,10 +573,17 @@ task copyTestLib(
         dependsOn: mergePythonLib,
         description: 'Copy merged Python library (tests only)') {
     into buildTestLibDir
-    from pythonLibDir
-    exclude '**/*.pyd', '**/*.class' // test material includes .pyc files
-    // Include only tests and test material
-    include libTestSpecs
+
+    from(pythonLibDir) {
+        exclude '**/*.pyd', '**/*.class' // test material includes .pyc files
+        // Include only tests and test material
+        include libTestSpecs
+    }
+    from(pythonLibDir) {
+        // re-include these in a separate block to avoid interference with exclude
+        include 'test/large_methods_272$py.class'
+        include 'test/large_module_272$py.class'
+    }
 }
 
 // Attach this task to processResources

@@ -1175,6 +1175,10 @@ The text for an official release would continue like ...
             <fileset dir="${basedir}/Lib">
                 <exclude name="**/*.class"/>
             </fileset>
+            <fileset dir="${basedir}/Lib">
+                <include name="test/large_methods_272$py.class"/>
+                <include name="test/large_module_272$py.class"/>
+            </fileset>
         </copy>
     </target>
 

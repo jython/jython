@@ -39,6 +39,8 @@ New Features
 
 
 Jython 2.7.5a1 Bugs fixed
+    - [ GH-416 ] Solve serialization backward incompatibility of oversized methods and functions
+    - [ GH-234 ] Clarification on compile (Module or method too large)
     - [ GH-413 ] Java 25 compatibility regressions.
     - [ GH-404 ] Windows code page 65001 (UTF-8) not supported by Jython
     - [ GH-388 ] @ExposedType annotation should be @Documented
