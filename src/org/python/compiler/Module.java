@@ -13,12 +13,22 @@ import java.io.ObjectOutputStream;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.UserPrincipal;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.HashSet;
 import java.util.Stack;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodTooLargeException;
@@ -720,6 +730,64 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         module.mainCode = main;
     }
 
+    // Accepts double-quoted strings OR unquoted strings without spaces, avoids some illegal filename characters.
+    private static final Pattern CPYTHON2_ENV_PATTERN = Pattern.compile(
+            "(?:^|\\s)-D" + Pattern.quote(PYTHON_CPYTHON) + "=(?:\"([^\"<>|?*]+)\"|([^\\s\"<>|?*]+))(?=\\s|$)");
+
+    private static boolean requiresCheck(String activeCommand) {
+        String envOpts = System.getenv("JYTHON_OPTS");
+        if (envOpts == null || envOpts.isEmpty()) {
+            return false;
+        }
+        int firstIdx = envOpts.indexOf(PYTHON_CPYTHON);
+        if (firstIdx == -1) {
+            return false;
+        }
+        if (envOpts.indexOf(PYTHON_CPYTHON, firstIdx + PYTHON_CPYTHON.length()) != -1 || envOpts.contains("'")) {
+            return true; // suspicious complexity
+        }
+        Matcher matcher = CPYTHON2_ENV_PATTERN.matcher(envOpts);
+        if (matcher.find()) {
+            String extractedValue = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+            try { // if they match, activeCommand might stem from env and we better check
+                return extractedValue.equals(activeCommand) || 
+                        new File(extractedValue).getCanonicalFile().equals(new File(activeCommand).getCanonicalFile());
+            } catch (IOException e) {
+                return true; // illegal filename char (or whatever causes this exception) justifies checking
+            }
+        }
+        return true; // contains PYTHON_CPYTHON in a strange way, better check
+    }
+
+    private static String getWindowsRawSid(UserPrincipal principal)
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        // extracts raw OS Security Identifier (SID) from a Windows UserPrincipal
+        // using reflection to prevent compilation issues on non-Windows platforms
+
+        // under the hood on Windows, this is sun.nio.fs.WindowsUserPrincipals$User
+        Method sidStringMethod = principal.getClass().getMethod("sidString");
+        sidStringMethod.setAccessible(true);
+        return sidStringMethod.invoke(principal).toString().toUpperCase().trim();
+    }
+
+    private static boolean validateCommandOwner(String providedCommand, boolean isWindows)
+            throws IOException {
+        UserPrincipal owner = Files.getOwner(new File(providedCommand).toPath());
+        if (isWindows) { // on Windows we check the SID to avoid localization issues
+            try {
+                String rawSid = getWindowsRawSid(owner);
+                // S-1-5-18     = Local SYSTEM Account
+                // S-1-5-32-544 = Built-in Administrators Group
+                return "S-1-5-18".equals(rawSid) || "S-1-5-32-544".equals(rawSid);
+            } catch (Exception e) {
+                // NoSuchMethodException, IllegalAccessException or InvocationTargetException
+                return false; // in doubt better reject
+            }
+        } else { // posix
+            return "root".equals(owner.getName());
+        }
+    }
+
     // Error message formats required by loadPyBytecode
     private static String TRIED_CREATE_PYC_MSG =
             "\nJython tried to create a pyc-file by executing\n    %s\nwhich failed because %s";
@@ -766,8 +834,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
             // (bts[4]<< 0) & 0x000000FF;
             if (magic != 62211) { // check Python 2.7 bytecode
                 throw new RuntimeException(
-                        String.format(LARGE_METHOD_MSG, filename) //
-                                + "\n'" + pyc_filename + "' is not CPython 2.7 bytecode." //
+                        String.format(LARGE_METHOD_MSG, filename)
+                                + "\n'" + pyc_filename + "' is not CPython 2.7 bytecode."
                                 + String.format(PLEASE_PROVIDE_MSG, filename));
             }
             _marshal.Unmarshaller un = new _marshal.Unmarshaller(f);
@@ -776,36 +844,96 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
             if (code instanceof PyBytecode) {
                 return (PyBytecode) code;
             }
-            throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename) //
+            throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename)
                     + "\n'" + pyc_filename + "' contains invalid bytecode."
                     + String.format(PLEASE_PROVIDE_MSG, filename));
 
         } else {
             String CPython_command = System.getProperty(PYTHON_CPYTHON);
             if (try_cpython && CPython_command != null) {
+                boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+                boolean checkOwner = true;
                 // check that the command is an absolute path or resolves to a standard system location...
                 File pythonExec = new File(CPython_command);
-                if (!pythonExec.isAbsolute()) {
+                if (pythonExec.isAbsolute()) {
+                    if (!pythonExec.isFile() || !pythonExec.canExecute()) {
+                        throw new RuntimeException("The provided CPython command does not exist or " +
+                                "is not executable: " + CPython_command);
+                    }
+                    checkOwner = requiresCheck(CPython_command);
+                } else {
                     boolean foundSystemPython = false;
                     // for convenience, some bare standard commands are still permitted in this case:
                     if (CPython_command.equals("python") || CPython_command.equals("python2") 
                             || CPython_command.equals("python2.7") || CPython_command.equals("python.exe")
-                            || CPython_command.equals("python2.exe")) {
-                        // canonical locations for these standard commands on Linux, macOS, and Windows
-                        String[] systemDirectories = {
-                            "/usr/bin", "/usr/local/bin", "/opt/homebrew/bin", // Linux & macOS
-                            "C:\\Python27", "C:\\Program Files\\Python27"};    // Windows
-                        for (String dir : systemDirectories) {
-                            pythonExec = new File(dir, CPython_command);
-                            if (!pythonExec.exists() && dir.startsWith("C:\\") && !CPython_command.endsWith(".exe")) {
-                                // one more try for Windows dirs by adding .exe postfix
-                                pythonExec = new File(dir, CPython_command+".exe");
+                            || CPython_command.equals("python2.exe")) { // we resolve them as follows:
+                        if (isWindows) {
+                            // gather all legitimate hardware roots from the kernel (e.g. C:\, D:\)
+                            HashSet<String> roots = new HashSet<>();
+                            for (File root : File.listRoots()) {
+                                if (root.exists()) {
+                                    roots.add(root.getAbsolutePath().toUpperCase());
+                                }
                             }
-                            if (pythonExec.exists() && pythonExec.isFile() && pythonExec.canExecute()) {
-                                // resolve absolute path
-                                CPython_command = pythonExec.getAbsolutePath();
-                                foundSystemPython = true;
-                                break;
+                            // we first try some standard paths
+                            String[] standardPythonDirectories = {"Python27\\", "Program Files\\Python27\\"};
+                            searchPy27:
+                            for (String root : roots) {
+                                for (String dir : standardPythonDirectories) {
+                                    File standardPath = new File(root, dir + CPython_command);
+                                    if (!CPython_command.endsWith(".exe") && !standardPath.exists()) {
+                                        // one more try with .exe postfix
+                                        standardPath = new File(root, dir + CPython_command + ".exe");
+                                    }
+                                    if (standardPath.isFile() && standardPath.canExecute()) {
+                                        CPython_command = standardPath.getAbsolutePath();
+                                        foundSystemPython = true;
+                                        break searchPy27;
+                                    }
+                                }
+                            }
+                            if (!foundSystemPython) { // next, we try locations on the PATH variable
+                                String pathEnv = System.getenv("PATH");
+                                if (pathEnv != null && !pathEnv.isEmpty()) {
+                                    String[] pathDirs = pathEnv.split(";"); // we're on Windows, so semicolon it is
+                                    for (String dirPath : pathDirs) {
+                                        if (dirPath == null || dirPath.trim().isEmpty()) {
+                                            continue;
+                                        }
+                                        String cleanDirPath = dirPath.trim();
+                                        File dir = new File(cleanDirPath);
+                                        String upperPath = dir.getAbsolutePath().toUpperCase();
+                                        boolean validRoot = false;
+                                        for (String root : roots) {
+                                            if (upperPath.startsWith(root)) {
+                                                validRoot = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!validRoot) {
+                                            continue; // skip relative paths, UNC network shares, or fake drives
+                                        }
+                                        pythonExec = new File(dir, CPython_command);
+                                        if (!pythonExec.exists() && !CPython_command.endsWith(".exe")) {
+                                            pythonExec = new File(dir, CPython_command + ".exe");
+                                        }
+                                        if (pythonExec.isFile() && pythonExec.canExecute()) {
+                                            CPython_command = pythonExec.getAbsolutePath();
+                                            foundSystemPython = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } else { // we look at some standard paths for Linux & macOS
+                            String[] unixDirectories = {"/usr/bin", "/usr/local/bin", "/opt/homebrew/bin"};
+                            for (String dir : unixDirectories) {
+                                pythonExec = new File(dir, CPython_command);
+                                if (pythonExec.isFile() && pythonExec.canExecute()) {
+                                    CPython_command = pythonExec.getAbsolutePath();
+                                    foundSystemPython = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -815,34 +943,66 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                             "Please provide a full absolute path instead of: " + CPython_command);
                     }
                 }
+                if (checkOwner) {
+                    try {
+                        if (!validateCommandOwner(CPython_command, isWindows)) {
+                            throw new RuntimeException(
+                                "The owner of " + CPython_command +
+                                " does not have sufficient rights for the requested operation. " +
+                                "Please provide a command with sufficient rights.");
+                        }
+                    } catch (Exception ex) {
+                        // could possibly be IOException or SecurityException
+                        throw new RuntimeException(
+                            "Could not verify that the owner of " + CPython_command +
+                            " has sufficient rights for the requested operation: " +
+                            ex.getMessage(), ex);
+                    }
+                }
 
                 Exception exc = null;
                 int result = -1;
                 String reason;
+                boolean isJythonExe = false;
+                if (CPython_command != null) {
+                    File cpythonFile = new File(CPython_command);
+                    isJythonExe = cpythonFile.getName().equalsIgnoreCase("jython.exe");
+                }
                 try {
-                    // check version...
-                    ProcessBuilder pbVersion = new ProcessBuilder(CPython_command, "--version");
-                    // merge stderr into stdout to prevent stream buffer deadlocks
-                    pbVersion.redirectErrorStream(true); 
-                    Process pVersion = pbVersion.start();
-                    String cp_version = null;
-                    try (BufferedReader br = new BufferedReader(new InputStreamReader(pVersion.getInputStream()))) {
-                        cp_version = br.readLine();
-                        // consume any remaining output so the process can terminate cleanly
-                        while (br.readLine() != null) {}
-                    }
-                    result = pVersion.waitFor();
-                    if (cp_version == null || !cp_version.startsWith("Python 2.7.")) {
-                        reason  = (cp_version == null ? "No version output" : cp_version) 
-                                + " has been provided, but 2.7.x is required.";
-                        throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename)
-                                + String.format(TRIED_CREATE_PYC_MSG,
-                                CPython_command + " -m py_compile " + filename, reason)
-                                + String.format(PLEASE_PROVIDE_MSG, filename) + CPYTHON_CMD_MSG);
+                    if (isJythonExe) {
+                        result = 0; // no version check required, so pre-approve
+                    } else {
+                        // check version...
+                        ProcessBuilder pbVersion = new ProcessBuilder(CPython_command, "--version");
+                        // merge stderr into stdout to prevent stream buffer deadlocks
+                        pbVersion.redirectErrorStream(true); 
+                        Process pVersion = pbVersion.start();
+                        String cp_version = null;
+                        try (BufferedReader br = new BufferedReader(new InputStreamReader(pVersion.getInputStream()))) {
+                            cp_version = br.readLine();
+                            // consume any remaining output so the process can terminate cleanly
+                            while (br.readLine() != null) {}
+                        }
+                        result = pVersion.waitFor();
+                        if (cp_version == null || !cp_version.startsWith("Python 2.7.")) {
+                            reason  = (cp_version == null ? "No version output" : cp_version) 
+                                    + " has been provided, but 2.7.x is required.";
+                            throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename)
+                                    + String.format(TRIED_CREATE_PYC_MSG,
+                                    CPython_command + " -m py_compile " + filename, reason)
+                                    + String.format(PLEASE_PROVIDE_MSG, filename) + CPYTHON_CMD_MSG);
+                        }
                     }
                     // compile...
                     if (result == 0) {
-                        ProcessBuilder pbCompile = new ProcessBuilder(CPython_command, "-m", "py_compile", filename);
+                        ProcessBuilder pbCompile;
+                        if (isJythonExe) {
+                            // jython.exe with embedded CPython 2.7 based on jython.py via native PyInstaller
+                            pbCompile = new ProcessBuilder(CPython_command, "--pyc_compile", filename);
+                        } else {
+                            // standard CPython 2.7.x
+                            pbCompile = new ProcessBuilder(CPython_command, "-m", "py_compile", filename);
+                        }
                         pbCompile.redirectErrorStream(true);
                         Process pCompile = pbCompile.start();
                         // consume stream to prevent hanging
@@ -954,7 +1114,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
      * <p>
      * While Java String objects are limited only by the address range of arrays, the class file
      * standard only supports literals representable in at most 65535 bytes of modified UTF-8. This
-     * method us used only with base64 Strings (therefore ASCII without nulls) and so each character
+     * method is used only with base64 Strings (therefore ASCII without nulls) and so each character
      * occupies exactly 1 byte in the class file after encoding to UTF-8.
      * <p>
      * To work within the 65535 byte limitation, the {@code code_str} is split into several literals
@@ -1028,7 +1188,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
             Module module = new Module(name, filename, linenumbers, mtime);
             _module_init(node, module, printResults, cflags);
             module.write(ostream);
-
         } catch (MethodTooLargeException re) {
             PyBytecode btcode = loadPyBytecode(filename, true);
             int thresh = 22000;

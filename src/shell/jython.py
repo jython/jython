@@ -15,11 +15,16 @@
 import glob
 import os
 import os.path
+import re
+import shutil
 import shlex
 import subprocess
 import sys
+import py_compile
+import compileall
+import runpy
+import tempfile
 from collections import OrderedDict
-
 
 is_windows = os.name == "nt" or (os.name == "java" and os._name == "nt")
 
@@ -160,6 +165,7 @@ class JythonCommand(object):
     def __init__(self, args, jython_args):
         self.args = args
         self.jython_args = jython_args
+        self._jdb_alias_dir = None
 
     @property
     def uname(self):
@@ -247,6 +253,65 @@ class JythonCommand(object):
         self._jython_home = home
         return self._jython_home
 
+    def needs_jdb_path_alias(self):
+        """Return whether jdb needs a no-space alias for Jython paths.
+
+        Some jdb implementations, notably OpenJDK/Temurin 8, split the
+        debuggee command line on spaces after receiving it from this launcher.
+        A temporary symlink without spaces lets the classpath and -Dpython.*
+        values survive jdb's second-stage JVM launch.
+        """
+        return (self.args.jdb and self.uname not in (u"windows", u"cygwin")
+                and (u" " in self.jython_home or u" " in self.executable))
+
+    def ensure_jdb_alias_dir(self):
+        if self._jdb_alias_dir is None:
+            alias_dir = tempfile.mkdtemp(prefix="jython-jdb.")
+            if isinstance(alias_dir, bytes):
+                alias_dir = alias_dir.decode(ENCODING)
+            self._jdb_alias_dir = alias_dir
+        return self._jdb_alias_dir
+
+    @property
+    def jython_home_for_java(self):
+        if hasattr(self, "_jython_home_for_java"):
+            return self._jython_home_for_java
+        if self.needs_jdb_path_alias():
+            alias = os.path.join(self.ensure_jdb_alias_dir(), u"jython")
+            if not os.path.exists(alias):
+                os.symlink(os.path.abspath(self.jython_home), alias)
+            self._jython_home_for_java = alias
+        else:
+            self._jython_home_for_java = self.jython_home
+        return self._jython_home_for_java
+
+    @property
+    def executable_for_java(self):
+        if hasattr(self, "_executable_for_java"):
+            return self._executable_for_java
+        if self.needs_jdb_path_alias():
+            alias = os.path.join(self.jython_home_for_java, u"bin",
+                                 os.path.basename(self.executable))
+            if not os.path.exists(alias) and u" " in self.executable:
+                bin_dir = os.path.join(self.ensure_jdb_alias_dir(), u"bin")
+                if not os.path.exists(bin_dir):
+                    os.mkdir(bin_dir)
+                alias = os.path.join(bin_dir, os.path.basename(self.executable))
+                if not os.path.exists(alias):
+                    os.symlink(os.path.abspath(self.executable), alias)
+            if os.path.exists(alias):
+                self._executable_for_java = alias
+            else:
+                self._executable_for_java = self.executable
+        else:
+            self._executable_for_java = self.executable
+        return self._executable_for_java
+
+    def cleanup(self):
+        if self._jdb_alias_dir is not None:
+            shutil.rmtree(self._jdb_alias_dir, ignore_errors=True)
+            self._jdb_alias_dir = None
+
     @property
     def jython_opts():
         return get_env("JYTHON_OPTS", "")
@@ -260,7 +325,7 @@ class JythonCommand(object):
         if hasattr(self, "_jython_jars"):
             return self._jython_jars
 
-        home = self.jython_home
+        home = self.jython_home_for_java
         jython_jar = os.path.join(home, 'jython.jar')
         jython_dev_jar = os.path.join(home, 'jython-dev.jar')
 
@@ -309,8 +374,31 @@ setting JYTHON_HOME.""".format(self.jython_home))
         return [self.java_mem, self.java_stack]
 
     @property
+    def java_major_version(self):
+        if hasattr(self, "_java_major_version"):
+            return self._java_major_version
+        try:
+            output = subprocess.check_output([self.java_command, u"-version"],
+                                             stderr=subprocess.STDOUT)
+            if isinstance(output, bytes):
+                output = output.decode(ENCODING, "replace")
+            match = re.search(r'version "([^"]+)"', output)
+            if match is None:
+                major = 0
+            else:
+                version = match.group(1)
+                if version.startswith(u"1."):
+                    major = int(version.split(u".", 2)[1])
+                else:
+                    major = int(re.match(r"\d+", version).group(0))
+        except Exception:
+            major = 0
+        self._java_major_version = major
+        return major
+
+    @property
     def java_profile_agent(self):
-        return os.path.join(self.jython_home, "javalib", "profile.jar")
+        return os.path.join(self.jython_home_for_java, "javalib", "profile.jar")
 
     def set_encoding(self):
         if "JAVA_ENCODING" not in os.environ and self.uname == "darwin" and "file.encoding" not in self.args.properties:
@@ -346,10 +434,35 @@ setting JYTHON_HOME.""".format(self.jython_home))
         # Set default file encoding just for Darwin (?)
         self.set_encoding()
 
+        if self.args.profile and self.java_major_version >= 13:
+            msg = (u"--profile is not supported on Java {0}; the bundled Java "
+                   u"Interactive Profiler is only compatible with Java 12 and earlier.")
+            print >> sys.stderr, msg.format(self.java_major_version)
+            sys.exit(2)
+
         # Begin to build the Java part of the ultimate command
         args = [self.java_command]
         args.extend(self.java_opts)
         args.extend(self.args.java)
+
+        def append_java_arg(arg):
+            if self.args.jdb:
+                args.append(u"-R%s" % arg)
+            else:
+                args.append(arg)
+
+        if (not self.args.help and self.java_major_version >= 9
+                and not any(a.startswith(u"--add-opens=java.base/java.io") for a in args)):
+            append_java_arg(u"--add-opens=java.base/java.io=ALL-UNNAMED")
+        if (not self.args.help and self.java_major_version >= 9
+                and not any(a.startswith(u"--add-opens=java.base/sun.nio.ch") for a in args)):
+            append_java_arg(u"--add-opens=java.base/sun.nio.ch=ALL-UNNAMED")
+        if (not self.args.help and self.java_major_version >= 25
+                and not any(a.startswith(u"--enable-native-access") for a in args)):
+            append_java_arg(u"--enable-native-access=ALL-UNNAMED")
+        if (not self.args.help and self.java_major_version >= 25
+                and not any(a.startswith(u"--sun-misc-unsafe-memory-access") for a in args)):
+            append_java_arg(u"--sun-misc-unsafe-memory-access=allow")
 
         # Get the class path right (depends on --boot)
         classpath = self.java_classpath
@@ -361,9 +474,9 @@ setting JYTHON_HOME.""".format(self.jython_home))
         args.extend([u"-classpath", self.convert_path(classpath)])
 
         if "python.home" not in self.args.properties:
-            args.append(u"-Dpython.home=%s" % self.convert_path(self.jython_home))
+            args.append(u"-Dpython.home=%s" % self.convert_path(self.jython_home_for_java))
         if "python.executable" not in self.args.properties:
-            args.append(u"-Dpython.executable=%s" % self.convert_path(self.executable))
+            args.append(u"-Dpython.executable=%s" % self.convert_path(self.executable_for_java))
         if "python.launcher.uname" not in self.args.properties:
             args.append(u"-Dpython.launcher.uname=%s" % self.uname)
 
@@ -376,7 +489,18 @@ setting JYTHON_HOME.""".format(self.jython_home))
         if self.uname == u"cygwin" and "python.console" not in self.args.properties:
             args.append(u"-Dpython.console=org.python.core.PlainConsole")
 
+        # Conditionally auto-supply python.cpython2
+        if "python.cpython2" not in self.args.properties:
+            exe_name = os.path.basename(self.executable).lower()
+            # If we are the frozen jython.exe, we know we are backed by the right version
+            # If running raw, check whether the hosting interpreter is Python 2.7.x
+            if exe_name == u"jython.exe" or sys.version_info[:2] == (2, 7):
+                cpython_path = os.path.abspath(sys.executable.decode(ENCODING))
+                args.append(u"-Dpython.cpython2=%s" % self.convert_path(cpython_path))
+
         if self.args.profile:
+            if self.java_major_version < 13:
+                args.append(u"-Xverify:none")
             args.append(u"-XX:-UseSplitVerifier")
             args.append(u"-javaagent:%s" % self.convert_path(self.java_profile_agent))
 
@@ -531,9 +655,48 @@ def maybe_quote(s):
     arg.append(QUOTE)
     return ''.join(arg)
 
+def handle_native_cpython_tasks(sys_args):
+    """ Intercepts explicit compilation flags and executes them natively 
+        using the PyInstaller-bundled Python 2.7 interpreter, bypassing the JVM.
+    """
+    if len(sys_args) < 2:
+        return
+
+    # Handle explicit single/multi-file compilation
+    if sys_args[1] == u"--pyc_compile":
+        # Format: jython.exe --pyc_compile file1.py [file2.py ...]
+        # Map back to sys.argv for py_compile's main function
+        sys.argv = [sys.argv[0]] + sys.argv[2:]
+        
+        # Convert unicode paths to encoded byte strings for py_compile
+        encoded_args = encode_list(sys.argv[1:])
+        
+        for file_path in encoded_args:
+            try:
+                py_compile.compile(file_path)
+            except Exception as e:
+                print >> sys.stderr, "Failed to compile %s: %s" % (file_path, str(e))
+        sys.exit(0)
+
+    # Handle explicit directory batch compilation
+    if sys_args[1] == u"--pyc_compileall":
+        # Format: jython.exe --pyc_compileall [options] dir1 [dir2 ...]
+        # compileall.main() naturally parses standard CLI arguments like -q, -f, etc.
+        sys.argv = [sys.argv[0]] + sys.argv[2:]
+        
+        # compileall expects standard byte strings in sys.argv
+        sys.argv = encode_list(sys.argv)
+        
+        # Execute compileall's standard CLI main function
+        result = compileall.main()
+        sys.exit(0 if result else 1)
+
 def main(sys_args):
     # The entire program must work in Unicode
     sys_args = decode_list(sys_args)
+
+	# To enable compiling pyc files when used as jython.exe
+    handle_native_cpython_tasks(sys_args)
 
     # sys_args[0] is this script (which we'll replace with 'java' eventually).
     # Insert options for the java command from the environment.
@@ -571,10 +734,11 @@ def main(sys_args):
         # It is possible the Unicode cannot be encoded for the console
         enc = sys.stdout.encoding or 'ascii'
         sys.stdout.write(command_line.encode(enc, 'replace') + "\n")
+        jython_command.cleanup()
     else:
         try:
             if not (is_windows or not hasattr(os, "execvp") or args.help or 
-                    jython_command.uname == u"cygwin"):
+                    jython_command.uname == u"cygwin" or args.jdb):
                 # Replace this process with the java process.
                 #
                 # NB such replacements actually do not work under Windows,
@@ -586,9 +750,12 @@ def main(sys_args):
             else:
                 result = 1
                 try:
-                    result = subprocess.call(encode_list(command))
-                    if args.help:
-                        print_help()
+                    try:
+                        result = subprocess.call(encode_list(command))
+                        if args.help:
+                            print_help()
+                    finally:
+                        jython_command.cleanup()
                 except KeyboardInterrupt:
                     pass
                 sys.exit(result)
