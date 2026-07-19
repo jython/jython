@@ -724,10 +724,46 @@ class ProcessTestCase(unittest.TestCase):
                                "-c", 1])
 
 
+class SecurityManagerTestCase(unittest.TestCase):
+    def test_subprocess_shell_with_security_manager(self):
+        if not jython:
+            return
+
+        import java.lang.SecurityManager as SecurityManager
+        import java.lang.System as System
+        import java.security.AccessControlException as AccessControlException
+
+        class MySecurityManager(SecurityManager):
+            def checkRead(self, file, context=None):
+                if file == "/bin/sh" or file == "cmd.exe" or file.endswith("sh"):
+                    raise AccessControlException("Access denied: " + file)
+            def checkPermission(self, perm, context=None):
+                pass
+
+        original_sm = System.getSecurityManager()
+        System.setSecurityManager(MySecurityManager())
+        try:
+            # We must force re-initialization of subprocess _shell_command
+            # because it was already initialized when the module was loaded.
+            saved_shell_command = subprocess._shell_command
+            subprocess._shell_command = None
+            subprocess._setup_platform()
+            
+            try:
+                subprocess.Popen(["whoami"], shell=True)
+                self.fail("Expected OSError")
+            except OSError:
+                pass
+            except TypeError as e:
+                self.fail("Caught TypeError instead of OSError: " + str(e))
+        finally:
+            System.setSecurityManager(original_sm)
+            subprocess._shell_command = saved_shell_command
+
 def test_main():
     # Spawning many new jython processes takes a long time
     test_support.requires('subprocess')
-    test_support.run_unittest(ProcessTestCase)
+    test_support.run_unittest(ProcessTestCase, SecurityManagerTestCase)
     if hasattr(test_support, "reap_children"):
         test_support.reap_children()
 
