@@ -896,7 +896,7 @@ class HTMLDoc(Doc):
             title = '<a name="%s"><strong>%s</strong></a> = %s' % (
                 anchor, name, reallink)
         if inspect.isfunction(object):
-            args, varargs, varkw, defaults = inspect.getargspec(object)
+            args, varargs, varkw, defaults = inspect.getfullargspec(object)
             argspec = inspect.formatargspec(
                 args, varargs, varkw, defaults, formatvalue=self.formatvalue)
             if realname == '<lambda>':
@@ -1281,7 +1281,7 @@ class TextDoc(Doc):
                 skipdocs = 1
             title = self.bold(name) + ' = ' + realname
         if inspect.isfunction(object):
-            args, varargs, varkw, defaults = inspect.getargspec(object)
+            args, varargs, varkw, defaults = inspect.getfullargspec(object)
             argspec = inspect.formatargspec(
                 args, varargs, varkw, defaults, formatvalue=self.formatvalue)
             if realname == '<lambda>':
