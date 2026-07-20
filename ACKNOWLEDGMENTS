@@ -77,12 +77,11 @@ A huge thanks goes to all the members of the jpython/jython
 mailing lists.  A list follows of other folks who have contributed to
 JPython and Jython in ways large and small.
 
-In no particular order they are:
+In approximate order of arrival they are:
 
     Barry Warsaw (GitHub: warsaw)                   B, 2024-02-20
     Alan Kennedy (GitHub: amak)                     X, 2024-02-20
     Brian Zimmer (GitHub: bzimmer)                  B, 2024-02-20
-
     Kevin Butler
     Harry Mantakos
     Greg Ward
@@ -208,6 +207,8 @@ In no particular order they are:
     Adrian Ross (GitHub: R077A6r1an)                C, 2024-04-09
     John Hubbard (GitHub: jhubbardbnso)             C, 2024-06-06
     Werner Fouché (GitHub: wfouche)                 C, 2025-05-27
+    Harshit Gupta (GitHub: iamharshitgupta)         C, 2026-07-19
+
 
 Since about 2012 we have been asking contributors to sign the Python
 Contributor Agreement. The part following names above records evidence
