@@ -39,6 +39,8 @@ New Features
 
 
 Jython 2.7.5a1 Bugs fixed
+    - [ GH-430 ] CVE-2026-5598 (CVSS 8.9) - Jython 2.7.4 using a vulnerable Bouncy Castle version 1.78.1
+    - [ GH-434 ] CVE-2023-34462(CVSS 6.5), CVE-2022-41915(CVSS 6.5) Jython 2.7.4 using a vulnerable Netty version 4.1.173.Final
     - [ GH-416 ] Solve serialization backward incompatibility of oversized methods and functions
     - [ GH-234 ] Clarification on compile (Module or method too large)
     - [ GH-413 ] Java 25 compatibility regressions.
