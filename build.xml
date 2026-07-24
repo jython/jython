@@ -259,21 +259,20 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="failureaccess-1.0.1.jar" />
                 <file name="guava-33.2.1-jre.jar" />
                 <file name="icu4j-75.1.jar" />
-                <file name="jffi-1.3.15.jar"/>
+                <file name="jffi-1.4.0.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
-                <file name="jnr-constants-0.10.4.jar"/>
-                <file name="jnr-ffi-2.2.19.jar"/>
+                <file name="jnr-constants-0.11.0.jar"/>
+                <file name="jnr-ffi-2.3.0.jar"/>
                 <file name="jnr-netdb-1.2.0.jar"/>
-                <file name="jnr-posix-3.1.22.jar"/>
+                <file name="jnr-posix-3.2.1.jar"/>
                 <file name="jline-2.14.6.jar"/>
-                <!-- Netty JARs currently pinned at 4.1.73 by issue #349.
-                     Later versions (tried .80, .112) produce test failures. -->
-                <file name="netty-buffer-4.1.73.Final.jar"/>
-                <file name="netty-codec-4.1.73.Final.jar"/>
-                <file name="netty-common-4.1.73.Final.jar"/>
-                <file name="netty-handler-4.1.73.Final.jar"/>
-                <file name="netty-resolver-4.1.73.Final.jar"/>
-                <file name="netty-transport-4.1.73.Final.jar"/>
+                <file name="netty-buffer-4.1.136.Final.jar"/>
+                <file name="netty-codec-4.1.136.Final.jar"/>
+                <file name="netty-common-4.1.136.Final.jar"/>
+                <file name="netty-handler-4.1.136.Final.jar"/>
+                <file name="netty-resolver-4.1.136.Final.jar"/>
+                <file name="netty-transport-4.1.136.Final.jar"/>
+                <file name="netty-transport-native-unix-common-4.1.136.Final.jar"/>
             </filelist>
         </path>
 
@@ -865,19 +864,19 @@ The text for an official release would continue like ...
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-75.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <!-- Netty JARs currently pinned at 4.1.73 by issue #349.
-                 Later versions (tried .80, .112) produce test failures. -->
-            <zipfileset src="extlibs/netty-buffer-4.1.73.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-buffer-4.1.136.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.1.73.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-codec-4.1.136.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.1.73.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-common-4.1.136.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.1.73.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-handler-4.1.136.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-resolver-4.1.73.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-resolver-4.1.136.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.1.73.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-transport-4.1.136.Final.jar" excludes="META-INF/**"/>
+            <rule pattern="io.netty.**" result="org.python.netty.@1"/>
+            <zipfileset src="extlibs/netty-transport-native-unix-common-4.1.136.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <rule pattern="com.carrotsearch.sizeof.**" result="org.python.sizeof.@1"/>
@@ -904,11 +903,11 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <!-- remainder of JNR, JFFI -->
-            <zipfileset src="extlibs/jffi-1.3.15.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-constants-0.10.4.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-ffi-2.2.19.jar"/>
+            <zipfileset src="extlibs/jffi-1.4.0.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-constants-0.11.0.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-ffi-2.3.0.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.2.0.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-posix-3.1.22.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-posix-3.2.1.jar"/>
             <zipfileset src="extlibs/xercesImpl-2.12.2.jar"
                 excludes="META-INF/services/*, org/w3c/**"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
