@@ -173,9 +173,12 @@ public class PyReflectedFunction extends PyObject implements Traverseproc {
             if (argslist[i].matches(self, args, keywords, callData)) {
                 if (!argslist[i].isVarArgs) {
                     match = argslist[i];
-                } else {
+                } else if (varargMatch == null
+                        || argslist[i].betterVarargsMatchThan(varargMatch, self, args)) {
                     varargMatch = argslist[i];
                     varargData = callData;
+                    callData = new ReflectedCallData();
+                } else {
                     callData = new ReflectedCallData();
                 }
             }
