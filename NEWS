@@ -39,15 +39,17 @@ New Features
 
 
 Jython 2.7.5a1 Bugs fixed
-    - [ GH-349 ] Updating Netty JARs leads to errors in test_httplib and others
+    - [ GH-430 ] CVE-2026-5598 (CVSS 8.9) - Jython 2.7.4 using a vulnerable Bouncy Castle version 1.78.1
+    - [ GH-434 ] CVE-2023-34462(CVSS 6.5), CVE-2022-41915(CVSS 6.5) Jython 2.7.4 using a vulnerable Netty version 4.1.173.Final
     - [ GH-416 ] Solve serialization backward incompatibility of oversized methods and functions
-    - [ GH-234 ] Clarification on compile (Module or method too large)
     - [ GH-413 ] Java 25 compatibility regressions.
     - [ GH-404 ] Windows code page 65001 (UTF-8) not supported by Jython
     - [ GH-388 ] @ExposedType annotation should be @Documented
     - [ GH-384 ] Console encoding inferred incorrectly on Java 21
     - [ GH-382 ] Java EE Servlet Namespace Has Been Changed From javax.servlet to jakarta.servlet
     - [ GH-356 ] _ast.astlist.__add__ leads to Java exception
+    - [ GH-349 ] Updating Netty JARs leads to errors in test_httplib and others
+    - [ GH-234 ] Clarification on compile (Module or method too large)
     - [ GH-84 ] PyServlet Will Need To Use The jakarta.servlet Namespace #84
 
 
