@@ -39,6 +39,7 @@ New Features
 
 
 Jython 2.7.5a1 Bugs fixed
+    - [ GH-349 ] Updating Netty JARs leads to errors in test_httplib and others
     - [ GH-416 ] Solve serialization backward incompatibility of oversized methods and functions
     - [ GH-234 ] Clarification on compile (Module or method too large)
     - [ GH-413 ] Java 25 compatibility regressions.
