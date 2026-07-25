@@ -193,8 +193,10 @@ dependencies {
     implementation 'org.ow2.asm:asm-util:9.10.1'
 
     implementation 'com.google.guava:guava:33.2.1-jre'
- 
-    implementation 'com.ibm.icu:icu4j:78.3'
+
+    // Pin icu4j to latest 77.x until Jython moves to Java 11.
+    // https://unicode-org.github.io/icu/download/77.html
+    implementation 'com.ibm.icu:icu4j:77.1'
 
     implementation 'com.carrotsearch:java-sizeof:0.0.5'
 
