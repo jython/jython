@@ -69,13 +69,14 @@
 		</table>
 	</vendor>
 	<vendor name="mysql"
+		scroll="TYPE_SCROLL_INSENSITIVE"
 		datahandler="com.ziclix.python.sql.handler.MySQLDataHandler">
 		<test name="driver" os="java">
 			<factory class="com.ziclix.python.sql.zxJDBC" method="connect">
-				<argument name="url" value="jdbc:mysql://192.168.1.102/ziclix"/>
+				<argument name="url" value="jdbc:mysql://localhost:3306/ziclix?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC"/>
 				<argument name="usr" value="jython"/>
 				<argument name="pwd" value="jython"/>
-				<argument name="driver" value="org.gjt.mm.mysql.Driver"/>
+				<argument name="driver" value="com.mysql.cj.jdbc.Driver"/>
 			</factory>
 			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testBestRow"/>
@@ -86,8 +87,8 @@
 		</test>
 		<test name="datasource" os="java">
 			<factory class="com.ziclix.python.sql.zxJDBC" method="connectx">
-				<argument name="datasource" value="org.gjt.mm.mysql.jdbc2.optional.MysqlDataSource"/>
-				<keyword name="serverName" value="192.168.1.102"/>
+				<argument name="datasource" value="com.mysql.cj.jdbc.MysqlDataSource"/>
+				<keyword name="serverName" value="localhost"/>
 				<keyword name="databaseName" value="ziclix"/>
 				<keyword name="user" value="jython"/>
 				<keyword name="password" value="jython"/>

@@ -37,7 +37,7 @@ import java.util.ResourceBundle;
  * <p>
  * <pre>
  * from com.ziclix.python.sql import zxJDBC
- * db = zxJDBC.connect("jdbc:mysql://localhost:3306/MySql", None, None, "org.gjt.mm.mysql.Driver")
+ * db = zxJDBC.connect("jdbc:mysql://localhost:3306/MySql", None, None, "com.mysql.cj.jdbc.Driver")
  * </pre>
  *
  * @author brian zimmer

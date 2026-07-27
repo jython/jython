@@ -4,6 +4,7 @@
 
 from com.ziclix.python.sql import zxJDBC
 from java.util import Calendar, Date as JDate
+from org.python.core import Py
 
 import tempfile, os, time, runner
 
@@ -321,9 +322,9 @@ class zxAPITestCase(zxJDBCTestCase):
             c.scroll(6, "absolute")
             self.assertEquals(7, c.fetchone()[0])
             # make sure we get an IndexError
-            self.assertRaises(IndexError, c.scroll, 1, "relative")
-            self.assertRaises(IndexError, c.scroll, -1, "absolute")
-            self.assertRaises(zxJDBC.ProgrammingError, c.scroll, 1, "somethingelsealltogether")
+            with self.assertRaises(IndexError): c.scroll(1, "relative")
+            with self.assertRaises(IndexError): c.scroll(-1, "absolute")
+            with self.assertRaises(zxJDBC.ProgrammingError): c.scroll(1, "somethingelsealltogether")
         finally:
             c.close()
 
@@ -527,7 +528,7 @@ class zxAPITestCase(zxJDBCTestCase):
         # seeded with Java
         c = self.calendar()
         o = zxJDBC.TimeFromTicks(c.getTime().getTime() / 1000L)
-        v = zxJDBC.Time(c.get(Calendar.HOUR), c.get(Calendar.MINUTE), c.get(Calendar.SECOND))
+        v = zxJDBC.Time(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), c.get(Calendar.SECOND))
         assert o.equals(v), "incorrect date conversion using java, got [%ld], expected [%ld]" % (v.getTime(), o.getTime())
 
         # seeded with Python
@@ -546,7 +547,7 @@ class zxAPITestCase(zxJDBCTestCase):
         c = self.calendar()
         o = zxJDBC.TimestampFromTicks(c.getTime().getTime() / 1000L)
         v = zxJDBC.Timestamp(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DATE),
-                c.get(Calendar.HOUR), c.get(Calendar.MINUTE), c.get(Calendar.SECOND))
+                c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), c.get(Calendar.SECOND))
         assert o.equals(v), "incorrect date conversion using java, got [%ld], expected [%ld]" % (v.getTime(), o.getTime())
 
         # seeded with Python
@@ -689,9 +690,7 @@ class zxAPITestCase(zxJDBCTestCase):
         """testing insert, update, query and delete by java.sql.Date"""
         assert self.has_table("datetable"), "missing attribute datetable"
         def _cmp_(x, y):
-            xt = (x.getYear(), x.getMonth(), x.getDay())
-            yt = (y.getYear(), y.getMonth(), y.getDay())
-            return not xt == yt
+            return not x == Py.newDate(y)
         values = [(1996, 6, 22), (2000, 11, 12), (2000, 1, 12), (1999, 9, 24)]
         self._test_time(self.table("datetable"), zxJDBC.Date, values, zxJDBC.DATE, _cmp_)
 
@@ -699,9 +698,7 @@ class zxAPITestCase(zxJDBCTestCase):
         """testing insert, update, query and delete by java.sql.Time"""
         assert self.has_table("timetable"), "missing attribute timetable"
         def _cmp_(x, y):
-            xt = (x.getHours(), x.getMinutes(), x.getSeconds())
-            yt = (y.getHours(), y.getMinutes(), y.getSeconds())
-            return not xt == yt
+            return not x == Py.newTime(y)
         values = [(10, 11, 12), (3, 1, 12), (22, 9, 24)]
         self._test_time(self.table("timetable"), zxJDBC.Time, values, zxJDBC.TIME, _cmp_)
 
@@ -709,9 +706,7 @@ class zxAPITestCase(zxJDBCTestCase):
         """testing insert, update, query and delete by java.sql.Timestamp"""
         assert self.has_table("timestamptable"), "missing attribute timestamptable"
         def _cmp_(x, y):
-            xt = (x.getYear(), x.getMonth(), x.getDay(), x.getHours(), x.getMinutes(), x.getSeconds())
-            yt = (y.getYear(), y.getMonth(), y.getDay(), y.getHours(), y.getMinutes(), y.getSeconds())
-            return not xt == yt
+            return not x == Py.newDatetime(y)
         values = [(1996, 6, 22, 10, 11, 12), (2000, 11, 12, 3, 1, 12), (2001, 1, 12, 4, 9, 24)]
         self._test_time(self.table("timestamptable"), zxJDBC.Timestamp, values, zxJDBC.TIMESTAMP, _cmp_)
 
@@ -1107,6 +1102,8 @@ class BCPTestCase(zxJDBCTestCase):
             c.execute("select count(*) from zxtesting")
             one = c.fetchone()[0]
             c.close()
+            # another commit is needed because of MySQL's default REPEATABLE READ transaction snapshotting on self.db:
+            self.db.commit()
 
             dbSource = DBSource(src, c.datahandler.__class__, "zxtesting", None, None, None)
             dbSink = DBSink(dst, c.datahandler.__class__, "zxtestingbcp", None, None, 1)
@@ -1184,6 +1181,8 @@ class BCPTestCase(zxJDBCTestCase):
             c.execute("select count(*) from zxtesting")
             one = c.fetchone()[0]
             c.close()
+            # another commit is needed because of MySQL's default REPEATABLE READ transaction snapshotting on self.db:
+            self.db.commit()
 
             b = BCP(src, dst)
             if hasattr(self, "datahandler"):
@@ -1197,7 +1196,6 @@ class BCPTestCase(zxJDBCTestCase):
             c.execute("delete from zxtestingbcp")
             self.db.commit()
             c.close()
-
             assert one == two, "expected [%d] rows in destination, got [%d] (sql)" % (one, two)
             assert one == cnt, "expected [%d] rows in destination, got [%d] (bcp)" % (one, cnt)
 

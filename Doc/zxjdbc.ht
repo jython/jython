@@ -28,7 +28,7 @@ connection object.</p>
 Jython 2.1b1 on java1.4.0-beta3 (JIT: null)
 Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
-&gt;&gt;&gt; d, u, p, v = "jdbc:mysql://localhost/test", None, None, "org.gjt.mm.mysql.Driver"
+&gt;&gt;&gt; d, u, p, v = "jdbc:mysql://localhost/test", None, None, "com.mysql.cj.jdbc.Driver"
 &gt;&gt;&gt; db = zxJDBC.connect(d, u, p, v)
  <i><b>optionally</b></i>
 &gt;&gt;&gt; db = zxJDBC.connect(d, u, p, v, CHARSET='iso_1')
@@ -51,7 +51,7 @@ Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; params['user'] = None
 &gt;&gt;&gt; params['password'] = None
 &gt;&gt;&gt; params['port'] = 3306
-&gt;&gt;&gt; db = zxJDBC.connectx("org.gjt.mm.mysql.MysqlDataSource", **params)
+&gt;&gt;&gt; db = zxJDBC.connectx("com.mysql.cj.jdbc.MysqlDataSource", **params)
 &gt;&gt;&gt;
 </pre>
 
@@ -418,7 +418,7 @@ name=mysql
 url=jdbc:mysql://localhost/ziclix
 user=
 pwd=
-driver=org.gjt.mm.mysql.Driver
+driver=com.mysql.cj.jdbc.Driver
 datahandler=com.ziclix.python.sql.handler.MySQLDataHandler
 
 [jdbc]

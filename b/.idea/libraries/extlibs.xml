@@ -40,7 +40,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-netdb-1.1.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-posix-3.0.41.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/junit-4.10.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/mysql-connector-java-5.1.42-bin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/mysql-connector-j-9.7.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/netty-buffer-4.1.11.Final.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/netty-codec-4.1.11.Final.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/netty-common-4.1.11.Final.jar!/" />

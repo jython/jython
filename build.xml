@@ -244,7 +244,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <!-- Further database and Java EE-related JARs -->
             <filelist dir="${extlibs.dir}">
                 <file name="jakarta.servlet-api-5.0.0.jar" />
-                <file name="mysql-connector-java-5.1.42-bin.jar" />
+                <file name="mysql-connector-j-9.7.0.jar" />
                 <file name="postgresql-42.1.1.jre7.jar" />
             </filelist>
 
@@ -1116,7 +1116,7 @@ The text for an official release would continue like ...
                 <include name="CoreExposed.includes" />
                 <include name="extlibs/**/*.jar" />
                 <!-- don't distribute jdbc jars -->
-                <exclude name="extlibs/mysql-connector-java-*.jar" />
+                <exclude name="extlibs/mysql-connector-j-*.jar" />
                 <exclude name="extlibs/postgresql-*.jar" />
                 <exclude name="extlibs/ifxjdbc.jar" />
                 <exclude name="extlibs/ojdbc*.jar" />

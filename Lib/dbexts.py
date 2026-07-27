@@ -31,7 +31,7 @@ name=mysql
 url=jdbc:mysql://localhost/ziclix
 user=
 pwd=
-driver=org.gjt.mm.mysql.Driver
+driver=com.mysql.cj.jdbc.Driver
 datahandler=com.ziclix.python.sql.handler.MySQLDataHandler
 
 [jdbc]
@@ -695,14 +695,18 @@ class ResultSetRow:
     def __init__(self, rs, row):
         self.row = row
         self.rs = rs
+    def _idx(self, i):
+        if isinstance(i, basestring):
+            return self.rs.index(i)
+        return i
     def __getitem__(self, i):
-        if type(i) == type(""):
+        if isinstance(i, slice):
+            start = self._idx(i.start) if i.start is not None else None
+            stop = self._idx(i.stop) if i.stop is not None else None
+            return self.row[slice(start, stop, i.step)]
+        if isinstance(i, basestring):
             i = self.rs.index(i)
         return self.row[i]
-    def __getslice__(self, i, j):
-        if type(i) == type(""): i = self.rs.index(i)
-        if type(j) == type(""): j = self.rs.index(j)
-        return self.row[i:j]
     def __len__(self):
         return len(self.row)
     def __repr__(self):
@@ -715,8 +719,8 @@ class ResultSet:
     def index(self, i):
         return self.headers.index(i.upper())
     def __getitem__(self, i):
+        if isinstance(i, slice):
+            return map(lambda x, rs=self: ResultSetRow(rs, x), self.results[i])
         return ResultSetRow(self, self.results[i])
-    def __getslice__(self, i, j):
-        return map(lambda x, rs=self: ResultSetRow(rs, x), self.results[i:j])
     def __repr__(self):
         return "<%s instance {cols [%d], rows [%d]} at %s>" % (self.__class__, len(self.headers), len(self.results), id(self))

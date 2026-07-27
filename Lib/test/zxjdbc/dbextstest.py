@@ -27,7 +27,9 @@ class dbextsTestCase(runner.SQLTestCase):
 
         template = template % (args["url"], args["usr"], args["pwd"], args["driver"])
         if hasattr(self, "datahandler"):
-            template += "\tdatahandler=%s" % (self.datahandler.__name__)
+            # Note: Setting this to self.datahandler.__name__ is not sufficient since the
+            # fully qualified name is required, but __name__ just gives the class name.
+            template += "\tdatahandler=%s" % self.vendor.datahandler
         template = os.linesep.join(template.split())
 
         try:

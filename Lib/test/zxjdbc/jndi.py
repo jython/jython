@@ -6,7 +6,7 @@
         This script is used to bind a JNDI reference for testing purposes only.
 """
 from java.util import Hashtable
-from org.gjt.mm.mysql import MysqlDataSource
+from com.mysql.cj.jdbc import MysqlDataSource
 from javax.naming import Context, InitialContext, NameAlreadyBoundException
 
 env = Hashtable()

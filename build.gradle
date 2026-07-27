@@ -175,7 +175,7 @@ dependencies {
      * not bundled with Jython. Applications needing them can cite these or a
      * version they prefer.
      */
-    //implementation 'mysql:mysql-connector-java:5.1.42'
+    //implementation 'com.mysql:mysql-connector-j:9.7.0'
     //implementation 'org.postgresql:postgresql:42.1.1.jre7'
 
     // pin to Antlr 3 until we upgrade parsing
