@@ -72,7 +72,7 @@ public class PyBZ2Compressor extends PyObject {
         if (!captureStream.hasData()) {
             return Py.EmptyString;
         }
-        
+
         byte[] buf = captureStream.readData();
         captureStream.resetByteArray();
         return new PyString(StringUtil.fromBytes(buf));
@@ -82,7 +82,6 @@ public class PyBZ2Compressor extends PyObject {
     public PyString BZ2Compressor_flush(PyObject[] args, String[] kwds) {
         PyString finalData = Py.EmptyString;
         try {
-            compressStream.finish();
             compressStream.close();
 
             finalData = readData();

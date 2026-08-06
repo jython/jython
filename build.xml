@@ -245,7 +245,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <filelist dir="${extlibs.dir}">
                 <file name="jakarta.servlet-api-5.0.0.jar" />
                 <file name="mysql-connector-j-9.7.0.jar" />
-                <file name="postgresql-42.1.1.jre7.jar" />
+                <file name="postgresql-42.7.13.jar" />
             </filelist>
 
             <!-- Other JARs (alphabetical) -->
@@ -254,11 +254,13 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="asm-9.10.1.jar" />
                 <file name="asm-commons-9.10.1.jar" />
                 <file name="asm-util-9.10.1.jar" />
-                <file name="commons-compress-1.26.2.jar"/>
-                <file name="commons-io-2.16.1.jar"/>
-                <file name="failureaccess-1.0.1.jar" />
-                <file name="guava-33.2.1-jre.jar" />
-                <file name="icu4j-75.1.jar" />
+                <file name="commons-compress-1.28.0.jar"/>
+                <file name="commons-io-2.22.0.jar"/>
+                <file name="failureaccess-1.0.3.jar" />
+                <file name="guava-33.6.0-jre.jar" />
+                <!-- Pin icu4j to latest 77.x until Jython moves to Java 11.
+                     https://unicode-org.github.io/icu/download/77.html -->
+                <file name="icu4j-77.1.jar" />
                 <file name="jffi-1.4.0.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
                 <file name="jnr-constants-0.11.0.jar"/>
@@ -852,17 +854,17 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/asm-commons-9.10.1.jar" excludes="module-info.class"/>
             <zipfileset src="extlibs/asm-util-9.10.1.jar" excludes="module-info.class"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk18on-1.78.1.jar" excludes="META-INF/**"/>
-            <zipfileset src="extlibs/bcprov-jdk18on-1.78.1.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk18on-1.85.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk18on-1.85.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/commons-compress-1.26.2.jar" excludes="META-INF/versions/9/module-info.class"/>
+            <zipfileset src="extlibs/commons-compress-1.28.0.jar" excludes="META-INF/versions/9/module-info.class"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
-            <zipfileset src="extlibs/commons-io-2.16.1.jar" excludes="META-INF/versions/9/module-info.class"/>
+            <zipfileset src="extlibs/commons-io-2.22.0.jar" excludes="META-INF/versions/9/module-info.class"/>
             <rule pattern="org.apache.commons.io.**" result="org.python.apache.commons.io.@1"/>
-            <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
-            <zipfileset src="extlibs/guava-33.2.1-jre.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/failureaccess-1.0.3.jar"/>
+            <zipfileset src="extlibs/guava-33.6.0-jre.jar" excludes="META-INF/**"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
-            <zipfileset src="extlibs/icu4j-75.1.jar"/>
+            <zipfileset src="extlibs/icu4j-77.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
             <zipfileset src="extlibs/netty-buffer-4.1.136.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>

@@ -265,6 +265,8 @@ def _read_pem_cert_from_data(f, password, key_converter, cert_converter):
                 raise PEM_SSLError(err)
             except DecoderException as err:
                 raise PEM_SSLError(err)
+            except IOException as err:
+                raise PEM_SSLError(err)
 
             if obj is None:
                 break

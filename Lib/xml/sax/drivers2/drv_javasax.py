@@ -11,7 +11,8 @@ revision = "$Revision: 1.5 $"
 
 import string
 from xml.sax import xmlreader, saxutils
-from xml.sax.handler import feature_namespaces, feature_namespace_prefixes
+from xml.sax.handler import (feature_external_ges, feature_external_pes,
+                             feature_namespaces, feature_namespace_prefixes)
 from xml.sax import _exceptions
 
 # we only work in jython
@@ -29,21 +30,28 @@ try:
 except ImportError:
     raise _exceptions.SAXReaderNotAvailable("SAX is not on the classpath", None)
 
+_DEFAULT_SAX_FEATURES = (
+    # Avoid fetching external DTDs and resolving external entities by default.
+    ("http://apache.org/xml/features/nonvalidating/load-external-dtd", False),
+    (feature_external_ges, False),
+    (feature_external_pes, False),
+)
+
+
+def _set_default_features(configurable):
+    for name, value in _DEFAULT_SAX_FEATURES:
+        configurable.setFeature(name, value)
+
 # get some JAXP stuff
 try:
     from javax.xml.parsers import SAXParserFactory, ParserConfigurationException
     factory = SAXParserFactory.newInstance()
-    # Set this feature false, otherwise will attempt to load DTDs like
-    # DOCTYPE doc PUBLIC 'http://xml.python.org/public which are
-    # purposefully very much nonexistent in tests such as
-    # test_minidom.
-    #
-    # NOTE that this factory is by default nonvalidating anyway, as
-    # needed for Python usage.
-    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", False)
+    _set_default_features(factory)
     jaxp = 1
 except ImportError:
     jaxp = 0
+except (ParserConfigurationException, javasax.SAXException), e:
+    raise _exceptions.SAXReaderNotAvailable(e.getMessage(), None)
 
 from java.lang import String, Exception as JException
 
@@ -403,11 +411,13 @@ class AttributesNSImpl(AttributesImpl):
 def create_java_parser(jdriver = None):
     try:
         if jdriver:
-            return XMLReaderFactory.createXMLReader(jdriver)
+            parser = XMLReaderFactory.createXMLReader(jdriver)
         elif jaxp:
-            return factory.newSAXParser().getXMLReader()
+            parser = factory.newSAXParser().getXMLReader()
         else:
-            return XMLReaderFactory.createXMLReader()
+            parser = XMLReaderFactory.createXMLReader()
+        _set_default_features(parser)
+        return parser
     except ParserConfigurationException, e:
         raise _exceptions.SAXReaderNotAvailable(e.getMessage())
     except javasax.SAXException, e:
