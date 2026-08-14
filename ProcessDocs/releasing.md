@@ -51,7 +51,8 @@ To complete a public release you need the following things:
   * Informix (currently `jdbc-4.50.11.jar` for Java 8).
   * Oracle (currently `ojdbc8-23.4.0.24.05.jar` for Java 8).
 * Commit rights to the Jython repository (to push the tagged version).
-* The right to publish Jython at [Sonatype](https://oss.sonatype.org).
+* The right to publish Jython at the
+  [Maven Central Repository](https://central.sonatype.com).
 * A PGP signing key pair (generated with `gpg --gen-key`).
 * Access to the channels where we announce releases (e.g. Twitter).
 
@@ -61,7 +62,7 @@ In that case, be careful not to push any changes.
 
 > [!TIP]
 > If you clone from `https://github.com/jython/jython.git`,
-> that will prevent an unintended push.)
+> that will prevent an unintended push.
 
 
 ## Making a Releasable Jython
@@ -74,7 +75,7 @@ so aim for:
 
 * short (i.e. near a file system root), in the examples `D:\git`.
 * impersonal (not containing company or personal names).
-* represenable in ASCII (even though Jython is pretty good with Unicode now).
+* representable in ASCII (even though Jython is pretty good with Unicode now).
 
 The examples in this text were mostly made in Windows PowerShell,
 but Git remote operations are in Git Bash.
@@ -116,10 +117,10 @@ the last commits should be the same as in the project repository:
 
 ```posh
 PS work> git log --oneline --graph -4
-* d04ff7f62 (HEAD -> master, origin/master, origin/HEAD) Begin to identify as v2.7.4rc2
-* 3562755e5 (tag: v2.7.4rc1) Prepare for 2.7.4rc1 release.
-* 245deba51 Now with sensible timeouts.
-* 66600ad7e Impose timeout on regrtest workflows
+* 18c4d3111 (HEAD -> master, origin/master, origin/HEAD) Filter META-INF sub-folder from shaded JARs (#453)
+* 3833b3168 Optionally rank matches in overloaded varargs resolution (#425)
+* 1b22011e1 Update mysql connector to 9.7.0 and fix tests and references accordingly. (#450)
+* 309abdcf5 Update Apache commons and Guava JARs (#448)
 ```
 
 
@@ -137,11 +138,11 @@ The following files may need to be updated to match the version you are about to
   * `jython.release_serial`.
 
   In the language of these properties,
-  version 2.7.4 final is spelled `2`, `7`, `4`, `${PY_RELEASE_LEVEL_FINAL}`, `0`.
+  version 2.7.5 beta 1 is spelled `2`, `7`, `5`, `${PY_RELEASE_LEVEL_BETA}`, `1`.
   Every other expression needing a version number is derived from these 5 values.
 * `build.gradle`: The version number appears as a simple string property `version`,
   near the top of the file.
-  Version 2.7.4 is simply set like this: `version = '2.7.4'`.
+  Version 2.7.5b1 is simply set like this: `version = '2.7.5b1'`.
 * `README.txt`: It is possible no change is needed at all,
   and if a change is needed, it will probably only be to the running text.
   A copy of this file is made during the build,
@@ -158,7 +159,7 @@ The following files may need to be updated to match the version you are about to
   ```
 
   Replace the first line with the release you are building
-  e.g. "Jython 2.7.4".
+  e.g. "Jython 2.7.5b1".
   For a final release,
   it will probably say it is the same as the release candidate,
   rather than listing bugs fixed.
@@ -171,7 +172,8 @@ to match the identity of the next release.
 The build script ensures that, until we actually tag a change set as a release,
 the version numbers set here will always appear with a "snapshot" suffix.
 
-You should run the `ant javatest` and `ant regrtest` targets at this point.
+You should run the `ant javatest` and `ant regrtest` targets at this point,
+and also the gradle build `.\gradlew --console=plain publish`.
 These should run cleanly, or at least failures be explained and acceptable,
 e.g. known to be attributable to limitations in your network environment.
 If bugs are discovered that you need to fix,
@@ -200,9 +202,9 @@ Changes to be committed:
         modified:   build.gradle
         modified:   build.xml
 
-$ git commit -m"Prepare for 2.7.4 release."
-[master 3f256f4a7] Prepare for 2.7.4 release.
- 3 files changed, 4 insertions(+), 6 deletions(-)
+$ git commit -m"Prepare for 2.7.5b1 release."
+[master d73d4a22b] Prepare for 2.7.5b1 release.
+ 3 files changed, 9 insertions(+), 4 deletions(-)
 ```
 
 
@@ -240,13 +242,13 @@ Buildfile: D:\git\work\build.xml
 
 force-snapshot-if-polluted:
      [echo]
-     [echo] Change set 3f256f4a7 is not tagged 'v2.7.4' - build is a snapshot.
+     [echo] Change set cf1a264ad is not tagged 'v2.7.5b1' - build is a snapshot.
 
 dump:
      [echo] --- build Jython version ---
-     [echo] jython.version.short      = '2.7.4'
-     [echo] jython.release            = '2.7.4'
-     [echo] jython.version            = '2.7.4-SNAPSHOT'
+     [echo] jython.version.short      = '2.7.5'
+     [echo] jython.release            = '2.7.5b1'
+     [echo] jython.version            = '2.7.5b1-SNAPSHOT'
      [echo] --- optional libraries ---
      [echo] informix                  = '../support/jdbc-4.50.11.jar'
      [echo] oracle                    = '../support/ojdbc8-23.4.0.24.05.jar'
@@ -279,7 +281,7 @@ being careful to observe the conventional pattern
 (there *is* a "v" and there are *two* dots):
 
 ```posh
-PS work> git tag -a -s v2.7.4 -m"Jython 2.7.4 final"
+PS work> git tag -a -s v2.7.5b1 -m"Jython 2.7.5b1"
 ```
 
 This may open a pop-up from GPG
@@ -292,10 +294,10 @@ but the current state of your repository is still at the change set tagged.
 If something goes wrong after this point,
 but before the eventual push to the repository,
 that requires changes and a fresh commit,
-it is possible to delete the tag with `git tag -d v2.7.4`,
+it is possible to delete the tag with `git tag -d v2.7.5b1`,
 and make it again at the new tip when you're ready.
-The Git book explains why you should not
-[delete a tag after the push](https://git-scm.com/docs/git-tag#_discussion).
+The Git book explains why you should
+[not delete a tag after the push](https://git-scm.com/docs/git-tag#_discussion).
 
 We follow CPython in signing the tag with GPG as indicated in PEP 101
 and the [CPython release-tools](https://github.com/python/release-tools).
@@ -324,9 +326,11 @@ Run the `full-check` target again:
 PS work> ant full-check
 Buildfile: D:\git\work\build.xml
 
-     [echo] Build is for release of 2.7.4.
+     [echo] Build is for release of 2.7.5b1.
 
-     [echo] jython.version            = '2.7.4'
+     [echo] jython.version.short      = '2.7.5'
+     [echo] jython.release            = '2.7.5b1'
+     [echo] jython.version            = '2.7.5b1'
 ```
 This time the script confirms it is a release
 and the version appears without the "SNAPSHOT" qualifier.
@@ -352,9 +356,9 @@ The artifacts of interest are produced in the `./dist` directory and they are:
 
 ### Gradle Build for Release
 
-We can also build a slim JAR (one *not* containing its dependencies) using Gradle.
+We will also build a slim JAR (one *not* containing its dependencies) using Gradle.
 The Gradle build was released experimentally in Jython 2.7.2.
-Now users have a little experience using this JAR for applications,
+Now users have a experience using this JAR for applications,
 we consider it a normal part of the build.
 
 Gradle operates a build entirely parallel to the Ant build,
@@ -362,9 +366,9 @@ where everything is regenerated from source,
 working in folder `./build2`.
 
 ```posh
-PS work> .\gradlew --console=plain publish
+PS work> .\gradlew --console=plain clean publish
 > Task :generateVersionInfo
-This build is for v2.7.4.
+This build is for v2.7.5b1.
 
 > Task :generateGrammarSource
 ...
@@ -393,13 +397,13 @@ BUILD SUCCESSFUL in 6m 41s
 Don't worry, despite the name, this doesn't actually *publish* Jython.
 When the build finishes, a JAR that is potentially fit to publish,
 and its subsidiary artifacts (source, javadoc, checksums),
-will have been created in `./build2/stagingRepo/org/python/jython-slim/2.7.4`.
+will have been created in `./build2/stagingRepo/org/python/jython-slim/2.7.5b1`.
 
 It can also be "published" to your local Maven cache (usually `~/.m2/repository`)
 with the task `publishMainPublicationToMavenLocal`.
 This need not be done as part of a release,
 but can be useful in verification using a Gradle or Maven build that references it
-(see the section [Slim (Gradle) regrtest](#slim-gradle-regrtest).
+(see the section [Slim (Gradle) regrtest](#slim-gradle-regrtest)).
 
 
 ### Test what you built
@@ -412,10 +416,9 @@ the local directory `inst` is chosen as the target in the installer.
 Let's use Java 11, different from the version we built with.
 
 ```posh
-PS 274-trial> mkdir kit
-PS 274-trial> copy "D:\git\work\dist\jython*.jar" .\kit
-PS 274-trial> java -jar kit\jython-installer.jar
-WARNING: An illegal reflective access operation has occurred
+PS 275b1-trial> mkdir kit
+PS 275b1-trial> copy "D:\git\work\dist\jython*.jar" .\kit
+PS 275b1-trial> java -jar kit\jython-installer.jar
 ...
 DEPRECATION: A future version of pip will drop support for Python 2.7.
 ...
@@ -425,8 +428,8 @@ Successfully installed pip-19.1 setuptools-41.0.1
 It is worth checking the manifests:
 
 ```posh
-PS 274-trial> jar -xf .\kit\jython-standalone.jar META-INF
-PS 274-trial> cat .\META-INF\MANIFEST.MF
+PS 275b1-trial> jar -xf .\kit\jython-standalone.jar META-INF
+PS 275b1-trial> cat .\META-INF\MANIFEST.MF
 Manifest-Version: 1.0
 Ant-Version: Apache Ant 1.10.14
 Created-By: 1.8.0_321-b07 (Oracle Corporation)
@@ -435,10 +438,12 @@ Built-By: Jeff
 Automatic-Module-Name: org.python.jython2.standalone
 Implementation-Vendor: Python Software Foundation
 Implementation-Title: Jython fat jar with stdlib
-Implementation-Version: 2.7.4
+Implementation-Version: 2.7.5b1
+Enable-Native-Access: ALL-UNNAMED
+Add-Opens: java.base/java.io java.base/sun.nio.ch
 
 Name: Build-Info
-version: 2.7.4
+version: 2.7.5b1
 git-build: true
 oracle: true
 informix: true
@@ -455,11 +460,11 @@ And similarly in other JARs `inst\jython.jar`, `kit\jython-installer.jar`.
 The real test consists in running the regression tests:
 
 ```posh
-PS 274-trial> inst\bin\jython -m test.regrtest -e
-== 2.7.4 (tags/v2.7.4:3f256f4a7, Aug 18 2024, 10:30:53)
+PS 275b1-trial> inst\bin\jython -m test.regrtest -e
+== 2.7.5b1 (tags/v2.7.5b1:d73d4a22b, Aug 10 2026, 19:19:37)
 == [Java HotSpot(TM) 64-Bit Server VM (Oracle Corporation)]
 == platform: java11.0.22
-== encodings: stdin=ms936, stdout=ms936, FS=utf-8
+== encodings: stdin=UTF-8, stdout=UTF-8, FS=utf-8
 == locale: default=('en_GB', 'windows-1252'), actual=(None, None)
 test_grammar
 test_opcodes
@@ -489,18 +494,18 @@ There will be many failures.
 When the author last tried, they were these:
 
 ```posh
-PS 274-trial> copy -r inst\Lib\test TestLib\test
-PS 274-trial> $env:JYTHONPATH = ".\TestLib"
-PS 274-trial> java -jar kit\jython-standalone.jar -m test.regrtest -e
-== 2.7.4 (tags/v2.7.4:3f256f4a7, Aug 18 2024, 10:30:53)
+PS 275b1-trial> copy -r inst\Lib\test TestLib\test
+PS 275b1-trial> $env:JYTHONPATH = ".\TestLib"
+PS 275b1-trial> java -jar kit\jython-standalone.jar -m test.regrtest -e
+== 2.7.5b1 (tags/v2.7.5b1:d73d4a22b, Aug 10 2026, 19:19:37)
 == [Java HotSpot(TM) 64-Bit Server VM (Oracle Corporation)]
 == platform: java11.0.22
-== encodings: stdin=ms936, stdout=ms936, FS=utf-8
+== encodings: stdin=UTF-8, stdout=UTF-8, FS=utf-8
 == locale: default=('en_GB', 'windows-1252'), actual=(None, None)
 test_grammar
 test_opcodes
 ...
-test_zlib
+ttest_zlib
 test_zlib_jy
 338 tests OK.
 17 tests skipped:
@@ -563,7 +568,7 @@ PS work> .\gradlew --console=plain publishMainPublicationToMavenLocal
 ```
 
 This will deliver build artifacts to
-`~/.m2/repository/org/python/jython-slim/2.7.4`.
+`~/.m2/repository/org/python/jython-slim/2.7.5b1`.
 One can construct an application to run with that as a dependency,
 by giving it a Gradle build file like this:
 
@@ -579,7 +584,9 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.python:jython-slim:2.7.4'
+    implementation 'org.python:jython-slim:2.7.5b1'
+    // Required for test_xml_etree
+    runtimeOnly 'xerces:xercesImpl:2.12.2' 
 }
 
 application {
@@ -600,7 +607,7 @@ public class RegressionTest {
         try (PythonInterpreter interp = new PythonInterpreter()) {
             interp.exec("import sys, os");
             interp.exec("sys.path[0] = os.sep.join(['.', 'TestLib'])");
-            interp.exec("sys.argv[1:] = ['-e']");
+            interp.exec("sys.argv[1:] = ['-e', '-x', 'test_socket_jy']");
             interp.exec("from test import regrtest as rt");
             interp.exec("rt.main()");
         }
@@ -611,6 +618,8 @@ public class RegressionTest {
 Tests have about the same success rate as for the stand-alone Jython JAR.
 Notably `test_ssl_jy` passes here because a genuine (not wrapped)
 Bouncy Castle JAR is on the path.
+We skip `test_socket_jy` as it reliably hangs,
+probably on a race to re-use the same port.
 
 Tests end with a failure status under Gradle, even when all tests pass,
 because `regrtest` calls `sys.exit`,
@@ -618,9 +627,9 @@ which raises `SystemExit`.
 It looks like:
 
 ```text
-333 tests OK.
+337 tests OK.
 ...
-33 tests failed:
+28 fails unexpected:
 ...
 Exception in thread "MainThread" Traceback (most recent call last):
   File "<string>", line 1, in <module>
@@ -628,14 +637,14 @@ Exception in thread "MainThread" Traceback (most recent call last):
     sys.exit(surprises > 0)
 SystemExit: True
 ```
-
 One could improve the driver program, but it is complicated to do properly.
 
 
 ### Build the Bundles to Publish
 
 Back in the release working directory,
-the artifacts for Maven are built using a separate script `maven/build.xml`.
+the artifacts for Maven Central are built using a separate
+script `maven/build.xml`.
 
 ```posh
 PS work> ant -f maven\build.xml
@@ -652,10 +661,10 @@ During the build, `gpg` may prompt you (in a dialogue box)
 for the pass-phrase that protects your private signing key.
 This leaves the following new artifacts in `./publications`:
 
-* `jython-2.7.4-bundle.jar`
-* `jython-standalone-2.7.4-bundle.jar`
-* `jython-installer-2.7.4-bundle.jar`
-* `jython-slim-2.7.4-bundle.jar`
+* `jython-2.7.5b1-bundle.jar`
+* `jython-standalone-2.7.5b1-bundle.jar`
+* `jython-installer-2.7.5b1-bundle.jar`
+* `jython-slim-2.7.5b1-bundle.jar`
 
 
 ## Publication
@@ -666,8 +675,8 @@ In order to publish the bundles created in `./publications`,
 it is necessary to have an account with access to `groupId` `org.python`,
 which Sonatype will grant given the support of an existing owner.
 (This is a human process administered through JIRA.)
-There is an extensive
-[Sonatype OSSRH Guide](https://central.sonatype.org/pages/ossrh-guide.html)
+There is extensive
+[Maven Central Documentation](https://central.sonatype.org)
 about getting and using an account.
 
 
@@ -682,7 +691,7 @@ this release of Jython is really from the project.
 
 The infrastructure of PGP has been overhauled
 since the previous version of these notes was written.
-Follow the Sonatype guide
+Follow the Maven Central guide
 [Working with PGP Signatures](https://central.sonatype.org/publish/requirements/gpg/),
 which now appears to have been updated with the changes.
 
@@ -700,7 +709,7 @@ The [OpenPGP key server](https://keys.openpgp.org)
 provides an interface to query a PGP public key.
 PGP servers form a pool.
 It may take a few hours for your key to wash up at the machine
-Sonatype consults.
+Maven Central consults.
 
 Generation and publication of a key are one-time actions,
 except that the key has a finite lifetime with possible extensions.
@@ -715,30 +724,49 @@ for how to extend the life of a key.
 > so that users can still validate those past releases.
 > Renewing an old key is a valid and useful thing to do.
 > (An exception to this rule is when the old *private* key is thought
-> to have been lost.)
+> to have been exposed.)
 
 
 ### Publication via Sonatype
 
-You are now ready to upload bundles acceptable to Sonatype.
+You are now ready to upload bundles acceptable to Maven Central.
+The process guide is at
+[Publishing By Uploading a Bundle](https://central.sonatype.org/publish/publish-portal-upload/).
+It has changed a lot since we published version 2.7.4.
 
-* Go to the [Sonatype](https://oss.sonatype.org) 
-  repository manager and log in.
-* Under "Build Promotion" select "Staging Upload".
-* On the "Staging Upload" tab, and the Upload Mode drop-down,
-  select "Artifact Bundle".
-* Navigate to the `./publications` folder and upload in turn:
+* Go to the [Maven Central Repository](https://central.sonatype.com)
+  and log in.
+* Choose "Publish" from the menu.
+* Under "Namespace" you belong to `org.python`.
+* Choose "Publish Component".
+* For the "Deployment Name" the guide suggests using the co-ordinates
+  of the component (as they would appear in a Gradle build),
+  e.g. `org.python:jython-slim:2.7.5b1`.
+* Click "Choose file" and navigate to the `./publications` folder and "open" `jython-slim-2.7.5b1-bundle.jar`.
+* The site will show that it is validating the bumdle
 
-  * `jython-slim-2.7.4-bundle.jar`
-  * `jython-2.7.4-bundle.jar`
-  * `jython-standalone-2.7.4-bundle.jar`
-  * `jython-installer-2.7.4-bundle.jar`
+Do this process in turn for:
+  * `jython-slim-2.7.5b1-bundle.jar`
+  * `jython-standalone-2.7.4v-bundle.jar`
+  * `jython-2.7.5b1-bundle.jar`
+  * `jython-installer-2.7.5b1-bundle.jar`
 
-  For some reason (privacy?) the display shows a fake file path
-  but the name is correct.
-  Each upload creates a "staging repository".
+Each upload creates a "Deployment" where we have the option to "Publish"
+(if validation was successful)
+or "Drop" the component and try again.
 
-> [!NOTE]You may get a report (e-mail) from Sonatype Lift at this point
+> [!WARNING]
+> Our first attempt for 2.7.5b1 has failed validation.
+> Apparently the acceptable form of the bundle has changed
+> since we last created one using the build script.
+> It fails with the error:
+> ```text
+> Bundle has content that does NOT have a .pom file: META-INF
+> ```
+
+
+> [!TIP]
+> You may get a report (e-mail) from Sonatype Lift at this point
 > reporting potential vulnerabilities in dependencies.
 > (It seems only to work on the `-slim` JAR, which is why we upload it first.)
 > If any vulnerability is sufficiently serious to warrant upgrading JARs,
