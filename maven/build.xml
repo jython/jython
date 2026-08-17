@@ -134,21 +134,22 @@
         <attribute name="version" />
         <attribute name="fromDir" default="${dist.dir}" />
         <attribute name="stageDir" default="${build.maven}" />
+        <attribute name="artifact" default="@{stageDir}/${m2.groupDir}/@{artifactId}/@{version}" />
         <attribute name="basename" default="@{artifactId}-@{version}" />
         <sequential>
             <!-- Clean the staging directory. -->
-            <delete dir="@{stageDir}" />
-            <mkdir dir="@{stageDir}" />
+            <delete dir="@{stageDir}/${m2.groupDir}" />
+            <mkdir dir="@{artifact}" />
 
             <!-- Copy over the primary artifact from @{fromDir} to the staging area. -->
-            <copy file="@{fromDir}/@{artifactId}.jar" tofile="@{stageDir}/@{basename}.jar" />
+            <copy file="@{fromDir}/@{artifactId}.jar" tofile="@{artifact}/@{basename}.jar" />
 
             <!-- The source and Javadoc are already prepared (but add the version to the name). -->
-            <copy file="@{fromDir}/sources.jar" tofile="@{stageDir}/@{basename}-sources.jar" />
-            <copy file="@{fromDir}/javadoc.jar" tofile="@{stageDir}/@{basename}-javadoc.jar" />
+            <copy file="@{fromDir}/sources.jar" tofile="@{artifact}/@{basename}-sources.jar" />
+            <copy file="@{fromDir}/javadoc.jar" tofile="@{artifact}/@{basename}-javadoc.jar" />
 
             <!-- Create the POM from the given template with placeholders replaced. -->
-            <copy file="maven/pom-template.xml" tofile="@{stageDir}/@{basename}.pom">
+            <copy file="maven/pom-template.xml" tofile="@{artifact}/@{basename}.pom">
                 <filterset>
                     <filter token="PROJECT-VERSION" value="@{version}" />
                     <filter token="ARTIFACT-ID" value="@{artifactId}" />
@@ -156,12 +157,18 @@
             </copy>
 
             <!-- Sign everything. -->
-            <sign-all stageDir="@{stageDir}" artifactId="@{artifactId}" version="@{version}" />
+            <sign-detached artifact="@{artifact}" file="@{basename}.pom" />
+            <sign-detached artifact="@{artifact}" file="@{basename}.jar" />
+            <sign-detached artifact="@{artifact}" file="@{basename}-sources.jar" />
+            <sign-detached artifact="@{artifact}" file="@{basename}-javadoc.jar" />
 
-            <!-- JAR-up the entire contents of the staging directory. -->
-            <jar jarfile="${pubs.dir}/@{basename}-bundle.jar">
+            <!-- Checksum JARs and POMs -->
+            <checksum-pom-jar artifact="@{artifact}" />
+
+            <!-- ZIP-up the entire contents of the staging directory. -->
+            <zip destfile="${pubs.dir}/@{basename}-bundle.zip">
                 <fileset dir="@{stageDir}" />
-            </jar>
+            </zip>
         </sequential>
     </macrodef>
 
@@ -171,61 +178,84 @@
     <macrodef name="m2-bundle-gradle">
         <attribute name="artifactId" />
         <attribute name="version" />
-        <attribute name="fromDir" default="${gradle.repo}/${m2.groupDir}/@{artifactId}/@{version}" />
+        <attribute name="fromDir" default="${gradle.repo}" />
         <attribute name="stageDir" default="${build.maven}" />
+        <attribute name="artifact" default="@{stageDir}/${m2.groupDir}/@{artifactId}/@{version}" />
         <attribute name="basename" default="@{artifactId}-@{version}" />
         <sequential>
-            <!-- Validate the POM -->
-            <validate-pom file="@{fromdir}/@{basename}.pom" />
-
             <!-- Clean the staging directory. -->
-            <delete dir="@{stageDir}" />
-            <mkdir dir="@{stageDir}" />
+            <delete dir="@{stageDir}/${m2.groupDir}" />
+            <mkdir dir="@{artifact}" />
 
             <!-- Copy over all the artifacts from @{fromDir} to the staging area. -->
             <copy todir="@{stageDir}">
                 <fileset dir="@{fromDir}">
-                    <include name="*.jar" />
-                    <include name="*.pom" />
+                    <include name="**/*.jar" />
+                    <include name="**/*.pom" />
                 </fileset>
             </copy>
 
-            <!-- Sign everything. -->
-            <sign-all stageDir="@{stageDir}" artifactId="@{artifactId}" version="@{version}" />
+            <!-- Validate the POM -->
+            <validate-pom file="@{artifact}/@{basename}.pom" />
 
-            <!-- JAR-up the entire contents of the staging directory. -->
-            <jar jarfile="${pubs.dir}/@{basename}-bundle.jar">
+            <!-- Sign everything. -->
+            <sign-detached artifact="@{artifact}" file="@{basename}.pom" />
+            <sign-detached artifact="@{artifact}" file="@{basename}.jar" />
+            <sign-detached artifact="@{artifact}" file="@{basename}-sources.jar" />
+            <sign-detached artifact="@{artifact}" file="@{basename}-javadoc.jar" />
+
+            <!-- Checksum JARs and POMs -->
+            <checksum-pom-jar artifact="@{artifact}" />
+
+            <!-- ZIP-up the entire contents of the staging directory. -->
+            <zip destfile="${pubs.dir}/@{basename}-bundle.zip">
                 <fileset dir="@{stageDir}" />
-            </jar>
+            </zip>
         </sequential>
     </macrodef>
 
-    <!-- Add detached signature for single artifact in staging directory. -->
+    <!-- Add detached signature for single artifact in artifact directory. -->
     <macrodef name="sign-detached">
         <attribute name="file" />
-        <attribute name="stageDir" />
+        <attribute name="artifact" />
         <sequential>
             <!-- Generate a detached signature for each artifact in the bundle. -->
-            <exec executable="gpg" dir="@{stageDir}">
+            <exec executable="gpg" dir="@{artifact}">
                 <arg value="-ab" />
                 <arg value="@{file}" />
             </exec>
         </sequential>
     </macrodef>
 
-    <!-- Add detached signatures for group of artifacts in staging directory. -->
-    <macrodef name="sign-all">
-        <attribute name="artifactId" />
-        <attribute name="version" />
-        <attribute name="stageDir" />
-        <attribute name="basename" default="@{artifactId}-@{version}" />
+    <!-- Add checksums for for JAR and POM files in specified arifact directory. -->
+    <macrodef name="checksum-pom-jar">
+        <attribute name="artifact" />
         <sequential>
-            <sign-detached stageDir="@{stageDir}" file="@{basename}.pom" />
-            <sign-detached stageDir="@{stageDir}" file="@{basename}.jar" />
-            <sign-detached stageDir="@{stageDir}" file="@{basename}-sources.jar" />
-            <sign-detached stageDir="@{stageDir}" file="@{basename}-javadoc.jar" />
+        <!-- MD5 Checksum everything -->
+            <checksum algorithm="MD5" fileext=".md5">
+                <fileset dir="@{artifact}">
+                    <include name="*.jar" />
+                    <include name="*.pom" />
+                </fileset>
+            </checksum>
+
+            <!-- SHA-1 Checksum everything -->
+            <checksum algorithm="SHA-1" fileext=".sha1">
+                <fileset dir="@{artifact}">
+                    <include name="*.jar" />
+                    <include name="*.pom" />
+                </fileset>
+            </checksum>
+
+            <!-- SHA-256 Checksum everything -->
+            <checksum algorithm="SHA-256" fileext=".sha256">
+                <fileset dir="@{artifact}">
+                    <include name="*.jar" />
+                    <include name="*.pom" />
+                </fileset>
+            </checksum>
         </sequential>
-    </macrodef>
+   </macrodef>
 
     <!-- Validate a Maven POM . -->
     <macrodef name="validate-pom">

@@ -1080,12 +1080,10 @@ The text for an official release would continue like ...
 
     <target name="jar-sources" depends="init">
         <jar destfile="dist/${jython.sources.jar}" update="${jar.update}">
-            <fileset dir="${basedir}">
-                <exclude name="build/**" />
-                <exclude name="dist/**" />
-                <exclude name="extlibs/**" />
-                <exclude name="Doc/**" />
+            <fileset dir="${basedir}/src">
+                <exclude name="*.exe" />  <!-- launcher -->
             </fileset>
+            <fileset dir="${basedir}/build/gensrc" />
         </jar>
     </target>
 
