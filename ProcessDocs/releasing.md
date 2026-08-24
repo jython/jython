@@ -117,10 +117,10 @@ the last commits should be the same as in the project repository:
 
 ```posh
 PS work> git log --oneline --graph -4
-* 18c4d3111 (HEAD -> master, origin/master, origin/HEAD) Filter META-INF sub-folder from shaded JARs (#453)
+* 429858f62 (HEAD -> master, origin/master, origin/HEAD) Adjust build for Maven bundles to stricter rules (#455)
+* 18c4d3111 Filter META-INF sub-folder from shaded JARs (#453)
 * 3833b3168 Optionally rank matches in overloaded varargs resolution (#425)
 * 1b22011e1 Update mysql connector to 9.7.0 and fix tests and references accordingly. (#450)
-* 309abdcf5 Update Apache commons and Guava JARs (#448)
 ```
 
 
@@ -202,9 +202,9 @@ Changes to be committed:
         modified:   build.gradle
         modified:   build.xml
 
-$ git commit -m"Prepare for 2.7.5b1 release."
-[master d73d4a22b] Prepare for 2.7.5b1 release.
+[master 4ff770969] Prepare for 2.7.5b1 release.
  3 files changed, 9 insertions(+), 4 deletions(-)
+
 ```
 
 
@@ -242,7 +242,7 @@ Buildfile: D:\git\work\build.xml
 
 force-snapshot-if-polluted:
      [echo]
-     [echo] Change set cf1a264ad is not tagged 'v2.7.5b1' - build is a snapshot.
+     [echo] Change set 4ff770969 is not tagged 'v2.7.5b1' - build is a snapshot.
 
 dump:
      [echo] --- build Jython version ---
@@ -461,15 +461,15 @@ The real test consists in running the regression tests:
 
 ```posh
 PS 275b1-trial> inst\bin\jython -m test.regrtest -e
-== 2.7.5b1 (tags/v2.7.5b1:d73d4a22b, Aug 10 2026, 19:19:37)
+== 2.7.5b1 (tags/v2.7.5b1:4ff770969, Aug 17 2026, 09:19:04)
 == [Java HotSpot(TM) 64-Bit Server VM (Oracle Corporation)]
-== platform: java11.0.22
-== encodings: stdin=UTF-8, stdout=UTF-8, FS=utf-8
-== locale: default=('en_GB', 'windows-1252'), actual=(None, None)
-test_grammar
+== platform: java1.8.0_321
+== encodings: stdin=utf-8, stdout=utf-8, FS=utf-8
+== locale: default=('en_GB', 'windows-1252'), actual=(None, None)test_grammar
 test_opcodes
 test_dict
 ...
+367 tests OK.
 4 fails unexpected:
     test___all__ test_gc_jy test_import_jy test_ssl_jy
 ```
@@ -496,37 +496,19 @@ When the author last tried, they were these:
 ```posh
 PS 275b1-trial> copy -r inst\Lib\test TestLib\test
 PS 275b1-trial> $env:JYTHONPATH = ".\TestLib"
-PS 275b1-trial> java -jar kit\jython-standalone.jar -m test.regrtest -e
-== 2.7.5b1 (tags/v2.7.5b1:d73d4a22b, Aug 10 2026, 19:19:37)
+PS 275b1-trial> java -jar kit\jython-standalone.jar -m test.regrtest -e -x test_socket
+== 2.7.5b1 (tags/v2.7.5b1:4ff770969, Aug 17 2026, 09:19:04)
 == [Java HotSpot(TM) 64-Bit Server VM (Oracle Corporation)]
-== platform: java11.0.22
-== encodings: stdin=UTF-8, stdout=UTF-8, FS=utf-8
+== platform: java1.8.0_321
+== encodings: stdin=utf-8, stdout=utf-8, FS=utf-8
 == locale: default=('en_GB', 'windows-1252'), actual=(None, None)
 test_grammar
 test_opcodes
 ...
 ttest_zlib
 test_zlib_jy
-338 tests OK.
-17 tests skipped:
-    test_codecmaps_hk test_coerce_jy test_curses test_dict2java
-    test_exceptions_jy test_java_integration test_java_subclasses
-    test_java_visibility test_jbasic test_joverload test_jy_internals
-    test_set_jy test_smtpnet test_socketserver test_subprocess
-    test_urllib2net test_urllibnet
-10 skips unexpected:
-    test_coerce_jy test_dict2java test_exceptions_jy
-    test_java_integration test_java_subclasses test_java_visibility
-    test_jbasic test_joverload test_jy_internals test_set_jy
-33 tests failed:
-    test_argparse test_classpathimporter test_cmd_line
-    test_cmd_line_script test_codecs_jy test_compile_jy test_email_jy
-    test_email_renamed test_gc_jy test_httpservers test_import
-    test_import_jy test_json test_jython_initializer
-    test_jython_launcher test_lib2to3 test_linecache test_marshal
-    test_os_jy test_pdb test_platform test_popen test_quopri test_repr
-    test_site test_site_jy test_ssl_jy test_sys test_sys_jy
-    test_threading test_urllib2 test_warnings test_zipimport_support
+337 tests OK.
+...
 33 fails unexpected:
     test_argparse test_classpathimporter test_cmd_line
     test_cmd_line_script test_codecs_jy test_compile_jy test_email_jy
@@ -543,6 +525,8 @@ the library is a real file system.
 Others arise because we do not include certain JARs needed for the test.
 It is necessary to pick through the failures carefully
 to detect which are real.
+Here we have excluded `test_socket` as it hangs on Java 11,
+understood to be due to open-close races.
 
 > [!TIP]
 > We could probably do this better through skips in the tests,
@@ -619,7 +603,7 @@ Tests have about the same success rate as for the stand-alone Jython JAR.
 Notably `test_ssl_jy` passes here because a genuine (not wrapped)
 Bouncy Castle JAR is on the path.
 We skip `test_socket_jy` as it reliably hangs,
-probably on a race to re-use the same port.
+probably on a race to reuse the same port.
 
 Tests end with a failure status under Gradle, even when all tests pass,
 because `regrtest` calls `sys.exit`,
@@ -629,7 +613,7 @@ It looks like:
 ```text
 337 tests OK.
 ...
-28 fails unexpected:
+29 fails unexpected:
 ...
 Exception in thread "MainThread" Traceback (most recent call last):
   File "<string>", line 1, in <module>
@@ -689,8 +673,6 @@ for Sonatype to pick up,
 and so reassure users that
 this release of Jython is really from the project.
 
-The infrastructure of PGP has been overhauled
-since the previous version of these notes was written.
 Follow the Maven Central guide
 [Working with PGP Signatures](https://central.sonatype.org/publish/requirements/gpg/),
 which now appears to have been updated with the changes.
@@ -722,7 +704,7 @@ for how to extend the life of a key.
 > You may decide to create a new key for signing future releases.
 > The key that was used to sign past releases should remain valid
 > so that users can still validate those past releases.
-> Renewing an old key is a valid and useful thing to do.
+> Extending an old key is a valid and useful thing to do.
 > (An exception to this rule is when the old *private* key is thought
 > to have been exposed.)
 
@@ -735,35 +717,37 @@ The process guide is at
 It has changed a lot since we published version 2.7.4.
 
 * Go to the [Maven Central Repository](https://central.sonatype.com)
-  and log in.
+  and sign in.
 * Choose "Publish" from the menu.
 * Under "Namespace" you belong to `org.python`.
 * Choose "Publish Component".
-* For the "Deployment Name" the guide suggests using the co-ordinates
+* For the "Deployment Name" the guide suggests using the coordinates
   of the component (as they would appear in a Gradle build),
   e.g. `org.python:jython-slim:2.7.5b1`.
-* Click "Choose file" and navigate to the `./publications` folder and "open" `jython-slim-2.7.5b1-bundle.jar`.
-* The site will show that it is validating the bumdle
+* Click "Choose file" and navigate to the `./publications` folder
+  and "open" `jython-slim-2.7.5b1-bundle.jar`.
+* Click "Publish Component". (It doesn't actually publish it.)
+* The site will show that it is validating the bundle.
+  (It takes a little time for the dialogue to close.)
 
 Do this process in turn for:
   * `jython-slim-2.7.5b1-bundle.jar`
-  * `jython-standalone-2.7.4v-bundle.jar`
+  * `jython-standalone-2.7.5b1-bundle.jar`
   * `jython-2.7.5b1-bundle.jar`
   * `jython-installer-2.7.5b1-bundle.jar`
 
 Each upload creates a "Deployment" where we have the option to "Publish"
 (if validation was successful)
 or "Drop" the component and try again.
+You will need to refresh the deployments page to see when
+validation of the last component is complete.
+Check that the "ARTIFACT ID", "GROUP ID" and "VERSION"
+are correct for each.
 
-> [!WARNING]
-> Our first attempt for 2.7.5b1 has failed validation.
-> Apparently the acceptable form of the bundle has changed
-> since we last created one using the build script.
-> It fails with the error:
-> ```text
-> Bundle has content that does NOT have a .pom file: META-INF
-> ```
-
+> [!NOTE]
+> The acceptable form of the bundle has changed
+> since v2.7.4 and we have updated the scripts to conform.
+---
 
 > [!TIP]
 > You may get a report (e-mail) from Sonatype Lift at this point
@@ -786,18 +770,21 @@ from the "Staging Repositories" tab in the repository manager.
   that the upload reached "Close" with good status,
   If not, it should tell you what is lacking, and you have to go back and fix it.
 * In a fresh directory,
-  download the (as yet unreleased) artifacts from Sonatype and test them,
+  download the (as yet unreleased) JAR files from Sonatype and test them,
   repeating the section [Test what you built](#test-what-you-built).
-  A staging URL has form:
-  `https://oss.sonatype.org/content/repositories/orgpython-1105`
-  where the final number increments with each upload.
-* When you are absolutely satisfied ... "Release" the bundles.
+  (Do this for at least the standalone and installer JARs,
+  and the SHA-1 and SHA-256 checksum files too.)
+  You get the files from the deployments page,
+  under each component's "Component Files" section.
+* When you are absolutely satisfied ... return to
+  the deployments page and release the components
+  by clicking on the "Publish" button of each validated bundle.
   This will cause them to appear in the Maven
   [Central Repository](https://search.maven.org/)
   (takes an hour or two).
 
 > [!CAUTION]
-> Release at Sonatype is irreversible.
+> Release to the Central Repository is irrevocable.
 
 
 ### Only now is it safe to `git push`
@@ -822,12 +809,9 @@ and painfully obvious if this is a final release.
 
 ### Announcement
 
-> [!NOTE]
-> This section is untested since recent changes.
-
-* update files in (or make a PR against) the
+* update files in the
   [website repository](https://github.com/jython/jython.github.io)
-  that reference the current release:
+  that reference the current release (or make a PR there for):
 
   * Add to the [website news page](https://www.jython.org/news)
   * Ensure links on the [website front page](https://www.jython.org/index)
@@ -838,10 +822,14 @@ and painfully obvious if this is a final release.
 
   Exactly what you do here will depend on the kind of release you just made.
 
-* announce on Twitter (as jython), mailing lists, blog ...
+* announce on Twitter (as `jython`), mailing lists, blog ...
 
 
 ## Ready for new work
+
+> [!TIP]
+> Don't forget to sync your personal GitHub fork of Jython,
+> and then `git pull` into your development environment.
 
 After a release,
 Jython in the development environment
@@ -851,7 +839,8 @@ We do not know for sure the version next to be publicly released,
 so we use the smallest increment that results in a valid version number.
 
 After an alpha, beta or release candidate,
-assume the successor version to be a one-up serial of the *same* release level,
+assume the successor version to be a one-up serial of
+the *same* release level,
 incrementing `jython.release_serial`.
 After a final release,
 assume the successor to be an alpha of the next micro-release.
@@ -861,7 +850,7 @@ and `2.7.2` by `2.7.3a1`.
 If the version under development is ostensibly `2.7.4b3`,
 the build system will label the code as `2.7.4b3-DEV` in builds.
 If you build an installer, or dry-run a release, it will be `2.7.4b3-SNAPSHOT`.
-You can read this as a version that "may eventually become" `2.7.4b3` etc..
+You can read this as "code that may eventually become" `2.7.4b3` etc..
 
 The version under development in this scheme will often be one that never sees a release.
 E.g. when we are apparently working on `2.7.4b3`,
@@ -870,9 +859,9 @@ It's a harmless idiosyncrasy of the process that
 the version may only be chosen accurately when the time comes to release it.
 
 Make this change in both `build.xml` and `build.gradle`.
-See the section on
+See the section
 [Changes preparing for a release](#changes-preparing-for-a-release)
-for details.
+for details of where.
 
 In `NEWS`, add a new, empty, section in the development history that looks like this:
 ```text
