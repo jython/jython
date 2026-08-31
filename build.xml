@@ -104,7 +104,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property name="jython.micro_version" value="5"/>
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_BETA}"/>
         <!-- Zero at full release: one-up number for alpha, beta and gamma (candidate) versions. -->
-        <property name="jython.release_serial" value="1"/>
+        <property name="jython.release_serial" value="2"/>
         <!-- End of things you need to adjust when setting the version number. :) -->
     </target>
 
