@@ -8,9 +8,9 @@ name: launcher test 2.7
 
 on:
   push:
-    branches: [ master ]
+    branches: [ none ]
   pull_request:
-    branches: [ master ]
+    branches: [ none ]
 
 permissions:
   contents: read

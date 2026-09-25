@@ -33,6 +33,9 @@ for JYTHON_HOME in "$SPACE_DIR" "$1" ; do
     export JYTHON_HOME
     set -ex
 
+    # -J test verbose (handy on ci pipelines)
+    "$JYTHON" -J-version
+
     # -J passthrough
     "$JYTHON" -J-version 2>&1 | [ `egrep -c "^(java|openjdk) version "` == 1 ]
 

@@ -1,6 +1,6 @@
-# Run ant regrtest on Jython 2.7 (GitHub action)
+# Run ant test on Jython 2.7 (GitHub action)
 
-name: ant regrtest 2.7
+name: ant test 2.7
 
 on:
   push:
@@ -10,51 +10,74 @@ on:
 
 permissions:
   contents: read
+  checks: write
+#  id-token: write
 
 jobs:
-
-  ant-regrtest-ubuntu-jdk8:
-
+  # build once
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK 8
+        uses: actions/setup-java@v6
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Full Build with Ant
+        run: ant
+
+      # preserve the built files for later
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-output
+          path: dist/
+
+  # run the ci tests
+  test:
+    needs: build # wait for build to finish
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        java-version: [11, 17, 21, 25]
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
+      - uses: actions/checkout@v7
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v6
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
 
-    # Some tests require exactly-expected line endings
-    - run: git config --global core.autocrlf input
+      # fetch the previously built files
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: build-output
+          path: dist/
 
-    - uses: actions/checkout@v6
+      - name: Adjust jython Permission
+        run: chmod +x dist/bin/jython
 
-    - name: Set up JDK 8
-      uses: actions/setup-java@v5
-      with:
-        java-version: '8'
-        distribution: 'temurin'
+      - name: Test with Ant
+        run: ant test-ci-built
 
-    - name: Regression test with Ant
-      run: ant -noinput -buildfile build.xml regrtest-ci
+      - name: Upload JUnit Test Results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.os }}-java${{ matrix.java-version }}
+          path: reports/junit/raw
 
+      - name: Publish JUnit Test Report
+        uses: mikepenz/action-junit-report@v6
+        if: always()
+        with:
+          check_name: 'JUnit Test Report (${{ matrix.os }} - Java ${{ matrix.java-version }})'
+          report_paths: '**/TEST-*.xml'
 
-  ant-regrtest-windows-jdk11:
-
-    runs-on: windows-latest
-    timeout-minutes: 60
-
-    steps:
-    - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
-
-    # Some tests require exactly-expected line endings
-    - run: git config --global core.autocrlf input
-
-    - uses: actions/checkout@v6
-
-    - name: Set up JDK 11
-      uses: actions/setup-java@v5
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-
-    - name: Regression test with Ant
-      run: ant -noinput -buildfile build.xml regrtest-ci
-
+        
