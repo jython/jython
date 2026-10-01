@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.Map;
 
 import org.python.base.InterpreterError;
+import org.python.base.MissingFeature;
 import org.python.core.PyCode.Layout;
 import org.python.core.PyCode.Trait;
 import org.python.core.PyDict.MergeMode;
@@ -251,6 +252,12 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                         sp -= 2;
                         // delItem(w, v)
                         PySequence.delItem(s[sp], s[sp + 1]);
+                        break;
+
+                    case Opcode311.PRINT_EXPR:
+                        // v | -> |
+                        // ---^sp -^sp
+                        displayHook(s[--sp]);
                         break;
 
                     case Opcode311.RETURN_VALUE:
@@ -559,7 +566,7 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                         int top = sp - 1;
                         Object v = s[top]; // TOP
                         s[top] = switch (oparg) {
-                            default -> Py.NotImplemented;
+                            default -> throw new MissingFeature("BINARY_OP %d", oparg);
                             case Opcode311.NB_ADD -> PyNumber.add(v, w);
                             case Opcode311.NB_AND -> PyNumber.and(v, w);
                             // case Opcode311.NB_FLOOR_DIVIDE -> PyNumber.FloorDivide(v, w);
@@ -596,6 +603,16 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                             // case Opcode311.NB_INPLACE_XOR -> PyNumber.InPlaceXor(v, w);
                         };
                         ip += Opcode311.INLINE_CACHE_ENTRIES_BINARY_OP;
+                        break;
+                    }
+
+                    case Opcode311.BUILD_SLICE: {
+                        // start | stop | [step] | -> | slice |
+                        // ---------------------^sp ---------^sp
+                        Object step = oparg == 3 ? s[--sp] : null;
+                        Object stop = s[--sp];
+                        int top = sp - 1;
+                        s[top] = new PySlice(s[top], stop, step);
                         break;
                     }
 
@@ -657,6 +674,25 @@ class CPython311Frame extends PyFrame<CPython311Code> {
     }
 
     // Supporting definitions and methods -----------------------------
+
+    /**
+     * Implement the {@code sys.displayhook} called by the
+     * {@code PRINT_EXPR} operation in interactive code. Pending a
+     * {@code sys.displayhook}, this prints {@code repr(value)} to
+     * standard output, unless it is {@code None}, and binds
+     * {@code builtins._} to the value.
+     *
+     * @param value to display
+     * @throws Throwable from {@code repr()}
+     */
+    // Compare CPython sys_displayhook in sysmodule.c
+    private void displayHook(Object value) throws Throwable {
+        if (value != Py.None) {
+            builtins.put("_", Py.None);
+            System.out.println(Abstract.repr(value));
+            builtins.put("_", value);
+        }
+    }
 
     private static final Object[] EMPTY_OBJECT_ARRAY = Py.EMPTY_ARRAY;
     private static final String NAME_ERROR_MSG = "name '%.200s' is not defined";

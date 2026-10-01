@@ -26,13 +26,17 @@ jobs:
           java-version: '17'
 
       - name: Set up Python 3.11
+        id: setup-python
         uses: actions/setup-python@v4
         with:
           # This has to match the language version we're targeting
           python-version: '3.11'
 
       - name: Unit test with Gradle
-        run: ./gradlew --no-daemon test
+        # Tell the build exactly which CPython to use (see core/core.gradle)
+        run: >-
+          ./gradlew --no-daemon test
+          -Pcpython=${{ steps.setup-python.outputs.python-path }}
 
       - name: Clean up Gradle cache
         # Remove some files from the Gradle cache, so they aren't cached
