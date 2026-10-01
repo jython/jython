@@ -178,6 +178,41 @@ class BuiltinsModule extends JavaModule {
     private static final String DEFAULT_WITHOUT_ITERABLE =
             "Cannot specify a default for %s() with multiple positional arguments";
 
+    /**
+     * Implementation of {@code print()}, simplified: output always goes
+     * to {@code System.out}, and {@code file} and {@code flush} are not
+     * yet supported.
+     *
+     * @param sep separator between values ({@code None} means a space)
+     * @param end appended after the last value ({@code None} means a
+     *     new line)
+     * @param args the values to print
+     * @throws Throwable from {@code str()} of an argument
+     */
+    @PythonStaticMethod(positionalOnly = false)
+    @DocString("Prints the values to sys.stdout.")
+    // Simplified version of print()
+    static void print(@KeywordOnly @Default("None") Object sep, @Default("None") Object end,
+            @PositionalCollector PyTuple args) throws Throwable {
+        // @PositionalCollector has to be last.
+        String s = sep == Py.None ? " " : printArg("sep", sep);
+        String e = end == Py.None ? "\n" : printArg("end", end);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < args.size(); i++) {
+            if (i > 0) { sb.append(s); }
+            sb.append(Abstract.str(args.get(i)));
+        }
+        sb.append(e);
+        System.out.print(sb);
+        System.out.flush();
+    }
+
+    private static String printArg(String name, Object v) throws TypeError {
+        if (PyUnicode.TYPE.check(v)) { return v.toString(); }
+        throw new TypeError("%s must be None or a string, not %.200s", name,
+                PyType.of(v).getName());
+    }
+
     @PythonStaticMethod
     @DocString("Return the canonical string representation of the object.\n"
             + "For many object types, including most builtins, eval(repr(obj)) == obj.")
