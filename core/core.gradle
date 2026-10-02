@@ -34,6 +34,9 @@ def genJavaDir = "$genOutputDir/java/main"
 def genTestJavaDir = "$genOutputDir/java/test"
 
 def genInputDir = getProject().file('src/main/javaTemplate')
+
+// Destination of opcode constants generated from the supported CPython
+def genOpcodeJavaDir = "$genSourcesDir/opcodes/java/main"
 def genTestInputDir = getProject().file('src/test/javaTemplate')
 
 
@@ -51,6 +54,7 @@ sourceSets {
     main {
         java {
             srcDir genJavaDir
+            srcDir genOpcodeJavaDir
         }
     }
 
@@ -91,12 +95,28 @@ task generateObjectDefinitions(type: PythonExec,
 compileJava.dependsOn(generateObjectDefinitions)
 
 
+// Generate opcode constants (OpcodeNNN.java) from the supported CPython
+
+task generateOpcodes(type: PythonExec,
+        description: 'Generate opcode constants from CPython') {
+    def tool = getProject().getRootProject().file(
+            'build-tools/python/tool/opcode_gen.py')
+    // Clues for the incremental build
+    inputs.file(tool)
+    outputs.dir(genOpcodeJavaDir)
+    args tool
+    args genOpcodeJavaDir
+}
+compileJava.dependsOn(generateOpcodes)
+
+
 // Report the version of Python available
 
 task pythonVersion(type: PythonExec) {
     args '-V'
 }
 generateObjectDefinitions.dependsOn(pythonVersion)
+generateOpcodes.dependsOn(pythonVersion)
 
 
 // Copy and compile Python source examples to the build tree

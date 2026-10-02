@@ -471,12 +471,6 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                         break;
                     }
 
-                    case Opcode311.JUMP_BACKWARD_QUICK: {
-                        // Same as plain JUMP_BACKWARD for us
-                        ip -= oparg;
-                        break;
-                    }
-
                     case Opcode311.LOAD_METHOD:
                         /*
                          * Emitted when compiling obj.meth(...). Works in tandem with CALL.
