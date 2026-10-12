@@ -1,6 +1,6 @@
 // Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core;
+package org.python.util;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.python.base.InterpreterError;
+import org.python.core.CPython311Code;
 import org.python.modules.marshal;
 
 /**
@@ -21,7 +22,7 @@ import org.python.modules.marshal;
  * <p>
  * Jython 3 does not yet have its own compiler, so we delegate
  * compilation to a CPython subprocess of the version whose byte code
- * {@link CPython311Frame} executes. The subprocess runs the script
+ * {@code CPython311Frame} executes. The subprocess runs the script
  * {@code repl_compiler.py} (a resource alongside this class), which
  * uses {@code codeop.compile_command(source, "<stdin>", "single")} and
  * returns the code object in {@code marshal} format.

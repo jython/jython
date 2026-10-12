@@ -109,7 +109,7 @@ compileJava.dependsOn(generateObjectDefinitions)
 
 task repl(type: JavaExec, description: 'Run the interactive REPL') {
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'org.python.core.Repl'
+    mainClass = 'org.python.util.Repl'
     standardInput = System.in
     systemProperty 'jython.cpython', cpythonExecutable
 }

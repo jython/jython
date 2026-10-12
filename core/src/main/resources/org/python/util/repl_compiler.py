@@ -1,6 +1,6 @@
 # repl_compiler.py
 #
-# Compile interactive input for the Jython REPL (org.python.core.Repl).
+# Compile interactive input for the Jython REPL (org.python.util.Repl).
 #
 # Jython 3 does not yet have its own compiler, so the REPL runs this
 # in a CPython subprocess of the version whose byte code Jython executes.

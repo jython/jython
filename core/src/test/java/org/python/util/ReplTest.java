@@ -1,6 +1,6 @@
 // Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core;
+package org.python.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -17,6 +17,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.python.core.UnitTestSupport;
 
 /**
  * Tests of the interactive {@link Repl}, which compiles with a CPython

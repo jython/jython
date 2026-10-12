@@ -1,6 +1,6 @@
 // Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core;
+package org.python.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,11 +9,16 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.python.core.CPython311Code;
+import org.python.core.Interpreter;
+import org.python.core.PyDict;
+import org.python.core.PyException;
+
 /**
  * An interactive read-eval-print loop for the Jython 3 runtime.
  * <p>
  * Each statement is compiled by CPython (see {@link ReplCompiler})
- * and executed by {@link CPython311Frame} in a {@code globals}
+ * and executed by {@code CPython311Frame} in a {@code globals}
  * dictionary that persists for the session. The value of an expression
  * statement is printed by the byte code itself (via
  * {@code PRINT_EXPR}) to {@code System.out}.
