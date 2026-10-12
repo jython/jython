@@ -13,14 +13,14 @@
 #
 # The process exits when its standard input is closed.
 
-import sys, struct, marshal, codeop, traceback
+import sys, struct, marshal, codeop, traceback, platform
 
 SUPPORTED_VERSION = (3, 11)
 
 if sys.version_info[:2] != SUPPORTED_VERSION:
     print(f"The Jython REPL requires CPython "
           f"{'.'.join(map(str, SUPPORTED_VERSION))} to compile, not "
-          f"{sys.version.split()[0]} ({sys.executable})", file=sys.stderr)
+          f"{platform.python_version()} ({sys.executable})", file=sys.stderr)
     sys.exit(2)
 
 
