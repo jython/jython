@@ -69,11 +69,14 @@ sourceSets {
 // A task that runs Python with the tools library on the path
 
 /*
- * The CPython that compiles the test examples must be the version whose
- * byte code we execute (3.11). Specify it with -Pcpython=<executable>,
- * otherwise we use "python" from the path.
+ * The CPython that compiles Python for us must be the version whose byte
+ * code we execute (3.11). Choose it with -Pjython.cpython=<exe> or the
+ * environment variable JYTHON_CPYTHON; otherwise "python" from the PATH.
+ * Tests and the REPL get it as the system property of the same name, which
+ * applies the same rules when run outside Gradle (see ReplCompiler).
  */
-ext.cpythonExecutable = findProperty('cpython') ?: 'python'
+ext.cpythonExecutable = findProperty('jython.cpython')
+        ?: System.getenv('JYTHON_CPYTHON') ?: 'python'
 
 // The REPL tests compile with CPython (see ReplCompiler)
 test.systemProperty 'jython.cpython', cpythonExecutable

@@ -7,6 +7,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +33,7 @@ class ReplCompiler implements AutoCloseable {
     /** Environment variable naming the CPython executable. */
     static final String CPYTHON_ENV = "JYTHON_CPYTHON";
     /** Executable used when neither property nor variable is set. */
-    static final String CPYTHON_DEFAULT = "python3.11";
+    static final String CPYTHON_DEFAULT = "python";
 
     private static final String SCRIPT = "repl_compiler.py";
 
@@ -58,6 +60,8 @@ class ReplCompiler implements AutoCloseable {
     /** The CPython executable in use. */
     final String executable;
 
+    /** Private directory holding the copy of the script CPython runs. */
+    private final Path scriptDir;
     private final Process process;
     private final DataOutputStream toCompiler;
     private final DataInputStream fromCompiler;
@@ -78,13 +82,21 @@ class ReplCompiler implements AutoCloseable {
      */
     ReplCompiler(String executable) throws IOException {
         this.executable = executable;
-        String script = readScript();
-        // -I: ignore PYTHON* variables and user site; -u: unbuffered
-        ProcessBuilder pb = new ProcessBuilder(List.of(executable, "-I", "-u", "-c", script));
+        /*
+         * Run the script from a file, not with -c: on Windows, Java does
+         * not escape the double quotes in a -c argument, which corrupts it.
+         */
+        this.scriptDir = Files.createTempDirectory("jython-repl");
+        Path script = scriptDir.resolve(SCRIPT);
+        // -I: ignore PYTHON* variables, user site and script dir; -u: unbuffered
+        ProcessBuilder pb = new ProcessBuilder(
+                List.of(executable, "-I", "-u", script.toString()));
         pb.redirectError(ProcessBuilder.Redirect.INHERIT);
         try {
+            copyScript(script);
             this.process = pb.start();
         } catch (IOException ioe) {
+            deleteScript();
             throw new IOException(String.format(
                     "cannot run CPython '%s' to compile (set -D%s or %s): %s", executable,
                     CPYTHON_PROPERTY, CPYTHON_ENV, ioe.getMessage()), ioe);
@@ -152,6 +164,8 @@ class ReplCompiler implements AutoCloseable {
             }
         } catch (IOException | InterruptedException e) {
             process.destroy();
+        } finally {
+            deleteScript();
         }
     }
 
@@ -164,10 +178,21 @@ class ReplCompiler implements AutoCloseable {
     }
 
     /** Read the compiler script from the class path. */
-    private static String readScript() throws IOException {
+    /** Copy the compiler script from our resources to the given file. */
+    private static void copyScript(Path script) throws IOException {
         try (InputStream s = ReplCompiler.class.getResourceAsStream(SCRIPT)) {
             if (s == null) { throw new IOException("missing resource " + SCRIPT); }
-            return new String(s.readAllBytes(), StandardCharsets.UTF_8);
+            Files.copy(s, script);
+        }
+    }
+
+    /** Delete the copy of the script and its directory, if we can. */
+    private void deleteScript() {
+        try {
+            Files.deleteIfExists(scriptDir.resolve(SCRIPT));
+            Files.deleteIfExists(scriptDir);
+        } catch (IOException e) {
+            // Leave it for the system to clean up
         }
     }
 }
