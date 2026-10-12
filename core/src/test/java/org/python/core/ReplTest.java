@@ -63,8 +63,12 @@ class ReplTest extends UnitTestSupport {
             System.setOut(savedOut);
             System.setErr(savedErr);
         }
-        return new Session(outBytes.toString(StandardCharsets.UTF_8),
-                errBytes.toString(StandardCharsets.UTF_8));
+        return new Session(text(outBytes), text(errBytes));
+    }
+
+    /** Captured text with line endings as "\n" (println gives "\r\n" on Windows). */
+    private static String text(ByteArrayOutputStream bytes) {
+        return bytes.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
     }
 
     @Test
