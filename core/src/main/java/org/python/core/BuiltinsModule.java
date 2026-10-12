@@ -178,6 +178,50 @@ class BuiltinsModule extends JavaModule {
     private static final String DEFAULT_WITHOUT_ITERABLE =
             "Cannot specify a default for %s() with multiple positional arguments";
 
+    /**
+     * Implementation of {@code print()}, simplified: output always goes
+     * to {@code System.out}, and {@code file} and {@code flush} are not
+     * yet supported.
+     *
+     * @param sep separator between values ({@code None} means a space)
+     * @param end appended after the last value ({@code None} means a
+     *     new line)
+     * @param args the values to print
+     * @throws Throwable from {@code str()} of an argument
+     */
+    @PythonStaticMethod(positionalOnly = false)
+    @DocString("Prints the values to sys.stdout.")
+    // Simplified version of print()
+    static void print(@KeywordOnly @Default("None") Object sep, @Default("None") Object end,
+            @PositionalCollector PyTuple args) throws Throwable {
+        // @PositionalCollector has to be last.
+        if (sep != Py.None && !PyUnicode.TYPE.check(sep)) { throw noneOrStrError("sep", sep); }
+        if (end != Py.None && !PyUnicode.TYPE.check(end)) { throw noneOrStrError("end", end); }
+        String s = sep == Py.None ? " " : sep.toString();
+        String e = end == Py.None ? "\n" : end.toString();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < args.size(); i++) {
+            if (i > 0) { sb.append(s); }
+            sb.append(Abstract.str(args.get(i)));
+        }
+        sb.append(e);
+        System.out.print(sb);
+        System.out.flush();
+    }
+
+    /**
+     * Create a {@link TypeError} for an argument that should have been
+     * {@code None} or a {@code str}.
+     *
+     * @param name of the argument
+     * @param v value of the argument
+     * @return exception to throw
+     */
+    private static TypeError noneOrStrError(String name, Object v) {
+        return new TypeError("%s must be None or a string, not %.200s", name,
+                PyType.of(v).getName());
+    }
+
     @PythonStaticMethod
     @DocString("Return the canonical string representation of the object.\n"
             + "For many object types, including most builtins, eval(repr(obj)) == obj.")

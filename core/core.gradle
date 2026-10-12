@@ -68,10 +68,23 @@ sourceSets {
 
 // A task that runs Python with the tools library on the path
 
+/*
+ * The CPython that compiles Python for us must be the version whose byte
+ * code we execute (3.11). Choose it with -Pjython.cpython=<exe> or the
+ * environment variable JYTHON_CPYTHON; otherwise "python" from the PATH.
+ * Tests and the REPL get it as the system property of the same name, which
+ * applies the same rules when run outside Gradle (see ReplCompiler).
+ */
+ext.cpythonExecutable = findProperty('jython.cpython')
+        ?: System.getenv('JYTHON_CPYTHON') ?: 'python'
+
+// The REPL tests compile with CPython (see ReplCompiler)
+test.systemProperty 'jython.cpython', cpythonExecutable
+
 class PythonExec extends Exec {
 
     PythonExec() {
-        executable 'python'
+        executable getProject().cpythonExecutable
         environment('PYTHONPATH', getProject().getRootProject().file(
                 'build-tools/python/lib'))
     }
@@ -91,6 +104,17 @@ task generateObjectDefinitions(type: PythonExec,
 compileJava.dependsOn(generateObjectDefinitions)
 
 
+// Run the interactive REPL (compiling with CPython)
+// ./gradlew -q --console=plain core:repl
+
+task repl(type: JavaExec, description: 'Run the interactive REPL') {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.python.util.Repl'
+    standardInput = System.in
+    systemProperty 'jython.cpython', cpythonExecutable
+}
+
+
 // Report the version of Python available
 
 task pythonVersion(type: PythonExec) {
@@ -108,6 +132,7 @@ task compileTestPythonExamples(type: PythonExec,
         fileTree(testPythonExampleInputDir) {
             include '**/*.py'
         })
+    inputs.property('cpython', cpythonExecutable)
     outputs.dir(testPythonExampleOutputDir)
     // Exec task is python -m compile_examples <src> <dst>
     args '-m'
