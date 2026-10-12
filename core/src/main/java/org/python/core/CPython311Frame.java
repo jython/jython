@@ -676,16 +676,21 @@ class CPython311Frame extends PyFrame<CPython311Code> {
     // Supporting definitions and methods -----------------------------
 
     /**
-     * Implement the {@code sys.displayhook} called by the
-     * {@code PRINT_EXPR} operation in interactive code. Pending a
-     * {@code sys.displayhook}, this prints {@code repr(value)} to
-     * standard output, unless it is {@code None}, and binds
-     * {@code builtins._} to the value.
+     * Display the value of an expression statement in interactive code,
+     * for the {@code PRINT_EXPR} operation. This prints
+     * {@code repr(value)} to standard output, unless it is
+     * {@code None}, and binds {@code builtins._} to the value.
+     * <p>
+     * This is a stop-gap until we have a {@code sys} module. CPython's
+     * {@code PRINT_EXPR} looks up {@code sys.displayhook} and calls
+     * that, so it may be replaced from Python, and writes to
+     * {@code sys.stdout}. When we have those, {@code PRINT_EXPR} should
+     * do the same and this method should go.
      *
      * @param value to display
      * @throws Throwable from {@code repr()}
      */
-    // Compare CPython sys_displayhook in sysmodule.c
+    // Stop-gap for sys.displayhook: compare CPython sys_displayhook in sysmodule.c
     private void displayHook(Object value) throws Throwable {
         if (value != Py.None) {
             builtins.put("_", Py.None);

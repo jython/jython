@@ -195,8 +195,10 @@ class BuiltinsModule extends JavaModule {
     static void print(@KeywordOnly @Default("None") Object sep, @Default("None") Object end,
             @PositionalCollector PyTuple args) throws Throwable {
         // @PositionalCollector has to be last.
-        String s = sep == Py.None ? " " : printArg("sep", sep);
-        String e = end == Py.None ? "\n" : printArg("end", end);
+        if (sep != Py.None && !PyUnicode.TYPE.check(sep)) { throw noneOrStrError("sep", sep); }
+        if (end != Py.None && !PyUnicode.TYPE.check(end)) { throw noneOrStrError("end", end); }
+        String s = sep == Py.None ? " " : sep.toString();
+        String e = end == Py.None ? "\n" : end.toString();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < args.size(); i++) {
             if (i > 0) { sb.append(s); }
@@ -207,9 +209,16 @@ class BuiltinsModule extends JavaModule {
         System.out.flush();
     }
 
-    private static String printArg(String name, Object v) throws TypeError {
-        if (PyUnicode.TYPE.check(v)) { return v.toString(); }
-        throw new TypeError("%s must be None or a string, not %.200s", name,
+    /**
+     * Create a {@link TypeError} for an argument that should have been
+     * {@code None} or a {@code str}.
+     *
+     * @param name of the argument
+     * @param v value of the argument
+     * @return exception to throw
+     */
+    private static TypeError noneOrStrError(String name, Object v) {
+        return new TypeError("%s must be None or a string, not %.200s", name,
                 PyType.of(v).getName());
     }
 
