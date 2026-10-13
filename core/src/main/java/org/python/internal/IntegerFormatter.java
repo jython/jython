@@ -1,12 +1,13 @@
 // Copyright (c)2021 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core.stringlib;
+package org.python.internal;
 
 import java.math.BigInteger;
 
-import org.python.core.stringlib.InternalFormat.FormatError;
-import org.python.core.stringlib.InternalFormat.FormatOverflow;
-import org.python.core.stringlib.InternalFormat.Spec;
+import org.python.internal.Formats.AbstractFormatter;
+import org.python.internal.Formats.FormatError;
+import org.python.internal.Formats.FormatOverflow;
+import org.python.internal.Formats.Spec;
 
 /**
  * A class that provides the implementation of integer formatting. In a limited way, it acts like a
@@ -14,7 +15,7 @@ import org.python.core.stringlib.InternalFormat.Spec;
  * format specifier supplied at construction. These are ephemeral objects that are not, on their
  * own, thread safe.
  */
-public abstract class IntegerFormatter extends InternalFormat.AbstractFormatter {
+public abstract class IntegerFormatter extends Formats.AbstractFormatter {
 
     /**
      * Construct the formatter from a client-supplied buffer, to which the result will be appended,

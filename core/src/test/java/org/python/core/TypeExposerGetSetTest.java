@@ -19,11 +19,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.python.core.Exposed.Deleter;
-import org.python.core.Exposed.DocString;
-import org.python.core.Exposed.FrozenArray;
-import org.python.core.Exposed.Getter;
-import org.python.core.Exposed.Setter;
+import org.python.types.Exposed;
+import org.python.types.TypeSpec;
+import org.python.types.Exposed.Deleter;
+import org.python.types.Exposed.DocString;
+import org.python.types.Exposed.FrozenArray;
+import org.python.types.Exposed.Getter;
+import org.python.types.Exposed.Setter;
 
 /**
  * Test that get-set attributes exposed by a Python <i>type</i>
@@ -316,7 +318,7 @@ class TypeExposerGetSetTest extends UnitTestSupport {
     private static class ObjectWithGetSets extends BaseGetSets {
 
         static PyType TYPE =
-                PyType.fromSpec(new PyType.Spec("ObjectWithGetSets", MethodHandles.lookup())
+                PyType.fromSpec(new TypeSpec("ObjectWithGetSets", MethodHandles.lookup())
                         .adopt(AdoptedWithGetSets.class));
 
         /** Primitive integer attribute (not optional). */

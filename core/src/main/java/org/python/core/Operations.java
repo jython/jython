@@ -17,8 +17,10 @@ import java.lang.invoke.WrongMethodTypeException;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import org.python.base.InterpreterError;
 import org.python.core.Slot.Signature;
+import org.python.support.InterpreterError;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
  * An {@code Operations} object provides behaviour to a Java object
@@ -161,7 +163,7 @@ abstract class Operations {
                 // Always the same
                 return Derived.getInstance();
 
-            } else if (CraftedPyObject.class.isAssignableFrom(c)) {
+            } else if (WithClass.class.isAssignableFrom(c)) {
                 // Case 1: one of the crafted cases
                 // Ensure c and super-classes statically initialised.
                 ensureInit(c);
@@ -178,8 +180,8 @@ abstract class Operations {
                  * descriptors in the PyType cannot build method handles in advance
                  * of constructing the call site.
                  */
-                PyType.Spec spec =
-                        new PyType.Spec(c.getSimpleName(), MethodHandles.publicLookup().in(c));
+                TypeSpec spec =
+                        new TypeSpec(c.getSimpleName(), MethodHandles.publicLookup().in(c));
                 ops = PyType.fromSpec(spec);
                 // Must post answer to opsMap ourselves?
                 return ops;
@@ -446,7 +448,7 @@ abstract class Operations {
                 // getType = λ x : x.getType()
                 // .type() = (Object)PyType
                 getType = LOOKUP
-                        .findVirtual(CraftedPyObject.class, "getType", MethodType.methodType(T))
+                        .findVirtual(WithClass.class, "getType", MethodType.methodType(T))
                         .asType(MethodType.methodType(T, O));
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new InterpreterError(e, "preparing handles in Operations.Derived");

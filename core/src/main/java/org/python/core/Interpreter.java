@@ -2,7 +2,7 @@
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
 
 /**
  * An interpreter is responsible for certain variable aspects of the

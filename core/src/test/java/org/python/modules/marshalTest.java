@@ -35,7 +35,7 @@ import org.python.modules.marshal.Reader;
 import org.python.modules.marshal.StreamReader;
 import org.python.modules.marshal.StreamWriter;
 import org.python.modules.marshal.Writer;
-import org.python.core.stringlib.ByteArrayBuilder;
+import org.python.stringlib.ByteArrayBuilder;
 
 /**
  * Test reading (and to some extent writing) objects using the

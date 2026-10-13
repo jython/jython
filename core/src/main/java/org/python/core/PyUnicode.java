@@ -23,25 +23,27 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import org.python.base.InterpreterError;
-import org.python.base.MissingFeature;
-import org.python.core.Exposed.Default;
-import org.python.core.Exposed.Name;
-import org.python.core.Exposed.PythonMethod;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySequence.Delegate;
 import org.python.core.PySlice.Indices;
-import org.python.core.stringlib.FieldNameIterator;
-import org.python.core.stringlib.IntArrayBuilder;
-import org.python.core.stringlib.IntArrayReverseBuilder;
-import org.python.core.stringlib.InternalFormat;
-import org.python.core.stringlib.InternalFormat.AbstractFormatter;
-import org.python.core.stringlib.InternalFormat.FormatError;
-import org.python.core.stringlib.InternalFormat.FormatOverflow;
-import org.python.core.stringlib.InternalFormat.Spec;
-import org.python.core.stringlib.MarkupIterator;
-import org.python.core.stringlib.TextFormatter;
+import org.python.internal.Formats;
+import org.python.internal.TextFormatter;
+import org.python.internal.Formats.AbstractFormatter;
+import org.python.internal.Formats.FormatError;
+import org.python.internal.Formats.FormatOverflow;
+import org.python.internal.Formats.Spec;
 import org.python.modules.ucnhashAPI;
+import org.python.stringlib.FieldNameIterator;
+import org.python.stringlib.IntArrayBuilder;
+import org.python.stringlib.IntArrayReverseBuilder;
+import org.python.stringlib.MarkupIterator;
+import org.python.support.InterpreterError;
+import org.python.support.MissingFeature;
+import org.python.types.Exposed.Default;
+import org.python.types.Exposed.Name;
+import org.python.types.Exposed.PythonMethod;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
  * The Python {@code str} object is implemented by both
@@ -61,11 +63,11 @@ import org.python.modules.ucnhashAPI;
  * By contrast, a {@code PyUnicode} is time-efficient, but each
  * character occupies one {@code int}.
  */
-public class PyUnicode implements CraftedPyObject, PyDict.Key {
+public class PyUnicode implements WithClass, PyDict.Key {
 
     /** The type {@code str}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("str", MethodHandles.lookup()) //
+            new TypeSpec("str", MethodHandles.lookup()) //
                     .methods(PyUnicodeMethods.class) //
                     .adopt(String.class));
 
@@ -2699,7 +2701,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
         try {
             // Parse the specification
-            Spec spec = InternalFormat.fromText(stringFormatSpec);
+            Spec spec = Formats.fromText(stringFormatSpec);
 
             // Get a formatter for the specification
             TextFormatter f = new StrFormatter(spec);

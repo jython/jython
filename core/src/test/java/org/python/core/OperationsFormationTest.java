@@ -16,9 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.python.base.InterpreterError;
 import org.python.core.Operations.Clash;
-import org.python.core.PyType.Spec;
+import org.python.support.InterpreterError;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
+import org.python.types.WithDict;
 
 /**
  * An {@link Operations} object contains information about a Java
@@ -40,8 +43,8 @@ class OperationsFormationTest {
      *     pass
      * </pre>
      */
-    static class A implements CraftedPyObject {
-        static PyType TYPE = PyType.fromSpec(new Spec("A", MethodHandles.lookup()));
+    static class A implements WithClass {
+        static PyType TYPE = PyType.fromSpec(new TypeSpec("A", MethodHandles.lookup()));
         private PyType type;
 
         A(PyType type) { this.type = type; }
@@ -51,7 +54,7 @@ class OperationsFormationTest {
         @Override
         public PyType getType() { return type; }
 
-        static class Derived extends A implements DerivedPyObject, DictPyObject {
+        static class Derived extends A implements DerivedPyObject, WithDict {
             protected Map<Object, Object> __dict__;
 
             Derived(PyType type) {
@@ -72,16 +75,16 @@ class OperationsFormationTest {
      * </pre>
      */
     static class B {
-        static PyType TYPE = PyType.fromSpec(new Spec("B", MethodHandles.lookup()) //
+        static PyType TYPE = PyType.fromSpec(new TypeSpec("B", MethodHandles.lookup()) //
                 .base(A.TYPE));
     }
 
     /**
      * Built-in Python {@code class C} that has adopted implementations.
      */
-    static class C implements CraftedPyObject {
-        static PyType TYPE = PyType.fromSpec(new Spec("C", MethodHandles.lookup())
-                .adopt(C1.class, C2.class).flagNot(PyType.Flag.BASETYPE));
+    static class C implements WithClass {
+        static PyType TYPE = PyType.fromSpec(new TypeSpec("C", MethodHandles.lookup())
+                .adopt(C1.class, C2.class).flagNot(TypeFlag.BASETYPE));
 
         @Override
         public PyType getType() { return TYPE; }
@@ -94,9 +97,9 @@ class OperationsFormationTest {
     static class C2 {}
 
     /** Built-in Python {@code class BadC} identical to C. */
-    static class BadC implements CraftedPyObject {
-        static PyType TYPE = PyType.fromSpec(new Spec("BadC", MethodHandles.lookup())
-                .adopt(BadC2.class).flagNot(PyType.Flag.BASETYPE));
+    static class BadC implements WithClass {
+        static PyType TYPE = PyType.fromSpec(new TypeSpec("BadC", MethodHandles.lookup())
+                .adopt(BadC2.class).flagNot(TypeFlag.BASETYPE));
 
         @Override
         public PyType getType() { return TYPE; }
@@ -116,7 +119,7 @@ class OperationsFormationTest {
      * class {@link J} in Python. There is no {@link PyType}
      * corresponding directly to this class (unless "found").
      */
-    static class JDerived extends J implements DerivedPyObject, DictPyObject {
+    static class JDerived extends J implements DerivedPyObject, WithDict {
 
         /** The Python type of this instance. */
         private PyType type;
@@ -282,7 +285,7 @@ class OperationsFormationTest {
         void finds_expected_type() {
             // Define a new type
             // XXX cheating by short-cutting type.__new__
-            Spec specMyA = new Spec("MyA", A.Derived.class).base(A.TYPE);
+            TypeSpec specMyA = new TypeSpec("MyA", A.Derived.class).base(A.TYPE);
             PyType typeMyA = PyType.fromSpec(specMyA);
 
             // Define an object of that type
@@ -340,7 +343,7 @@ class OperationsFormationTest {
             // Define a new type
             // XXX cheating by short-cutting type.__new__
             PyType JTYPE = PyType.fromClass(J.class);
-            Spec specMyJ = new Spec("MyJ", JDerived.class).base(JTYPE);
+            TypeSpec specMyJ = new TypeSpec("MyJ", JDerived.class).base(JTYPE);
             PyType typeMyJ = PyType.fromSpec(specMyJ);
 
             // XXX cheating by short-cutting type.__call__

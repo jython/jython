@@ -1,6 +1,6 @@
 package org.python.core;
 
-import org.python.base.MissingFeature;
+import org.python.support.MissingFeature;
 
 /** Stop-gap definition to satisfy references in the project. */
 class codecs {

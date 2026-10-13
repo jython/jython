@@ -6,10 +6,14 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
+
 /** Common run-time constants and constructors. */
 public class Py {
 
-    private static class Singleton implements CraftedPyObject {
+    private static class Singleton implements WithClass {
 
         final PyType type;
 
@@ -20,8 +24,8 @@ public class Py {
 
         Singleton(String name) {
             this.name = name;
-            type = PyType.fromSpec(new PyType.Spec(name, MethodHandles.lookup())
-                    .canonical(getClass()).flagNot(PyType.Flag.BASETYPE));
+            type = PyType.fromSpec(new TypeSpec(name, MethodHandles.lookup())
+                    .canonical(getClass()).flagNot(TypeFlag.BASETYPE));
         }
 
         @Override
@@ -81,7 +85,7 @@ public class Py {
     public static PyDict dict() { return new PyDict(); }
 
     /** Empty (zero-length) array of {@link Object}. */
-    static final Object[] EMPTY_ARRAY = new Object[0];
+    public static final Object[] EMPTY_ARRAY = new Object[0];
 
     /** Empty (zero-length) array of {@code String}. */
     static final String[] EMPTY_STRING_ARRAY = new String[0];

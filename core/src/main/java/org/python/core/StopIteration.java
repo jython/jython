@@ -2,13 +2,15 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code StopIteration} exception. */
 public class StopIteration extends PyException {
     private static final long serialVersionUID = 1L;
 
     /** The type of Python object this class implements. */
     public static final PyType TYPE = PyType.fromSpec(
-            new PyType.Spec("StopIteration", MethodHandles.lookup())
+            new TypeSpec("StopIteration", MethodHandles.lookup())
                     .base(PyException.TYPE));
 
     /**

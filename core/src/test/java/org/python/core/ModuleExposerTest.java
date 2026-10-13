@@ -19,11 +19,11 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import org.python.core.Exposed.PositionalOnly;
-import org.python.core.Exposed.PythonMethod;
-import org.python.core.Exposed.PythonStaticMethod;
 import org.python.core.ModuleDef.MethodDef;
+import org.python.types.Exposed;
+import org.python.types.Exposed.PositionalOnly;
+import org.python.types.Exposed.PythonMethod;
+import org.python.types.Exposed.PythonStaticMethod;
 
 /**
  * Test that a Python <b>module</b> defined in Java, using the scheme of

@@ -5,6 +5,9 @@ package org.python.core;
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+
 /**
  * A {@code PyFrame} is the context for the execution of code.
  * Different concrete sub-classes of {@code PyFrame} exist to
@@ -80,9 +83,9 @@ public abstract class PyFrame<C extends PyCode> {
 
     /** The Python type {@code frame}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("frame", MethodHandles.lookup())
+            new TypeSpec("frame", MethodHandles.lookup())
                     // Type admits no Python subclasses.
-                    .flagNot(PyType.Flag.BASETYPE));
+                    .flagNot(TypeFlag.BASETYPE));
 
     /** Frames form a stack by chaining through the back pointer. */
     PyFrame<? extends PyCode> back;

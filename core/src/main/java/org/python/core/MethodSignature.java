@@ -11,8 +11,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
-import org.python.base.MethodKind;
 import org.python.core.Slot.EmptyException;
+import org.python.support.MethodKind;
 
 /**
  * The {@code enum MethodSignature} enumerates the method signatures

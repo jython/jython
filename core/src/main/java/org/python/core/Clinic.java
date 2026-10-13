@@ -5,9 +5,10 @@ package org.python.core;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.invoke.MethodType;
 
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
+
+import java.lang.invoke.MethodType;
 
 /**
  * A collection of methods and {@code MethodHandle}s for converting

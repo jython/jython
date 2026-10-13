@@ -1,6 +1,6 @@
 // Copyright (c)2021 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core.stringlib;
+package org.python.stringlib;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,7 +13,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.python.core.PyType;
-import org.python.core.stringlib.InternalFormat.Spec;
+import org.python.internal.Formats;
+import org.python.internal.Formats.Spec;
+import org.python.stringlib.FieldNameIterator;
+import org.python.stringlib.MarkupIterator;
 
 /**
  * Tests of {@code stringlib} support for formatting. These facilities
@@ -35,14 +38,14 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets ''")
         public void fromEmpty() {
-            InternalFormat.Spec spec = InternalFormat.fromText("");
+            Formats.Spec spec = Formats.fromText("");
             assertEquals(Spec.NONE, spec.type);
         }
 
         @Test
         @DisplayName("interprets 'x'")
         public void fromPlain() {
-            InternalFormat.Spec spec = InternalFormat.fromText("x");
+            Formats.Spec spec = Formats.fromText("x");
             assertFalse(Spec.specified(spec.align));
             assertFalse(Spec.specified(spec.fill));
             assertFalse(Spec.specified(spec.width));
@@ -53,7 +56,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '<x'")
         public void fromPLeftAlign() {
-            InternalFormat.Spec spec = InternalFormat.fromText("<x");
+            Formats.Spec spec = Formats.fromText("<x");
             assertEquals('<', spec.align);
             assertEquals('x', spec.type);
         }
@@ -61,7 +64,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '~<x'")
         public void fromFilled() {
-            InternalFormat.Spec spec = InternalFormat.fromText("~<x");
+            Formats.Spec spec = Formats.fromText("~<x");
             assertEquals('~', spec.fill);
             assertEquals('<', spec.align);
             assertEquals('x', spec.type);
@@ -70,7 +73,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '+x'")
         public void fromMandatorySign() {
-            InternalFormat.Spec spec = InternalFormat.fromText("+x");
+            Formats.Spec spec = Formats.fromText("+x");
             assertEquals('+', spec.sign);
             assertEquals('x', spec.type);
         }
@@ -78,7 +81,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '#x'")
         public void fromAlternate() {
-            InternalFormat.Spec spec = InternalFormat.fromText("#x");
+            Formats.Spec spec = Formats.fromText("#x");
             assertEquals(true, spec.alternate);
 
         }
@@ -86,7 +89,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '0x'")
         public void fromLeadingZero() {
-            InternalFormat.Spec spec = InternalFormat.fromText("0x");
+            Formats.Spec spec = Formats.fromText("0x");
             assertEquals('=', spec.align);
             assertEquals('0', spec.fill);
         }
@@ -94,7 +97,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '123x'")
         public void fromWidth() {
-            InternalFormat.Spec spec = InternalFormat.fromText("123x");
+            Formats.Spec spec = Formats.fromText("123x");
             assertEquals(123, spec.width);
 
         }
@@ -102,8 +105,8 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '123.456x'")
         public void fromWidthPrecision() {
-            InternalFormat.Spec spec =
-                    InternalFormat.fromText("123.456x");
+            Formats.Spec spec =
+                    Formats.fromText("123.456x");
             assertEquals(123, spec.width);
             assertEquals(456, spec.precision);
         }
@@ -136,7 +139,7 @@ class FormatParsingTest {
                 Class<T> expected, String spec,
                 String expectedMessage) {
             T t = assertThrows(expected,
-                    () -> InternalFormat.fromText(spec));
+                    () -> Formats.fromText(spec));
             assertEquals(expectedMessage, t.getMessage());
             return t;
         }

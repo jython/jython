@@ -1,4 +1,4 @@
-package org.python.core.stringlib;
+package org.python.stringlib;
 
 import java.util.Arrays;
 import java.util.Spliterator;

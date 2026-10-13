@@ -179,7 +179,7 @@ public class PyNumber extends Abstract {
      * @throws Throwable from the implementation of the operation
      */
     private static Object binary_op1(Object v, Object w, Slot binop)
-            throws Slot.EmptyException, Throwable {
+            throws org.python.core.Slot.EmptyException, Throwable {
 
         Operations vOps = Operations.of(v);
         PyType vtype = vOps.type(v);

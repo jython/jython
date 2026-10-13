@@ -2,7 +2,7 @@ package org.python.core;
 
 import java.util.Map;
 
-import org.python.base.MissingFeature;
+import org.python.support.MissingFeature;
 
 /**
  * Abstract API for operations on mapping types, corresponding to

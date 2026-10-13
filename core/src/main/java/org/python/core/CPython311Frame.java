@@ -6,10 +6,10 @@ import java.lang.invoke.MethodHandle;
 import java.util.EnumSet;
 import java.util.Map;
 
-import org.python.base.InterpreterError;
 import org.python.core.PyCode.Layout;
-import org.python.core.PyCode.Trait;
 import org.python.core.PyDict.MergeMode;
+import org.python.support.InterpreterError;
+import org.python.types.WithDict;
 
 /** A {@link PyFrame} for executing CPython 3.11 byte code. */
 class CPython311Frame extends PyFrame<CPython311Code> {
@@ -49,11 +49,11 @@ class CPython311Frame extends PyFrame<CPython311Code> {
      * The func argument also locates the code object for the frame, the
      * properties of which determine many characteristics of the frame.
      * <ul>
-     * <li>If the {@code code} argument has the {@link Trait#NEWLOCALS}
+     * <li>If the {@code code} argument has the {@link CodeFlag#NEWLOCALS}
      * the {@code locals} argument is ignored.
      * <ul>
      * <li>If the code does not additionally have the trait
-     * {@link Trait#OPTIMIZED}, a new empty {@code dict} will be
+     * {@link CodeFlag#OPTIMIZED}, a new empty {@code dict} will be
      * provided as {@link #locals}.</li>
      * <li>Otherwise, the code has the trait {@code OPTIMIZED}, and
      * {@link #locals} will be {@code null} until possibly set
@@ -86,10 +86,10 @@ class CPython311Frame extends PyFrame<CPython311Code> {
         int nfast = 0;
 
         // The need for a dictionary of locals depends on the code
-        EnumSet<PyCode.Trait> traits = code.traits;
-        if (traits.contains(Trait.NEWLOCALS)) {
+        EnumSet<CodeFlag> traits = code.traits;
+        if (traits.contains(CodeFlag.NEWLOCALS)) {
             // Ignore locals argument
-            if (traits.contains(Trait.OPTIMIZED)) {
+            if (traits.contains(CodeFlag.OPTIMIZED)) {
                 // We can create it later but probably won't need to
                 this.locals = null;
                 // Instead locals are in an array
@@ -744,8 +744,8 @@ class CPython311Frame extends PyFrame<CPython311Code> {
          * descriptor, or null if the attribute was not found. It's time to
          * give the object instance dictionary a chance.
          */
-        if (obj instanceof DictPyObject) {
-            Map<Object, Object> d = ((DictPyObject)obj).getDict();
+        if (obj instanceof WithDict) {
+            Map<Object, Object> d = ((WithDict)obj).getDict();
             Object instanceAttr = d.get(name);
             if (instanceAttr != null) {
                 // Found the callable in the instance dictionary.

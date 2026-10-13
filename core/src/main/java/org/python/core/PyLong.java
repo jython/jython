@@ -11,17 +11,18 @@ import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.util.Map;
 
-import org.python.base.InterpreterError;
-import org.python.base.MissingFeature;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.Slot.EmptyException;
-import org.python.core.stringlib.FloatFormatter;
-import org.python.core.stringlib.IntegerFormatter;
-import org.python.core.stringlib.InternalFormat;
-import org.python.core.stringlib.InternalFormat.FormatError;
-import org.python.core.stringlib.InternalFormat.FormatOverflow;
-import org.python.core.stringlib.InternalFormat.AbstractFormatter;
-import org.python.core.stringlib.InternalFormat.Spec;
+import org.python.internal.IntegerFormatter;
+import org.python.internal.Formats;
+import org.python.internal.Formats.AbstractFormatter;
+import org.python.internal.Formats.FormatError;
+import org.python.internal.Formats.FormatOverflow;
+import org.python.internal.Formats.Spec;
+import org.python.support.InterpreterError;
+import org.python.support.MissingFeature;
+import org.python.types.TypeSpec;
+import org.python.types.WithDict;
 
 /**
  * A Python {@code int} object may be represented by a
@@ -35,7 +36,7 @@ public class PyLong extends AbstractPyObject implements PyDict.Key {
 
     /** The type {@code int}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("int", MethodHandles.lookup()) //
+            new TypeSpec("int", MethodHandles.lookup()) //
                     .adopt(BigInteger.class, Integer.class) //
                     .accept(Boolean.class) //
                     .methods(PyLongMethods.class));
@@ -521,7 +522,7 @@ public class PyLong extends AbstractPyObject implements PyDict.Key {
 
         try {
             // Parse the specification
-            Spec spec = InternalFormat.fromText(stringFormatSpec);
+            Spec spec = Formats.fromText(stringFormatSpec);
 
             // Get a formatter for the specification
             AbstractFormatter f;
@@ -553,7 +554,7 @@ public class PyLong extends AbstractPyObject implements PyDict.Key {
      * Instances in Python of sub-classes of 'int', are represented in
      * Java by instances of this class.
      */
-    static class Derived extends PyLong implements DictPyObject {
+    static class Derived extends PyLong implements WithDict {
 
         protected Derived(PyType subType, BigInteger value) { super(subType, value); }
 

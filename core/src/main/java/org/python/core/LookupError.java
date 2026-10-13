@@ -2,6 +2,8 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code LookupError} exception. */
 public class LookupError extends PyException {
     private static final long serialVersionUID = 1L;
@@ -9,7 +11,7 @@ public class LookupError extends PyException {
     /** The type object of Python {@code LookupError} exceptions. */
     @SuppressWarnings("hiding")
     static final PyType TYPE = PyType.fromSpec(
-            new PyType.Spec("LookupError", MethodHandles.lookup()).base(PyException.TYPE));
+            new TypeSpec("LookupError", MethodHandles.lookup()).base(PyException.TYPE));
 
     /**
      * Constructor for sub-class use specifying {@link #type}.

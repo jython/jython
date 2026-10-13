@@ -5,10 +5,10 @@ package org.python.core;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Method;
 
-import org.python.core.Exposed.PythonMethod;
-import org.python.core.Exposed.PythonStaticMethod;
-import org.python.base.InterpreterError;
 import org.python.core.ModuleDef.MethodDef;
+import org.python.support.InterpreterError;
+import org.python.types.Exposed.PythonMethod;
+import org.python.types.Exposed.PythonStaticMethod;
 
 /**
  * A {@code ModuleExposer} provides access to the attributes of a module

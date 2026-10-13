@@ -20,9 +20,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.python.base.InterpreterError;
-import org.python.base.MissingFeature;
 import org.python.core.ArgumentError.Mode;
+import org.python.support.InterpreterError;
+import org.python.support.MissingFeature;
 
 /**
  * This {@code enum} provides a set of structured constants that are

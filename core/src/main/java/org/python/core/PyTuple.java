@@ -13,17 +13,18 @@ import java.util.NoSuchElementException;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
-import org.python.base.InterpreterError;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySlice.Indices;
-import org.python.core.PyType.Spec;
+import org.python.support.InterpreterError;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /** The Python {@code tuple} object. */
-public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
+public class PyTuple extends AbstractList<Object> implements WithClass {
 
     /** The Python type object for {@code tuple}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new Spec("tuple", MethodHandles.lookup()));
+            new TypeSpec("tuple", MethodHandles.lookup()));
 
     /** The Python type of this instance. */
     protected final PyType type;

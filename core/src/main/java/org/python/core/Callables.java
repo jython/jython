@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.python.types.FastCall;
+
 /** Compare CPython {@code Objects/call.c}: {@code Py_Object_*}. */
 class Callables extends Abstract {
 

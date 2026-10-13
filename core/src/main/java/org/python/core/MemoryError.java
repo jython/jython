@@ -2,13 +2,15 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code MemoryError} exception. */
 class MemoryError extends PyException {
     private static final long serialVersionUID = 1L;
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec(
-            new PyType.Spec("MemoryError", MethodHandles.lookup()));
+            new TypeSpec("MemoryError", MethodHandles.lookup()));
 
     /**
      * Constructor for sub-class use specifying {@link #type}.

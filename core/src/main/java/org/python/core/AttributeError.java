@@ -2,13 +2,15 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code AttributeError} exception. */
 class AttributeError extends PyException {
     private static final long serialVersionUID = 1L;
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("AttributeError", MethodHandles.lookup()) //
+            new TypeSpec("AttributeError", MethodHandles.lookup()) //
                     .base(PyException.TYPE));
 
     /**

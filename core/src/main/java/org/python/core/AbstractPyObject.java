@@ -2,11 +2,13 @@
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
+import org.python.types.WithClass;
+
 /**
  * Class that may be used as a base for Python objects (but doesn't have to be)
  * to supply some universally needed methods and the type.
  */
-abstract class AbstractPyObject implements CraftedPyObject {
+abstract class AbstractPyObject implements WithClass {
 
     private PyType type;
 

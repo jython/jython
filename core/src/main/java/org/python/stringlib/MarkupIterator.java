@@ -1,15 +1,17 @@
 // Copyright (c)2021 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core.stringlib;
+package org.python.stringlib;
 
 import java.lang.invoke.MethodHandles;
 
-import org.python.base.MissingFeature;
-import org.python.core.CraftedPyObject;
 import org.python.core.Py;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.ValueError;
+import org.python.support.MissingFeature;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
  * Provides an implementation of the object that
@@ -17,12 +19,12 @@ import org.python.core.ValueError;
  * returning successive 4-tuples, the sequence being equivalent to
  * the original string.
  */
-public class MarkupIterator implements CraftedPyObject {
+public class MarkupIterator implements WithClass {
 
     /** The Python type {@code formatteriterator} of this class. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("formatteriterator", MethodHandles.lookup())
-                    .flagNot(PyType.Flag.BASETYPE));
+            new TypeSpec("formatteriterator", MethodHandles.lookup())
+                    .flagNot(TypeFlag.BASETYPE));
 
     /** The UTF-16 string from which elements are being returned. */
     private final String markup;

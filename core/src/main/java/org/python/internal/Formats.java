@@ -1,6 +1,6 @@
 // Copyright (c)2021 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core.stringlib;
+package org.python.internal;
 
 import org.python.core.PyObjectUtil.NoConversion;
 
@@ -8,7 +8,7 @@ import org.python.core.PyObjectUtil.NoConversion;
  * Static methods and classes for representing a format string and
  * building the formatted output.
  */
-public class InternalFormat {
+public class Formats {
 
     /**
      * Create a {@link Spec} object by parsing a format specification.

@@ -21,8 +21,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.python.base.MissingFeature;
-import org.python.core.PyType.Spec;
+import org.python.support.MissingFeature;
+import org.python.types.TypeSpec;
 
 /**
  * Test selected methods of {@link PyUnicode} on a variety of
@@ -1411,7 +1411,7 @@ class PyUnicodeTest extends UnitTestSupport {
          * argument to {@code str.join()}.
          */
         protected static class MySequence extends AbstractPyObject {
-            static PyType TYPE = PyType.fromSpec(new Spec("MySequence", MethodHandles.lookup()));
+            static PyType TYPE = PyType.fromSpec(new TypeSpec("MySequence", MethodHandles.lookup()));
             final String value;
 
             protected MySequence(String value) {
@@ -1435,7 +1435,7 @@ class PyUnicodeTest extends UnitTestSupport {
          * argument to {@code str.join()}.
          */
         protected static class MyIterator extends AbstractPyObject {
-            static PyType TYPE = PyType.fromSpec(new Spec("MyIterator", MethodHandles.lookup()));
+            static PyType TYPE = PyType.fromSpec(new TypeSpec("MyIterator", MethodHandles.lookup()));
             final String value;
             int i = 0;
 

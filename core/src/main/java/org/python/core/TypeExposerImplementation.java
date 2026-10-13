@@ -20,19 +20,19 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
-import org.python.base.InterpreterError;
-import org.python.core.Exposed.Deleter;
-import org.python.core.Exposed.DocString;
-import org.python.core.Exposed.Getter;
-import org.python.core.Exposed.Member;
-import org.python.core.Exposed.PythonMethod;
-import org.python.core.Exposed.PythonStaticMethod;
-import org.python.core.Exposed.Setter;
 import org.python.core.Operations.BinopGrid;
 import org.python.core.PyMemberDescr.Flag;
 import org.python.core.Slot.Signature;
+import org.python.support.InterpreterError;
+import org.python.types.Exposed.Deleter;
+import org.python.types.Exposed.DocString;
+import org.python.types.Exposed.Getter;
+import org.python.types.Exposed.Member;
+import org.python.types.Exposed.PythonMethod;
+import org.python.types.Exposed.PythonStaticMethod;
+import org.python.types.Exposed.Setter;
 
-class TypeExposer extends Exposer {
+class TypeExposerImplementation extends Exposer {
 
     /**
      * Type for which attributes are to be exposed (or {@code null}
@@ -67,7 +67,7 @@ class TypeExposer extends Exposer {
      *
      * @param type being exposed
      */
-    TypeExposer(PyType type) {
+    TypeExposerImplementation(PyType type) {
         this.type = type;
         this.memberSpecs = new TreeSet<>();
         this.getSetSpecs = new TreeSet<>();
@@ -162,7 +162,7 @@ class TypeExposer extends Exposer {
      * @throws InterpreterError on duplicates or unsupported types
      */
     private void addGetter(Method m, Getter anno) {
-        addSpec(m, anno.value(), TypeExposer::castGetSet, GetSetSpec::new,
+        addSpec(m, anno.value(), TypeExposerImplementation::castGetSet, GetSetSpec::new,
                 ms -> getSetSpecs.add(ms), GetSetSpec::addGetter);
     }
 
@@ -177,7 +177,7 @@ class TypeExposer extends Exposer {
      * @throws InterpreterError on duplicates or unsupported types
      */
     private void addSetter(Method m, Setter anno) {
-        addSpec(m, anno.value(), TypeExposer::castGetSet, GetSetSpec::new,
+        addSpec(m, anno.value(), TypeExposerImplementation::castGetSet, GetSetSpec::new,
                 ms -> getSetSpecs.add(ms), GetSetSpec::addSetter);
     }
 
@@ -192,7 +192,7 @@ class TypeExposer extends Exposer {
      * @throws InterpreterError on duplicates or unsupported types
      */
     private void addDeleter(Method m, Deleter anno) {
-        addSpec(m, anno.value(), TypeExposer::castGetSet, GetSetSpec::new,
+        addSpec(m, anno.value(), TypeExposerImplementation::castGetSet, GetSetSpec::new,
                 ms -> getSetSpecs.add(ms), GetSetSpec::addDeleter);
     }
 

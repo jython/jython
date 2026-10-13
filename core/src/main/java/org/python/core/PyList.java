@@ -16,10 +16,11 @@ import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.python.base.InterpreterError;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySlice.Indices;
-import org.python.core.PyType.Spec;
+import org.python.support.InterpreterError;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
  * The Python {@code list} object that is also a Java
@@ -41,10 +42,10 @@ import org.python.core.PyType.Spec;
  *     behaviour was inherited.
  */
 // @ExposedType(name = "list", base = PyObject.class, doc = BuiltinDocs.list_doc)
-public class PyList implements List<Object>, CraftedPyObject {
+public class PyList implements List<Object>, WithClass {
 
     public static final PyType TYPE =
-            PyType.fromSpec(new Spec("list", MethodHandles.lookup()));
+            PyType.fromSpec(new TypeSpec("list", MethodHandles.lookup()));
 
     /** The Python type of this instance. */
     protected final PyType type;

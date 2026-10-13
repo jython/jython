@@ -1,4 +1,4 @@
-package org.python.base;
+package org.python.support;
 
 /**
  * Enum describing whether a method is an instance, static or class

@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
-import org.python.base.InterpreterError;
-import org.python.base.MethodKind;
+import org.python.support.InterpreterError;
+import org.python.support.MethodKind;
+import org.python.types.Exposed;
 
 /**
  * This class provides a parser for the positional and keyword

@@ -8,27 +8,28 @@ import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.util.Map;
 
-import org.python.base.InterpreterError;
 import org.python.core.PyObjectUtil.NoConversion;
-import org.python.core.stringlib.FloatFormatter;
-import org.python.core.stringlib.InternalFormat;
-import org.python.core.stringlib.InternalFormat.FormatError;
-import org.python.core.stringlib.InternalFormat.FormatOverflow;
-import org.python.core.stringlib.InternalFormat.Spec;
+import org.python.internal.FloatFormatter;
+import org.python.internal.Formats;
+import org.python.internal.Formats.FormatError;
+import org.python.internal.Formats.FormatOverflow;
+import org.python.internal.Formats.Spec;
 import org.python.modules.math;
+import org.python.types.TypeSpec;
+import org.python.types.WithDict;
 
 /** The Python {@code float} object. */
 public class PyFloat extends AbstractPyObject {
     /** The type {@code float}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("float", MethodHandles.lookup())
+            new TypeSpec("float", MethodHandles.lookup())
                     .adopt(Double.class)
                     .operand(Integer.class, BigInteger.class,
                             PyLong.class, Boolean.class)
                     .methods(PyFloatMethods.class));
 
     /** Format specification used by repr(). */
-    static final Spec SPEC_REPR = InternalFormat.fromText(" >r");
+    static final Spec SPEC_REPR = Formats.fromText(" >r");
     /** Format specification used by str(). */
     static final Spec SPEC_STR = Spec.NUMERIC;
 
@@ -490,7 +491,7 @@ public class PyFloat extends AbstractPyObject {
                 throw Abstract.argumentTypeError("__format__", 0, "str", formatSpec);
             }
 
-            Spec spec = InternalFormat.fromText(formatSpec.toString());
+            Spec spec = Formats.fromText(formatSpec.toString());
             return formatDouble(doubleValue(self), spec);
         } catch (IllegalArgumentException iae) {
             // XXX Some format specification errors: why not FormatError?
@@ -723,7 +724,7 @@ public class PyFloat extends AbstractPyObject {
      * Instances in Python of sub-classes of 'float', are represented in
      * Java by instances of this class.
      */
-    static class Derived extends PyFloat implements DictPyObject {
+    static class Derived extends PyFloat implements WithDict {
 
         protected Derived(PyType subType, double value) {
             super(subType, value);

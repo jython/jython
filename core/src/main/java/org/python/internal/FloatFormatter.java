@@ -1,14 +1,15 @@
 // Copyright (c)2021 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core.stringlib;
+package org.python.internal;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
-import org.python.core.stringlib.InternalFormat.FormatError;
-import org.python.core.stringlib.InternalFormat.FormatOverflow;
-import org.python.core.stringlib.InternalFormat.Spec;
+import org.python.internal.Formats.AbstractFormatter;
+import org.python.internal.Formats.FormatError;
+import org.python.internal.Formats.FormatOverflow;
+import org.python.internal.Formats.Spec;
 
 /**
  * A class that provides the implementation of floating-point
@@ -17,7 +18,7 @@ import org.python.core.stringlib.InternalFormat.Spec;
  * according to the format specifier supplied at construction. These
  * are ephemeral objects that are not, on their own, thread safe.
  */
-public abstract class FloatFormatter extends InternalFormat.AbstractFormatter {
+public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
     /** The rounding mode dominant in the formatter. */
     static final RoundingMode ROUND_PY = RoundingMode.HALF_EVEN;

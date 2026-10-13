@@ -3,6 +3,8 @@ package org.python.core;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code OSError} exception. */
 public class OSError extends PyException {
     private static final long serialVersionUID = 1L;
@@ -10,7 +12,7 @@ public class OSError extends PyException {
     /** The type object of Python {@code OSError} exceptions. */
     @SuppressWarnings("hiding")
     public static final PyType TYPE = PyType.fromSpec(
-            new PyType.Spec("OSError", MethodHandles.lookup())
+            new TypeSpec("OSError", MethodHandles.lookup())
                     .base(PyException.TYPE));
 
     /**

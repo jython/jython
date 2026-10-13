@@ -24,19 +24,20 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.python.base.InterpreterError;
-import org.python.base.MethodKind;
-import org.python.core.Exposed.Default;
-import org.python.core.Exposed.DocString;
-import org.python.core.Exposed.Getter;
-import org.python.core.Exposed.KeywordCollector;
-import org.python.core.Exposed.KeywordOnly;
-import org.python.core.Exposed.Name;
-import org.python.core.Exposed.PositionalCollector;
-import org.python.core.Exposed.PositionalOnly;
-import org.python.core.Exposed.PythonMethod;
-import org.python.core.Exposed.PythonStaticMethod;
 import org.python.core.ModuleDef.MethodDef;
+import org.python.support.InterpreterError;
+import org.python.support.MethodKind;
+import org.python.types.Exposed;
+import org.python.types.Exposed.Default;
+import org.python.types.Exposed.DocString;
+import org.python.types.Exposed.Getter;
+import org.python.types.Exposed.KeywordCollector;
+import org.python.types.Exposed.KeywordOnly;
+import org.python.types.Exposed.Name;
+import org.python.types.Exposed.PositionalCollector;
+import org.python.types.Exposed.PositionalOnly;
+import org.python.types.Exposed.PythonMethod;
+import org.python.types.Exposed.PythonStaticMethod;
 
 /**
  * An object for tabulating the attributes of classes that define
@@ -108,11 +109,11 @@ abstract class Exposer {
      * @return a type exposer able to deliver the attributes
      * @throws InterpreterError on errors of definition
      */
-    static TypeExposer exposeType(PyType type, Class<?> definingClass, Class<?> methodClass)
+    static TypeExposerImplementation exposeType(PyType type, Class<?> definingClass, Class<?> methodClass)
             throws InterpreterError {
 
         // Create an instance of Exposer to hold specs, type.
-        TypeExposer exposer = new TypeExposer(type);
+        TypeExposerImplementation exposer = new TypeExposerImplementation(type);
 
         // Scan the defining class for definitions
         exposer.expose(definingClass);
@@ -127,7 +128,7 @@ abstract class Exposer {
     /**
      * Add to {@link #specs}, definitions found in the given class and
      * annotated for exposure. (Note that the that the override
-     * {@link TypeExposer#scanJavaMethods(Class)} also adds a method if
+     * {@link TypeExposerImplementation#scanJavaMethods(Class)} also adds a method if
      * it has a the name of a special method.)
      *
      * @param defsClass to introspect for definitions

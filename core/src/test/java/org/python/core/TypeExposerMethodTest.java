@@ -11,11 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.python.base.MethodKind;
-import org.python.core.Exposed.Default;
-import org.python.core.Exposed.PositionalOnly;
-import org.python.core.Exposed.PythonMethod;
-import org.python.core.PyType.Spec;
+import org.python.support.MethodKind;
+import org.python.types.Exposed;
+import org.python.types.TypeSpec;
+import org.python.types.Exposed.Default;
+import org.python.types.Exposed.PositionalOnly;
+import org.python.types.Exposed.PythonMethod;
 
 /**
  * Test that methods exposed by a Python <b>type</b> defined in
@@ -179,7 +180,7 @@ class TypeExposerMethodTest {
      */
     static class SimpleObject {
 
-        static PyType TYPE = PyType.fromSpec(new Spec("Simple", MethodHandles.lookup()));
+        static PyType TYPE = PyType.fromSpec(new TypeSpec("Simple", MethodHandles.lookup()));
 
         /**
          * See {@link NoParams}: no parameters are allowed (after
@@ -266,7 +267,7 @@ class TypeExposerMethodTest {
     static class ExampleObject {
 
         static PyType TYPE = PyType.fromSpec( //
-                new Spec("Example", MethodHandles.lookup()) //
+                new TypeSpec("Example", MethodHandles.lookup()) //
                         .adopt(ExampleObject2.class));
 
         /**

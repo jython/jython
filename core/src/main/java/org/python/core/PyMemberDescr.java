@@ -6,7 +6,9 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.util.EnumSet;
 
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
 
 /**
  * Descriptor for an attribute that has been defined (by a
@@ -17,8 +19,8 @@ abstract class PyMemberDescr extends DataDescriptor {
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("member_descriptor", MethodHandles.lookup())
-                    .flagNot(PyType.Flag.BASETYPE));
+            new TypeSpec("member_descriptor", MethodHandles.lookup())
+                    .flagNot(TypeFlag.BASETYPE));
 
     /** Acceptable values in the {@link #flags}. */
     enum Flag {

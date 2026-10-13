@@ -10,10 +10,10 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.python.base.MissingFeature;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySlice.Indices;
 import org.python.core.Slot.EmptyException;
+import org.python.support.MissingFeature;
 
 /**
  * Abstract API for operations on sequence types, corresponding to

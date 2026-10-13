@@ -5,9 +5,9 @@ package org.python.core;
 import java.lang.invoke.MethodHandle;
 import java.util.function.Supplier;
 
-import org.python.base.InterpreterError;
-import org.python.base.MissingFeature;
 import org.python.core.Slot.EmptyException;
+import org.python.support.InterpreterError;
+import org.python.support.MissingFeature;
 
 /**
  * The "abstract interface" to operations on Python objects. Methods

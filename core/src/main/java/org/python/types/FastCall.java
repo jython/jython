@@ -1,8 +1,12 @@
 // Copyright (c)2022 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core;
+package org.python.types;
 
 import java.util.Arrays;
+
+import org.python.core.ArgumentError;
+import org.python.core.Py;
+import org.python.core.TypeError;
 
 /**
  * Support direct calls from Java to the function represented by
@@ -16,7 +20,7 @@ import java.util.Arrays;
  * in CPython. It may provide a basis for efficient call sites for
  * function and method calling when argument lists are simple.
  */
-interface FastCall {
+public interface FastCall {
 
     /**
      * Invoke the target object with standard arguments

@@ -8,12 +8,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 
-import org.python.base.InterpreterError;
-import org.python.core.Exposed.Deleter;
-import org.python.core.Exposed.Getter;
-import org.python.core.Exposed.Setter;
-import org.python.core.PyType.Flag;
 import org.python.core.Slot.EmptyException;
+import org.python.support.InterpreterError;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.Exposed.Deleter;
+import org.python.types.Exposed.Getter;
+import org.python.types.Exposed.Setter;
 
 /**
  * Descriptor for an attribute that has been defined by a series of
@@ -30,7 +31,7 @@ abstract class PyGetSetDescr extends DataDescriptor {
 
     static final Lookup LOOKUP = MethodHandles.lookup();
     static final PyType TYPE =
-            PyType.fromSpec(new PyType.Spec("getset_descriptor", LOOKUP).flagNot(Flag.BASETYPE));
+            PyType.fromSpec(new TypeSpec("getset_descriptor", LOOKUP).flagNot(TypeFlag.BASETYPE));
 
     /** The method handle type (O)O. */
     // CPython: PyObject *(*getter)(PyObject *, void *)

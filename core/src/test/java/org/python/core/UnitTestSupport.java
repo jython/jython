@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.function.Executable;
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
 
 /**
  * A base class for unit tests that defines some common convenience

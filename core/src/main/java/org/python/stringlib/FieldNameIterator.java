@@ -1,13 +1,15 @@
 // Copyright (c)2021 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core.stringlib;
+package org.python.stringlib;
 
 import java.lang.invoke.MethodHandles;
 
-import org.python.base.MissingFeature;
-import org.python.core.CraftedPyObject;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.support.MissingFeature;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 
 /**
@@ -20,12 +22,12 @@ import org.python.core.PyType;
  * the object has an extra method {@link #head()} to return the
  * required first member of the pair.
  */
-public class FieldNameIterator implements CraftedPyObject {
+public class FieldNameIterator implements WithClass {
 
     /** The Python type {@code fieldnameiterator} of this class. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("fieldnameiterator", MethodHandles.lookup())
-                    .flagNot(PyType.Flag.BASETYPE));
+            new TypeSpec("fieldnameiterator", MethodHandles.lookup())
+                    .flagNot(TypeFlag.BASETYPE));
 
     /** The UTF-16 string from which elements are being returned. */
     private final String markup;

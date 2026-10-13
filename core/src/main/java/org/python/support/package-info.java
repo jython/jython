@@ -8,4 +8,4 @@
  * (meaning extension writers and those embedding the interpreter in an
  * application).
  */
-package org.python.base;
+package org.python.support;

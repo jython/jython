@@ -1,4 +1,4 @@
-package org.python.core.stringlib;
+package org.python.stringlib;
 
 /**
  * An elastic buffer of byte values, somewhat like the

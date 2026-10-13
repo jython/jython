@@ -5,8 +5,9 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
-import org.python.core.Exposed.Member;
-import org.python.core.PyType.Flag;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.Exposed.Member;
 
 /**
  * The Python {@code slice} object.
@@ -15,7 +16,7 @@ public class PySlice extends AbstractPyObject {
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("slice", MethodHandles.lookup()).flagNot(Flag.BASETYPE));
+            new TypeSpec("slice", MethodHandles.lookup()).flagNot(TypeFlag.BASETYPE));
 
     @Member
     final private Object start;

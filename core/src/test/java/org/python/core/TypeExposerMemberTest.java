@@ -14,9 +14,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import org.python.core.Exposed.DocString;
-import org.python.core.Exposed.Member;
+import org.python.types.Exposed;
+import org.python.types.TypeSpec;
+import org.python.types.Exposed.DocString;
+import org.python.types.Exposed.Member;
 
 /**
  * Test that members exposed by a Python <b>type</b> defined in
@@ -50,7 +51,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     private static class ObjectWithMembers extends BaseMembers {
 
         static PyType TYPE =
-                PyType.fromSpec(new PyType.Spec("ObjectWithMembers", MethodHandles.lookup())
+                PyType.fromSpec(new TypeSpec("ObjectWithMembers", MethodHandles.lookup())
                         .adopt(DerivedWithMembers.class));
 
         @Member

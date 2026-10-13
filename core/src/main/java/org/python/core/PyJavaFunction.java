@@ -6,22 +6,25 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
-import org.python.base.InterpreterError;
-import org.python.base.MethodKind;
 import org.python.core.ArgumentError.Mode;
-import org.python.core.Exposed.Getter;
-import org.python.core.Exposed.Member;
+import org.python.support.InterpreterError;
+import org.python.support.MethodKind;
+import org.python.types.FastCall;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
+import org.python.types.Exposed.Getter;
+import org.python.types.Exposed.Member;
 
 /**
  * The Python {@code builtin_function_or_method} object. Java
  * sub-classes represent either a built-in function or a built-in
  * method bound to a particular object.
  */
-public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
+public abstract class PyJavaFunction implements WithClass, FastCall {
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("builtin_function_or_method", MethodHandles.lookup()));
+            new TypeSpec("builtin_function_or_method", MethodHandles.lookup()));
 
     @Override
     public PyType getType() { return TYPE; }

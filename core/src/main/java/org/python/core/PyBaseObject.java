@@ -6,6 +6,7 @@ import java.lang.invoke.MethodHandle;
 import java.util.Map;
 
 import org.python.core.Slot.Signature;
+import org.python.types.WithDict;
 
 /**
  * The Python {@code object} object: all Python objects by default
@@ -152,8 +153,8 @@ public class PyBaseObject extends AbstractPyObject {
          * descriptor, or null if the attribute was not found. It's time to
          * give the object instance dictionary a chance.
          */
-        if (obj instanceof DictPyObject) {
-            Map<Object, Object> d = ((DictPyObject)obj).getDict();
+        if (obj instanceof WithDict) {
+            Map<Object, Object> d = ((WithDict)obj).getDict();
             Object instanceAttr = d.get(name);
             if (instanceAttr != null) {
                 // Found something
@@ -240,8 +241,8 @@ public class PyBaseObject extends AbstractPyObject {
          * There was no data descriptor, so we will place the value in the
          * object instance dictionary directly.
          */
-        if (obj instanceof DictPyObject) {
-            Map<Object, Object> d = ((DictPyObject)obj).getDict();
+        if (obj instanceof WithDict) {
+            Map<Object, Object> d = ((WithDict)obj).getDict();
             try {
                 // There is a dictionary, and this is a put.
                 d.put(name, value);
@@ -311,8 +312,8 @@ public class PyBaseObject extends AbstractPyObject {
          * There was no data descriptor, so we will remove the name from the
          * object instance dictionary directly.
          */
-        if (obj instanceof DictPyObject) {
-            Map<Object, Object> d = ((DictPyObject)obj).getDict();
+        if (obj instanceof WithDict) {
+            Map<Object, Object> d = ((WithDict)obj).getDict();
             try {
                 // There is a dictionary, and this is a delete.
                 Object previous = d.remove(name);

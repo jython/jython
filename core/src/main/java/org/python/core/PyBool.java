@@ -4,6 +4,9 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+
 /**
  * The Python {@code bool} object. The only instances of
  * {@code bool} in Python are {@code False} and {@code True},
@@ -16,10 +19,10 @@ public final class PyBool {
 
     /** The type of Python object this class implements. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("bool", MethodHandles.lookup()) //
+            new TypeSpec("bool", MethodHandles.lookup()) //
                     .canonical(Boolean.class) //
                     .base(PyLong.TYPE) //
-                    .flagNot(PyType.Flag.BASETYPE));
+                    .flagNot(TypeFlag.BASETYPE));
 
     private PyBool() {}  // enforces the doubleton :)
 

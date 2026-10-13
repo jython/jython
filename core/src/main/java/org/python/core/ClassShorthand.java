@@ -6,7 +6,7 @@ package org.python.core;
  * Some shorthands used to construct method signatures,
  * {@code MethodType}s, etc..
  */
-interface ClassShorthand {
+public interface ClassShorthand {
     /** Shorthand for {@code Object.class}. */
     static final Class<Object> O = Object.class;
     /** Shorthand for {@code Class.class}. */

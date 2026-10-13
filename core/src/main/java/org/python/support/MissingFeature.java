@@ -1,4 +1,4 @@
-package org.python.base;
+package org.python.support;
 
 /**
  * Thrown when we reach a combination of circumstances in the

@@ -1,6 +1,6 @@
 // Copyright (c)2022 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-package org.python.core;
+package org.python.types;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
@@ -11,6 +11,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import org.python.core.PyDict;
+import org.python.core.PyTuple;
+import org.python.core.PyType;
+import org.python.core.TypeError;
 
 /**
  * Annotations that may be placed on elements of a Java class
