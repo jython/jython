@@ -1,0 +1,4 @@
+[tools]
+ant = "latest"
+java = "temurin-8"
+
