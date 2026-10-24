@@ -1,4 +1,4 @@
-// Copyright (c)2023 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -10,11 +10,11 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.python.core.stringlib.ByteArrayBuilder;
+import org.python.stringlib.ByteArrayBuilder;
 
 /**
- * Our equivalent to the Python code object ({@code PyCodeObject} in
- * CPython's C API).
+ * A concrete implementation of the Python v3.11 {@code code} object
+ * ({@code PyCodeObject} in CPython's C API).
  */
 public class CPython311Code extends PyCode {
 
@@ -26,15 +26,15 @@ public class CPython311Code extends PyCode {
     final CPythonLayout layout;
 
     /**
-     * Instruction opcodes, not {@code null}. Treat these as unsigned
-     * 16-bit patterns in which the low 8 bits is the argument and the
-     * upper 8 bits is the opcode itself.
+     * Instruction opcodes, not {@code null}. Treat these as unsigned 16-bit
+     * patterns in which the low 8 bits is the argument and the upper 8 bits
+     * is the opcode itself.
      */
     final short[] wordcode;
 
     /**
-     * Table of byte code address ranges mapped to source lines,
-     * presentable as defined in PEP 626.
+     * Table of byte code address ranges mapped to source lines, presentable
+     * as defined in PEP 626.
      */
     // See CPython lnotab_notes.txt
     final byte[] linetable;
@@ -43,29 +43,25 @@ public class CPython311Code extends PyCode {
     final int stacksize;
 
     /**
-     * Table of byte code address ranges mapped to handler addresses in
-     * a compact byte encoding (defined by CPython and appearing in the
+     * Table of byte code address ranges mapped to handler addresses in a
+     * compact byte encoding (defined by CPython and appearing in the
      * serialised form of a {@code code} object).
      */
     final byte[] exceptiontable;
 
     /**
      * Full constructor based on CPython's
-     * {@code PyCode_NewWithPosOnlyArgs}. The {@link #traits} of the
-     * code are supplied here as CPython reports them: as a bit array in
-     * an integer, but the constructor makes a conversion, and it is the
-     * {@link #traits} which should be used at the Java level.
+     * {@code PyCode_NewWithPosOnlyArgs}.
      * <p>
-     * Where the parameters map directly to an attribute of the code
-     * object, that is the best way to explain them. Note that this
-     * factory method is tuned to the needs of {@code marshal.read}
-     * where the serialised form makes no secret of the version-specific
-     * implementation details.
+     * Where the parameters map directly to an attribute of the code object,
+     * that is the best way to explain them. Note that this factory method
+     * is tuned to the needs of {@code marshal.read} where the serialised
+     * form makes no secret of the version-specific implementation details.
      *
      * @param filename {@code co_filename}
      * @param name {@code co_name}
      * @param qualname {@code co_qualname}
-     * @param flags {@code co_flags} a bitmap of traits
+     * @param flags {@code co_flags} a set of code flags
      *
      * @param wordcode {@code co_code} as unsigned 16-bit words
      * @param firstlineno first source line of this code
@@ -85,17 +81,16 @@ public class CPython311Code extends PyCode {
      *     positional-only arguments (including arguments with default
      *     values)
      * @param kwonlyargcount {@code co_kwonlyargcount} the number of
-     *     keyword-only arguments (including arguments with default
-     *     values)
+     *     keyword-only arguments (including arguments with default values)
      *
      * @param stacksize {@code co_stacksize}
      * @param exceptiontable supports exception processing
      */
-    public CPython311Code( //
+    private CPython311Code( //
             // Grouped as _PyCodeConstructor in pycore_code.h
             // Metadata
             String filename, String name, String qualname, //
-            int flags,
+            EnumSet<CodeFlag> flags,
             // The code
             short[] wordcode, int firstlineno, byte[] linetable,
             // Used by the code
@@ -123,25 +118,23 @@ public class CPython311Code extends PyCode {
 
     /**
      * Essentially equivalent to the (strongly-typed) constructor, but
-     * accepting {@code Object} arguments, which are checked for type
-     * here. This is primarily designed for use by the {@code marshal}
-     * module.
+     * accepting {@code Object} arguments, which are checked for type here.
+     * This is primarily designed for use by the {@code marshal} module.
      * <p>
-     * The {@link #traits} of the code are supplied here as CPython
-     * reports them: as a bitmap in an integer, but the constructor
-     * makes a conversion, and it is the {@link #traits} which should be
-     * used at the Java level.
+     * The {@link PyCode#flags} of the code are supplied here as CPython
+     * reports them: as a bitmap in an integer, but this method makes a
+     * conversion, and it is the {@code EnumSet} {@link PyCode#flags} that
+     * should be used at the Java level.
      * <p>
-     * Where the parameters map directly to an attribute of the code
-     * object, that is the best way to explain them. Note that this
-     * factory method is tuned to the needs of {@code marshal.read}
-     * where the serialised form makes no secret of the version-specific
-     * implementation details.
+     * Where the parameters map directly to an attribute of the code object,
+     * that is the best way to explain them. Note that this factory method
+     * is tuned to the needs of {@code marshal.read} where the serialised
+     * form makes no secret of the version-specific implementation details.
      *
      * @param filename ({@code str}) = {@code co_filename}
      * @param name ({@code str}) = {@code co_name}
      * @param qualname ({@code str}) = {@code co_qualname}
-     * @param flags ({@code int}) = @code co_flags} a bitmap of traits
+     * @param flags ({@code int}) = @code co_flags} a bitmap
      *
      * @param bytecode ({@code bytes}) = {@code co_code}
      * @param firstlineno ({@code int}) = {@code co_firstlineno}
@@ -156,8 +149,7 @@ public class CPython311Code extends PyCode {
      * @param posonlyargcount ({@code int}) = {@code co_posonlyargcount}
      * @param kwonlyargcount ({@code int}) = {@code co_kwonlyargcount}
      * @param stacksize ({@code int}) = {@code co_stacksize}
-     * @param exceptiontable ({@code tuple}) supports exception
-     *     processing
+     * @param exceptiontable ({@code tuple}) supports exception processing
      * @return a new code object
      */
     // Compare CPython _PyCode_New in codeobject.c
@@ -178,10 +170,15 @@ public class CPython311Code extends PyCode {
 
         // Order of checks and casts based on _PyCode_Validate FWIW
         if (argcount < posonlyargcount || posonlyargcount < 0 || kwonlyargcount < 0) {
-            throw new ValueError("code: argument counts inconsistent");
+            throw PyErr.format(PyExc.ValueError, "code: argument counts inconsistent");
         }
-        if (stacksize < 0) { throw new ValueError("code: bad stacksize"); }
-        if (flags < 0) { throw new ValueError("code: bad flags argument"); }
+        if (stacksize < 0) { throw PyErr.format(PyExc.ValueError, "code: bad stacksize"); }
+        if (flags < 0) { throw PyErr.format(PyExc.ValueError, "code: bad flags argument"); }
+
+        String _filename = castString(filename, "filename");
+        String _name = castString(name, "name");
+        String _qualname = castString(qualname, "qualname");
+        EnumSet<CodeFlag> _flags = CodeFlag.setFromBits(flags);
 
         PyBytes _bytecode = castBytes(bytecode, "bytecode");
         PyTuple _consts = castTuple(consts, "consts");
@@ -189,18 +186,14 @@ public class CPython311Code extends PyCode {
 
         // Compute a layout from localsplus* arrays
         CPythonLayout _layout =
-                new CPythonLayout(localsplusnames, localspluskinds, totalargs(argcount, flags));
-
-        String _name = castString(name, "name");
-        String _qualname = castString(qualname, "qualname");
-        String _filename = castString(filename, "filename");
+                new CPythonLayout(localsplusnames, localspluskinds, totalargs(argcount, _flags));
 
         PyBytes _linetable = castBytes(linetable, "linetable");
         PyBytes _exceptiontable = castBytes(exceptiontable, "exceptiontable");
 
         // Everything is the right type and size
         return new CPython311Code(//
-                _filename, _name, _qualname, flags, //
+                _filename, _name, _qualname, _flags, //
                 wordcode(_bytecode), firstlineno, _linetable.asByteArray(), //
                 _consts.toArray(), _names, //
                 _layout, //
@@ -251,17 +244,17 @@ public class CPython311Code extends PyCode {
      * Build an {@link ArgParser} to match the code object and given
      * defaults. This is a call-back when constructing a
      * {@code CPython311Function} from this {@code code} object and also
-     * when the code object of a function is replaced. The method
-     * ensures the parser reflects the variable names and the frame
-     * layout implied by the code object. The caller (the function
-     * definition) supplies the default values of arguments on return.
+     * when the code object of a function is replaced. The method ensures
+     * the parser reflects the variable names and the frame layout implied
+     * by the code object. The caller (the function definition) supplies the
+     * default values of arguments on return.
      *
      * @return parser reflecting the frame layout of this code object
      */
     ArgParser buildParser() {
         int regargcount = argcount + kwonlyargcount;
         return new ArgParser(name, layout.localnames, regargcount, posonlyargcount, kwonlyargcount,
-                traits.contains(PyCode.Trait.VARARGS), traits.contains(PyCode.Trait.VARKEYWORDS));
+                flags.contains(CodeFlag.VARARGS), flags.contains(CodeFlag.VARKEYWORDS));
     }
 
     @Override
@@ -269,8 +262,8 @@ public class CPython311Code extends PyCode {
 
     /**
      * Store information about the variables required by a
-     * {@link CPython311Code} object and where they will be stored in
-     * the frame it creates.
+     * {@link CPython311Code} object and where they will be stored in the
+     * frame it creates.
      */
     final static class CPythonLayout implements Layout {
         /** Count of {@code co_varnames} */
@@ -280,13 +273,13 @@ public class CPython311Code extends PyCode {
         /** Count of {@code co_freevars} */
         final int nfreevars;
         /**
-         * Index of first cell (which may be a parameter). Cell variables do
-         * not in general form a contiguous block in the frame.
+         * Index of first cell (which may be a parameter). Cell variables do not
+         * in general form a contiguous block in the frame.
          */
         private final int cell0;
         /**
-         * Index of first free variable. Free variables form a contiguous
-         * block in the frame from this index.
+         * Index of first free variable. Free variables form a contiguous block
+         * in the frame from this index.
          */
         final int free0;
         /** Names of all the variables in frame order. */
@@ -295,9 +288,9 @@ public class CPython311Code extends PyCode {
         private final byte[] kinds;
 
         /**
-         * Construct a {@code Layout} based on a representation used
-         * internally by CPython that appears in the stream {@code marshal}
-         * writes, e.g. in a {@code .pyc} file.
+         * Construct a {@code Layout} based on a representation used internally
+         * by CPython that appears in the stream {@code marshal} writes, e.g. in
+         * a {@code .pyc} file.
          *
          * @param localsplusnames tuple of all the names
          * @param localspluskinds bytes of kinds of variables
@@ -317,15 +310,15 @@ public class CPython311Code extends PyCode {
             this.kinds = new byte[n];
 
             if (kindBytes.size() != n) {
-                throw new ValueError(LENGTHS_UNEQUAL, kindBytes.size(), n);
+                throw PyErr.format(PyExc.ValueError, LENGTHS_UNEQUAL, kindBytes.size(), n);
             }
 
             // Compute indexes into name arrays as we go
             int nloc = 0, nfree = 0, ncell = 0, icell0 = -1;
 
             /*
-             * Step through the localsplus* variables saving the name and kind
-             * of each, and counting the different kinds.
+             * Step through the localsplus* variables saving the name and kind of
+             * each, and counting the different kinds.
              */
             for (int i = 0; i < n; i++) {
 
@@ -421,9 +414,9 @@ public class CPython311Code extends PyCode {
         public int nfreevars() { return nfreevars; }
 
         /**
-         * A {@code Spliterator} of local variable names of the kind
-         * indicated in the mask. The caller must specify where to start
-         * looking in the list and how many names there ought to be.
+         * A {@code Spliterator} of local variable names of the kind indicated
+         * in the mask. The caller must specify where to start looking in the
+         * list and how many names there ought to be.
          *
          * @param mask single bit kind
          * @param count how many of that kind
@@ -467,8 +460,8 @@ public class CPython311Code extends PyCode {
     private static final int CO_FAST_LOCAL = 0x20, CO_FAST_CELL = 0x40, CO_FAST_FREE = 0x80;
 
     /**
-     * Convert the contents of a Python {@code bytes} to 16-bit word
-     * code as expected by the eval-loop in {@link CPython311Frame}.
+     * Convert the contents of a Python {@code bytes} to 16-bit word code as
+     * expected by the eval-loop in {@link CPython311Frame}.
      *
      * @param bytecode as compiled by Python as bytes
      * @return 16-bit word code

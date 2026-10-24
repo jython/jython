@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -59,6 +59,8 @@ class AbstractNumberAPITest extends UnitTestSupport {
         abstract void supports_asSize() throws Throwable;
 
         abstract void supports_asLong() throws Throwable;
+
+        abstract void supports_toFloat() throws Throwable;
     }
 
     /** The {@code int} implementations all behave like this. */
@@ -84,9 +86,8 @@ class AbstractNumberAPITest extends UnitTestSupport {
 
         /**
          * Assert that the argument is an {@code Integer} if it could be so
-         * represented. (Simple unary operations may not normalise this way,
-         * and none of them need to, but it is desirable if it may be done
-         * quickly.)
+         * represented. (Simple unary operations may not normalise this way, and
+         * none of them need to, but it is desirable if it may be done quickly.)
          *
          * @param result to test
          */
@@ -247,6 +248,16 @@ class AbstractNumberAPITest extends UnitTestSupport {
                 assertEquals(v, r);
             }
         }
+
+        @Override
+        @Test
+        void supports_toFloat() throws Throwable {
+            for (Object v : all) {
+                Object r = PyNumber.toFloat(v);
+                double e = PyLong.asBigInteger(v).doubleValue();
+                assertEquals(e, r);
+            }
+        }
     }
 
     @Nested
@@ -271,4 +282,5 @@ class AbstractNumberAPITest extends UnitTestSupport {
             other(0, 932, Integer.MIN_VALUE, ZERO, TEN.negate(), TEN.pow(10));
         }
     }
+
 }

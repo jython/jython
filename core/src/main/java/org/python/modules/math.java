@@ -1,12 +1,12 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.modules;
 
 import org.python.core.PyTuple;
 
 /**
- * Stop-gap {@code math} module holding just the things we use form
- * code at present. Not exposed to Python.
+ * Stop-gap {@code math} module holding just the things we use form code
+ * at present. Not exposed to Python.
  */
 public class math {
 
@@ -40,6 +40,6 @@ public class math {
                 break;
         }
 
-        return new PyTuple(mantissa, exponent);
+        return PyTuple.of(mantissa, exponent);
     }
 }
