@@ -1,6 +1,5 @@
-// Copyright (c)2023 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
-// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
 import java.lang.invoke.MethodHandles;
@@ -16,24 +15,26 @@ import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySlice.Indices;
+import org.python.core.PyUtil.NoConversion;
 import org.python.support.InterpreterError;
+import org.python.types.Exposed.DocString;
+import org.python.types.Exposed.PythonMethod;
+import org.python.types.Feature;
 import org.python.types.TypeSpec;
 import org.python.types.WithClass;
 
 /**
  * The Python {@code list} object that is also a Java
- * {@code List<Object>}. Operations in both APIs are synchronised
- * for safety against concurrent threads.
+ * {@code List<Object>}. Operations in both APIs are synchronised for
+ * safety against concurrent threads.
  * <p>
- * It is {@code synchronized} so that competing threads should be
- * able to access it with roughly the same protection against
- * concurrent modification that CPython offers. There are also
- * necessary safeguards during {@code sort()} to detect modification
- * from within the current thread as a side effect of comparison.
- * Java brings its own safeguard within iterators against structural
- * concurrent modification.
+ * It is {@code synchronized} so that competing threads should be able
+ * to access it with roughly the same protection against concurrent
+ * modification that CPython offers. There are also necessary safeguards
+ * during {@code sort()} to detect modification from within the current
+ * thread as a side effect of comparison. Java brings its own safeguard
+ * within iterators against structural concurrent modification.
  *
  * @implNote The design follows that in Jython 2 with a private Java
  *     list member to which operations are delegated directly or
@@ -41,11 +42,12 @@ import org.python.types.WithClass;
  *     through a private delegate member where in the former design
  *     behaviour was inherited.
  */
-// @ExposedType(name = "list", base = PyObject.class, doc = BuiltinDocs.list_doc)
 public class PyList implements List<Object>, WithClass {
 
-    public static final PyType TYPE =
-            PyType.fromSpec(new TypeSpec("list", MethodHandles.lookup()));
+    /** The Python type object for {@code list}. */
+    public static final PyType TYPE = PyType.fromSpec( //
+            new TypeSpec("list", MethodHandles.lookup()) //
+                    .add(Feature.BASETYPE, Feature.SEQUENCE_PROTOCOL));
 
     /** The Python type of this instance. */
     protected final PyType type;
@@ -57,13 +59,13 @@ public class PyList implements List<Object>, WithClass {
     private final ListDelegate delegate = new ListDelegate();
 
     /**
-     * Synchronisation prevents modification by competing threads during
-     * an operation, but does not defend against actions within that
-     * operation by the same thread. One context where this occurs is
-     * {@code sort()}, where the implementation of {@code __lt__} on
-     * elements can, in principle, mutate the list being sorted. This
-     * variable is cleared at the beginning of {@code sort()} and set by
-     * any operation that modifies the list.
+     * Synchronisation prevents modification by competing threads during an
+     * operation, but does not defend against actions within that operation
+     * by the same thread. One context where this occurs is {@code sort()},
+     * where the implementation of {@code __lt__} on elements can, in
+     * principle, mutate the list being sorted. This variable is cleared at
+     * the beginning of {@code sort()} and set by any operation that
+     * modifies the list.
      */
     private boolean changed = false;
 
@@ -80,8 +82,8 @@ public class PyList implements List<Object>, WithClass {
     }
 
     /**
-     * Construct a Python {@code list} object, specifying actual type
-     * and initial capacity.
+     * Construct a Python {@code list} object, specifying actual type and
+     * initial capacity.
      *
      * @param type actual type
      * @param initialCapacity capacity
@@ -91,8 +93,7 @@ public class PyList implements List<Object>, WithClass {
     }
 
     /**
-     * Construct a Python {@code list} object, specifying initial
-     * capacity.
+     * Construct a Python {@code list} object, specifying initial capacity.
      *
      * @param initialCapacity capacity
      */
@@ -110,9 +111,9 @@ public class PyList implements List<Object>, WithClass {
     public PyList() { this(TYPE, 0); }
 
     /**
-     * Construct a Python {@code list} object, specifying actual type
-     * and initial contents. The contents will be a (shallow) copy of
-     * the collection.
+     * Construct a Python {@code list} object, specifying actual type and
+     * initial contents. The contents will be a (shallow) copy of the
+     * collection.
      *
      * @param type actual type
      * @param c initial contents
@@ -123,31 +124,35 @@ public class PyList implements List<Object>, WithClass {
     }
 
     /**
-     * Construct a Python {@code list} object, specifying initial
-     * contents. The contents will be a (shallow) copy of the
-     * collection.
+     * Construct a Python {@code list} object, specifying initial contents.
+     * The contents will be a (shallow) copy of the collection.
      *
      * @param c initial contents
      */
     public PyList(Collection<?> c) { this(TYPE, c); }
 
     /**
-     * Construct a {@code list} with initial contents from an array
-     * slice.
+     * Construct a {@code list} with initial contents from an array slice.
      *
      * @param a the array
      * @param start of slice
      * @param count of elements to take
      */
-    PyList(Object[] a, int start, int count) {
+    public PyList(Object[] a, int start, int count) {
         this(TYPE, count);
         int stop = start + count;
         for (int i = start; i < stop; i++) { add(a[i]); }
     }
 
     /**
-     * Return a Python {@code list} object, specifying initial
-     * contents.
+     * Construct a {@code list} with initial contents from an array.
+     *
+     * @param a the array
+     */
+    public PyList(Object[] a) { this(a, 0, a.length); }
+
+    /**
+     * Return a Python {@code list} object, specifying initial contents.
      *
      * @param elements initial element values
      * @return list of elements
@@ -191,49 +196,34 @@ public class PyList implements List<Object>, WithClass {
     */
     // @formatter:on
 
-    // @ExposedMethod(doc = BuiltinDocs.list___len___doc)
-    synchronized int __len__() {
-        return size();
-    }
+    @SuppressWarnings("unused")
+    private synchronized int __len__() { return size(); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___ne___doc)
-    synchronized Object __ne__(Object o) {
-        return delegate.cmp(o, Comparison.NE);
-    }
+    @SuppressWarnings("unused")
+    private synchronized Object __ne__(Object o) { return delegate.cmp(o, Comparison.NE); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___eq___doc)
-    synchronized Object __eq__(Object o) {
-        return delegate.cmp(o, Comparison.EQ);
-    }
+    @SuppressWarnings("unused")
+    private synchronized Object __eq__(Object o) { return delegate.cmp(o, Comparison.EQ); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___lt___doc)
-    synchronized Object __lt__(Object o) {
-        return delegate.cmp(o, Comparison.LT);
-    }
+    @SuppressWarnings("unused")
+    private synchronized Object __lt__(Object o) { return delegate.cmp(o, Comparison.LT); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___le___doc)
-    synchronized Object __le__(Object o) {
-        return delegate.cmp(o, Comparison.LE);
-    }
+    @SuppressWarnings("unused")
+    private synchronized Object __le__(Object o) { return delegate.cmp(o, Comparison.LE); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___gt___doc)
-    synchronized Object __gt__(Object o) {
-        return delegate.cmp(o, Comparison.GT);
-    }
+    @SuppressWarnings("unused")
+    private synchronized Object __gt__(Object o) { return delegate.cmp(o, Comparison.GT); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___ge___doc)
-    synchronized Object __ge__(Object o) {
-        return delegate.cmp(o, Comparison.GE);
-    }
+    @SuppressWarnings("unused")
+    private synchronized Object __ge__(Object o) { return delegate.cmp(o, Comparison.GE); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___imul___doc)
     // @formatter:off
     /*
     synchronized Object __imul__(Object o) {
         if (!o.isIndex()) {
             return null;
         }
-        int count = o.asIndex(Py.OverflowError);
+        int count = o.asIndex(PyExc.OverflowError);
 
         int size = size();
         if (size == 0 || count == 1) {
@@ -246,7 +236,7 @@ public class PyList implements List<Object>, WithClass {
         }
 
         if (size > Integer.MAX_VALUE / count) {
-            throw new MemoryError("");
+            throw PyErr.format(PyExc.MemoryError, "");
         }
 
         int newSize = size * count;
@@ -263,48 +253,53 @@ public class PyList implements List<Object>, WithClass {
     */
     // @formatter:on
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___mul___doc)
-    synchronized Object __mul__(Object n) throws Throwable { return delegate.__mul__(n); }
+    @SuppressWarnings("unused")
+    private synchronized Object __mul__(Object n) throws Throwable { return delegate.__mul__(n); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___rmul___doc)
-    synchronized Object __rmul__(Object n) throws Throwable { return delegate.__mul__(n); }
+    @SuppressWarnings("unused")
+    private synchronized Object __rmul__(Object n) throws Throwable { return delegate.__mul__(n); }
 
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___add___doc)
-    synchronized Object __add__(Object o) throws Throwable { return delegate.__add__(o); }
+    @SuppressWarnings("unused")
+    private synchronized Object __add__(Object o) throws Throwable { return delegate.__add__(o); }
 
-    // @ExposedMethod(type = MethodType.BINARY)
-    synchronized Object __radd__(Object o) throws Throwable { return delegate.__radd__(o); }
+    @SuppressWarnings("unused")
+    private synchronized Object __radd__(Object o) throws Throwable { return delegate.__radd__(o); }
 
-    // @ExposedMethod(doc = BuiltinDocs.list___contains___doc)
-    synchronized boolean __contains__(Object o) throws Throwable {
+    @SuppressWarnings("unused")
+    private synchronized Object __iadd__(Object o) throws Throwable {
+        changed = true;
+        extend(o);
+        return this;
+    }
+
+    @SuppressWarnings("unused")
+    private synchronized boolean __contains__(Object o) throws Throwable {
         return delegate.__contains__(o);
     }
 
-    // @ExposedMethod(doc = BuiltinDocs.list___delitem___doc)
-    synchronized void __delitem__(Object index) throws Throwable {
+    @SuppressWarnings("unused")
+    private synchronized void __delitem__(Object index) throws Throwable {
         changed = true;
         delegate.__delitem__(index);
     }
 
-    // @ExposedMethod(doc = BuiltinDocs.list___setitem___doc)
-    synchronized void __setitem__(Object index, Object value) throws Throwable {
+    @SuppressWarnings("unused")
+    private synchronized void __setitem__(Object index, Object value) throws Throwable {
         changed = true;
         delegate.__setitem__(index, value);
     }
 
-    // @ExposedMethod(doc = BuiltinDocs.list___getitem___doc)
-    synchronized Object __getitem__(Object index) throws Throwable {
+    @SuppressWarnings("unused")
+    private synchronized Object __getitem__(Object index) throws Throwable {
         return delegate.__getitem__(index);
     }
 
     // @formatter:off
     /*
-    // @ExposedMethod(doc = BuiltinDocs.list___iter___doc)
     Object __iter__() {
         return new PyListIterator(this);
     }
 
-    // @ExposedMethod(doc = BuiltinDocs.list___reversed___doc)
     synchronized PyIterator __reversed__() {
         return new PyReversedIterator(this);
     }
@@ -313,7 +308,7 @@ public class PyList implements List<Object>, WithClass {
 
     @Override
     public String toString() {
-        // XXX Use repr for elements and guard against recursive references
+        // FIXME Use repr for elements and guard against recursion
         StringJoiner sj = new StringJoiner(", ", "[", "]");
         for (Object v : list) { sj.add(v.toString()); }
         return sj.toString();
@@ -346,50 +341,63 @@ public class PyList implements List<Object>, WithClass {
     */
     // @formatter:on
 
+    // Methods -------------------------------------------------------
+
     /**
      * Add a single element to the end of list.
      *
      * @param o the element to add.
      */
-    // @ExposedMethod(doc = BuiltinDocs.list_append_doc)
-    final synchronized void list_append(Object o) {
+    @PythonMethod
+    @DocString("Append object to the end of the list.")
+    final synchronized void append(Object o) {
         changed = true;
         list.add(o);
     }
 
     /**
-     * Remove all items from the list (same as {@code del s[:]})
+     * Remove all items from the list (same as {@code del s[:]}).
      */
-    // @ExposedMethod in Python 3
-    final synchronized void list_clear() {
+    @Override
+    @PythonMethod
+    @DocString("Remove all items from list.")
+    public final synchronized void clear() {
         changed = true;
         list.clear();
     }
 
     /**
-     * Return the number elements in the list that are Python-equal to
-     * the argument.
+     * Return the number elements in the list that are Python-equal to the
+     * argument.
      *
      * @param v the value to test for.
      * @return the number of occurrences.
      * @throws Throwable from the implementation of {@code __eq__}
      */
-    // @ExposedMethod(doc = BuiltinDocs.list_count_doc)
-    final synchronized int list_count(Object v) throws Throwable { return delegate.count(v); }
+    @PythonMethod
+    @DocString("Return number of occurrences of value.")
+    final synchronized int count(Object v) throws Throwable { return delegate.count(v); }
 
     /**
-     * Return smallest index where an element in the list Python-equals the argument.
+     * Return smallest index where an element in the list Python-equals the
+     * argument.
      *
      * @param v the value to look for.
      * @param start first index to test
      * @param stop first index not to test
      * @return index of the occurrence
-     * @throws ValueError if {@code v} not found
-     * @throws TypeError from bad {@code start} and {@code stop} types
+     * @throws PyBaseException (ValueError) if {@code v} not found
+     * @throws PyBaseException (TypeError) from bad {@code start} and
+     *     {@code stop} types
      * @throws Throwable from errors other than indexing
      */
-    // @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.list_index_doc)
-    final synchronized int list_index(Object v, Object start, Object stop) throws TypeError, Throwable {
+    @PythonMethod
+    @DocString("""
+            Return first index of value.
+
+            Raises ValueError if the value is not present.""")
+    final synchronized int index(Object v, Object start, Object stop)
+            throws PyBaseException, Throwable {
         return delegate.index(v, start, stop);
     }
 
@@ -399,36 +407,41 @@ public class PyList implements List<Object>, WithClass {
      *
      * @param index the position where the element will be inserted.
      * @param o the element to insert.
-     * @throws TypeError from bad {@code index} type
+     * @throws PyBaseException (TypeError) from bad {@code index} type
      * @throws Throwable from other conversion errors
      */
-    // @ExposedMethod(doc = BuiltinDocs.list_insert_doc)
-    final synchronized void list_insert(Object index, Object o) throws TypeError, Throwable {
+    @PythonMethod
+    @DocString("Insert object before index.")
+    final synchronized void insert(Object index, Object o) throws PyBaseException, Throwable {
         changed = true;
         delegate.insert(index, o);
     }
 
     /**
-     * Remove from the list the first element that is Python-equal to
-     * the argument. Same as {@code del s[s.index(x)]}.
+     * Remove from the list the first element that is Python-equal to the
+     * argument. Same as {@code del s[s.index(x)]}.
      *
      * @param v the element to search for and remove.
      * @throws Throwable from the implementation of {@code __eq__}
      */
-    // @ExposedMethod(doc = BuiltinDocs.list_remove_doc)
+    @PythonMethod("remove")
+    @DocString("""
+            Remove first occurrence of value.
+
+            Raises ValueError if the value is not present.""")
     final synchronized void list_remove(Object v) throws Throwable {
         int i = find(v);
         if (i >= 0) {
             changed = true;
             list.remove(i);
         } else {
-            throw new ValueError("%s.remove(x): x not in list", getType().name);
+            throw PyErr.format(PyExc.ValueError, "%s.remove(x): x not in list",
+                    getType().getName());
         }
     }
 
     /**
-     * Return the index of {@code v} in {@link #list} or -1 if not
-     * found.
+     * Return the index of {@code v} in {@link #list} or -1 if not found.
      *
      * @param v the element to search for and remove.
      * @return the index of {@code v} or -1 if not found.
@@ -443,11 +456,12 @@ public class PyList implements List<Object>, WithClass {
     }
 
     /**
-     * Reverses the items of s in place. The reverse() methods modify the list in place for economy
-     * of space when reversing a large list. It doesn't return the reversed list to remind you of
-     * this side effect.
+     * Reverses the items of s in place. The reverse() methods modify the
+     * list in place for economy of space when reversing a large list. It
+     * doesn't return the reversed list to remind you of this side effect.
      */
-    // @ExposedMethod(doc = BuiltinDocs.list_reverse_doc)
+    @PythonMethod
+    @DocString("Reverse *IN PLACE*.")
     final synchronized void reverse() {
         Collections.reverse(list);
         changed = true;
@@ -459,60 +473,58 @@ public class PyList implements List<Object>, WithClass {
      * @param n the index of the element to remove and return.
      * @return the popped item
      */
-    // @ExposedMethod(defaults = "-1", doc = BuiltinDocs.list_pop_doc)
-    final synchronized Object list_pop(int n) {
+    @PythonMethod
+    @DocString("""
+            Remove and return item at index (default last).
+
+            Raises IndexError if list is empty or index is out of range.""")
+    final synchronized Object pop(int n) {
         int size = size();
         if (size == 0) {
-            throw new IndexError("pop from empty list");
+            throw PyErr.format(PyExc.IndexError, "pop from empty list");
         } else {
             if (n < 0) { n += size; }
-            if (n < 0 || n >= size) { throw new IndexError("pop index out of range"); }
+            if (n < 0 || n >= size) {
+                throw PyErr.format(PyExc.IndexError, "pop index out of range");
+            }
             changed = true;
             return list.remove(n);
         }
     }
 
     /**
-     * Append the elements in the argument sequence to the end of the
-     * list, {@code s[len(s):len(s)] = o}.
+     * Append the elements in the argument sequence to the end of the list,
+     * {@code s[len(s):len(s)] = o}.
      *
      * @param o the sequence of items to append to the list.
      * @throws Throwable from attempting to get an iterator on {@code o}
      */
-    // @ExposedMethod(doc = BuiltinDocs.list_extend_doc)
-    final synchronized void list_extend(Object o) throws Throwable {
-        list_extend(o, null);
-    }
+    @PythonMethod
+    @DocString("Extend list by appending elements from the iterable.")
+    final synchronized void extend(Object o) throws Throwable { extend(o, null); }
 
     /**
-     * Append the elements in the argument sequence to the end of the
-     * list, {@code s[len(s):len(s)] = o}.
+     * Append the elements in the argument sequence to the end of the list,
+     * {@code s[len(s):len(s)] = o}.
      *
      * @param <E> the type of exception to throw
      * @param o the sequence of items to append to the list.
-     * @param exc a supplier (e.g. lambda expression) for the exception
-     *     to throw if an iterator cannot be formed (or {@code null} for
-     *     a default {@code TypeError})
+     * @param exc a supplier (e.g. lambda expression) for the exception to
+     *     throw if an iterator cannot be formed (or {@code null} for a
+     *     default {@code TypeError})
      * @throws E to throw if an iterator cannot be formed
      * @throws Throwable from the implementation of {@code o}.
      */
-    final <E extends PyException> void list_extend(Object o, Supplier<E> exc) throws E, Throwable {
+    final <E extends PyBaseException> void extend(Object o, Supplier<E> exc) throws E, Throwable {
         changed = true;
         list.addAll(PySequence.fastList(o, exc));
-    }
-
-    // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___iadd___doc)
-    synchronized Object __iadd__(Object o) throws Throwable {
-        changed = true;
-        list_extend(o);
-        return this;
     }
 
     /**
      * Sort the items of the list in place, using only &lt; comparisons
      * between items. Exceptions are not suppressed &mdash; if any
-     * comparison operations fail, the entire sort operation will fail
-     * (and the list will likely be left in a partially modified state).
+     * comparison operations fail, the entire sort operation will fail (and
+     * the list will likely be left in a partially modified state).
      *
      * @param key specifies a function of one argument that is used to
      *     extract a comparison key from each list element, e.g.
@@ -521,9 +533,18 @@ public class PyList implements List<Object>, WithClass {
      *     were reversed.
      * @throws Throwable from object comparison
      */
-    // @ExposedMethod(doc = BuiltinDocs.list_sort_doc)
-    final synchronized void sort(Function<Object, Object> key, boolean reverse)
-            throws Throwable {
+    @PythonMethod
+    @DocString("""
+            Sort the list in ascending order and return None.
+
+            The sort is in-place (i.e. the list itself is modified) and stable (i.e. the
+            order of two equal elements is maintained)
+
+            If a key function is given, apply it once to each list item and sort them,
+            ascending or descending, according to their function values.
+
+            The reverse flag can be set to sort in descending order""")
+    final synchronized void sort(Function<Object, Object> key, boolean reverse) throws Throwable {
         // Python: sort(*, key=None, reverse=False)
         if (key == null) {
             sortOnValue(reverse);
@@ -552,8 +573,8 @@ public class PyList implements List<Object>, WithClass {
     }
 
     /**
-     * During {@link PyList#sortOnKey(Function, boolean)}, we actually
-     * sort a list of these key-value objects.
+     * During {@link PyList#sortOnKey(Function, boolean)}, we actually sort
+     * a list of these key-value objects.
      */
     private static class KV {
 
@@ -572,10 +593,7 @@ public class PyList implements List<Object>, WithClass {
         // Make a copy of the list as key-value pairs in kvList
         int size = list.size();
         final ArrayList<KV> kvList = new ArrayList<KV>(size);
-        for (Object value : list) {
-            Object k = keyfunc.apply(value);
-            kvList.add(new KV(k, value));
-        }
+        for (Object value : list) { Object k = keyfunc.apply(value); kvList.add(new KV(k, value)); }
 
         // We shall sort kvList comparing keys
         final ListElementComparator<KV> cmp = new ListElementComparator<KV>(reverse) {
@@ -597,8 +615,6 @@ public class PyList implements List<Object>, WithClass {
         for (int i = 0; i < size; i++) { list.set(i, kvList.get(i).value); }
         changed = true;
     }
-
-    public PyTuple __getnewargs__() { return new PyTuple(new PyTuple(list)); }
 
     // List interface ------------------------------------------------
 
@@ -626,11 +642,7 @@ public class PyList implements List<Object>, WithClass {
         return addAll(0, c);
     }
 
-    @Override
-    public synchronized void clear() {
-        changed = true;
-        list.clear();
-    }
+    // PyList.clear implements List.clear
 
     @Override
     public synchronized boolean contains(Object o) {
@@ -646,7 +658,8 @@ public class PyList implements List<Object>, WithClass {
     public synchronized boolean containsAll(Collection<?> c) {
         try {
             for (Object o : c) {
-                // Use the Python definition of equality (which may throw)
+                // Use the Python definition of equality (which may
+                // throw)
                 if (!delegate.__contains__(o)) { return false; }
             }
             return true;
@@ -656,19 +669,13 @@ public class PyList implements List<Object>, WithClass {
     }
 
     @Override
-    public synchronized Object get(int index) {
-        return list.get(index);
-    }
+    public synchronized Object get(int index) { return list.get(index); }
 
     @Override
-    public synchronized int indexOf(Object o) {
-        return list.indexOf(o);
-    }
+    public synchronized int indexOf(Object o) { return list.indexOf(o); }
 
     @Override
-    public synchronized boolean isEmpty() {
-        return list.isEmpty();
-    }
+    public synchronized boolean isEmpty() { return list.isEmpty(); }
 
     @Override
     public Iterator<Object> iterator() {
@@ -697,14 +704,10 @@ public class PyList implements List<Object>, WithClass {
     }
 
     @Override
-    public synchronized int lastIndexOf(Object o) {
-        return list.lastIndexOf(o);
-    }
+    public synchronized int lastIndexOf(Object o) { return list.lastIndexOf(o); }
 
     @Override
-    public ListIterator<Object> listIterator() {
-        return listIterator(0);
-    }
+    public ListIterator<Object> listIterator() { return listIterator(0); }
 
     @Override
     public ListIterator<Object> listIterator(final int index) {
@@ -779,7 +782,8 @@ public class PyList implements List<Object>, WithClass {
         for (int i = 0; i < n; i++) {
             Object item = list.get(i);
             for (Object o : c) {
-                // Use the Python definition of equality (which may throw)
+                // Use the Python definition of equality (which may
+                // throw)
                 try {
                     if (Abstract.richCompareBool(o, item, Comparison.EQ)) {
                         erasures.add(i);
@@ -803,12 +807,10 @@ public class PyList implements List<Object>, WithClass {
             Object item = list.get(i);
             boolean retain = false;
             for (Object o : c) {
-                // Use the Python definition of equality (which may throw)
+                // Use the Python definition of equality (which may
+                // throw)
                 try {
-                    if (Abstract.richCompareBool(o, item, Comparison.EQ)) {
-                        retain = true;
-                        break;
-                    }
+                    if (Abstract.richCompareBool(o, item, Comparison.EQ)) { retain = true; break; }
                 } catch (Throwable e) {
                     // Treat as non-match
                 }
@@ -826,23 +828,21 @@ public class PyList implements List<Object>, WithClass {
     }
 
     @Override
-    public synchronized int size() {
-        return list.size();
-    }
+    public synchronized int size() { return list.size(); }
 
     @Override
     public synchronized List<Object> subList(int fromIndex, int toIndex) {
         /*
-         * XXX There is a difficulty here in our management of concurrency.
-         * The sub-list is an *unsynchronised* view on this PyList's private
-         * list variable, so it bypasses the synchronisation in the PyList
-         * wrapper. Here, and in Jython 2, we wrap this view in a new
-         * PyList. Although that is synchronised (on itself), it is not
-         * synchronised on this PyList and concurrent access is possible
-         * through the two objects. Compare
-         * java.util.Collections.SynchronizedRandomAccessList<E>, where the
-         * problem is solved by sharing a mutex.
+         * XXX There is a difficulty here in our management of concurrency. The
+         * sub-list is an *unsynchronised* view on this PyList's private list
+         * variable, so it bypasses the synchronisation in the PyList wrapper.
+         * Here, and in Jython 2, we wrap this view in a new PyList. Although
+         * that is synchronised (on itself), it is not synchronised on this
+         * PyList and concurrent access is possible through the two objects.
+         * Compare java.util.Collections.SynchronizedRandomAccessList<E>, where
+         * the problem is solved by sharing a mutex.
          */
+        // Note private constructor wraps same storage
         return new PyList(TYPE, list.subList(fromIndex, toIndex));
     }
 
@@ -902,9 +902,8 @@ public class PyList implements List<Object>, WithClass {
     // Supporting code -----------------------------------------------
 
     /**
-     * This comparator is used in
-     * {@link PyList#sort(Function, boolean)}, sub-classed for the type
-     * of sort.
+     * This comparator is used in {@link PyList#sort(Function, boolean)},
+     * sub-classed for the type of sort.
      *
      * @param <T> type of element to sort (on practice {@code Object} or
      *     {@code KV}.
@@ -923,17 +922,13 @@ public class PyList implements List<Object>, WithClass {
          * @return the exception raised by any application of
          *     {@link #lessThan(Object, Object)}
          */
-        Throwable getRaisedException() {
-            return comparatorException;
-        }
+        Throwable getRaisedException() { return comparatorException; }
 
         /**
          * @return whether an exception was raised by any application of
          *     {@link #lessThan(Object, Object)}
          */
-        boolean raisedException() {
-            return comparatorException != null;
-        }
+        boolean raisedException() { return comparatorException != null; }
 
         /**
          * Defines the comparison operation to use.
@@ -953,32 +948,19 @@ public class PyList implements List<Object>, WithClass {
             } catch (Throwable pye) {
                 // Stash the exception to rethrow later
                 comparatorException = pye;
-                // XXX made up answer may violate contract of compare. Why stash?
+                // XXX made up answer may violate contract of compare.
+                // Why stash?
                 return 0;
             } finally {
                 // Detect change occurring during the comparisons
-                if (changed) { throw new ValueError("list modified during sort"); }
+                if (changed) { throw PyErr.format(PyExc.ValueError, "list modified during sort"); }
             }
         }
     }
 
     /**
-     * Accept an index, treating negative values as end-relative, and
-     * bound it to the sequence range. It is not an error for the index
-     * value to fall outside the valid range. (It is simply clipped to
-     * the nearer end.)
-     *
-     * @param index as presented
-     * @return bounded {@code 0 <= index <= list.size()}
-     */
-    private int boundedIndex(int index) {
-        int L = list.size();
-        return index < 0 ? Math.max(0, index + L) : Math.min(L, index);
-    }
-
-    /**
-     * Given an ordered ascending list of indices into {@link #list},
-     * remove the elements at those indices.
+     * Given an ordered ascending list of indices into {@link #list}, remove
+     * the elements at those indices.
      *
      * @param erasures to remove
      * @return {@code true} if {@code erasures} is not empty
@@ -991,10 +973,10 @@ public class PyList implements List<Object>, WithClass {
 
         /*
          * p, q are pointers into the list. We copy elements from list[q] to
-         * list[p], for p<q. r is the position of the next erasure. Whenever
-         * q reaches an erasure, we advance q over it without copy. Up to
-         * the first erasure, no copies are necessary, so we start like
-         * this, at he first erasure:
+         * list[p], for p<q. r is the position of the next erasure. Whenever q
+         * reaches an erasure, we advance q over it without copy. Up to the
+         * first erasure, no copies are necessary, so we start like this, at he
+         * first erasure:
          */
         int r = ei.next(), p = r, q = r + 1, n = list.size();
         while (ei.hasNext()) {
@@ -1016,14 +998,14 @@ public class PyList implements List<Object>, WithClass {
 
     /**
      * Wrap the {@link #list} of this {@code PyList} as a
-     * {@link PySequence.Delegate}, for the management of indexing and
-     * other sequence operations. Note that this class is not
-     * synchronised, but relies on the caller holding the lock on the
-     * containing {@code PyList} method.
+     * {@link PySequence.Delegate}, for the management of indexing and other
+     * sequence operations. Note that this class is not synchronised, but
+     * relies on the caller holding the lock on the containing
+     * {@code PyList} method.
      */
     private class ListDelegate extends PySequence.Delegate<Object, PyList> {
         @Override
-        public int length() { return list.size(); };
+        public int length() { return list.size(); }
 
         @Override
         public PyType getType() { return PyList.this.getType(); }
@@ -1042,10 +1024,7 @@ public class PyList implements List<Object>, WithClass {
             else {
                 v = new PyList(TYPE, slice.slicelength);
                 int i = slice.start;
-                for (int j = 0; j < slice.slicelength; j++) {
-                    v.add(list.get(i));
-                    i += slice.step;
-                }
+                for (int j = 0; j < slice.slicelength; j++) { v.add(list.get(i)); i += slice.step; }
             }
             return v;
         }
@@ -1060,13 +1039,13 @@ public class PyList implements List<Object>, WithClass {
              * would also try __tojava__. Necessary?
              */
             List<Object> v = PySequence.fastList(value,
-                    () -> new TypeError("can only assign an iterable to a slice"));
-            if (v == PyList.this) { v = new ArrayList<>(list); } // self[slice] = self
+                    () -> PyErr.format(PyExc.TypeError, "can only assign an iterable to a slice"));
+            // If assignment is self[slice] = self, work with a copy.
+            if (v == PyList.this) { v = new ArrayList<>(list); }
 
             // Now we have a List of values to assign
             final int N = v.size(), M = slice.slicelength, D = N - M;
             final int step = slice.step;
-            ;
             if (D != 0) {
                 if (step == 1) {
                     // Contiguous slice requiring change of size
@@ -1081,12 +1060,14 @@ public class PyList implements List<Object>, WithClass {
                         // v is longer by D than slice it replaces.
                         // Copy M elements to [start:stop-D]
                         Collections.copy(list.subList(start, start + M), v.subList(0, M));
-                        // Insert the last D elements of v at the slice stop.
+                        // Insert the last D elements of v at the slice
+                        // stop.
                         list.addAll(stop, v.subList(N - D, N));
                     }
                 } else {
-                    // Extended slice, but not the same size as the value
-                    throw new ValueError(
+                    // Extended slice, but not the same size as the
+                    // value
+                    throw PyErr.format(PyExc.ValueError,
                             "attempt to assign sequence of size %d to extended slice of size %d", N,
                             M);
                 }
@@ -1097,9 +1078,7 @@ public class PyList implements List<Object>, WithClass {
         }
 
         @Override
-        public void delItem(int i) throws Throwable {
-            list.remove(i);
-        }
+        public void delItem(int i) throws Throwable { list.remove(i); }
 
         @Override
         public void delSlice(PySlice.Indices slice) throws Throwable {
@@ -1109,9 +1088,9 @@ public class PyList implements List<Object>, WithClass {
                 /*
                  * We will step through the list removing items. If we are stepping
                  * backwards, the increments will be slice.step (negative), but if
-                 * stepping forwards, slice.step-1, because the items to right will
-                 * have moved one closer, due to the deletion. (There are faster
-                 * ways, but how often will it matter?)
+                 * stepping forwards, slice.step-1, because the items to right will have
+                 * moved one closer, due to the deletion. (There are faster ways, but
+                 * how often will it matter?)
                  */
                 final int inc = step > 0 ? step - 1 : step;
                 if (inc == 0) {
@@ -1154,8 +1133,8 @@ public class PyList implements List<Object>, WithClass {
         /**
          * {@inheritDoc}
          * <p>
-         * The iterator returned for the {@code ListDelegate} is
-         * specifically a {@code ListIterator<Object>}.
+         * The iterator returned for the {@code ListDelegate} is specifically a
+         * {@code ListIterator<Object>}.
          */
         @Override
         public ListIterator<Object> iterator() { return list.listIterator(); }
@@ -1179,9 +1158,9 @@ public class PyList implements List<Object>, WithClass {
         }
 
         /**
-         * Implementation of the {@code count} method of sequences.
-         * Determine the number of times the sequence contains an element
-         * equal to the argument.
+         * Implementation of the {@code count} method of sequences. Determine
+         * the number of times the sequence contains an element equal to the
+         * argument.
          *
          * @param v value to match in the client
          * @return the number of times found
@@ -1203,33 +1182,31 @@ public class PyList implements List<Object>, WithClass {
          * @param index position to insert
          * @param v value to insert
          * @return the number of times found
-         * @throws TypeError from bad {@code index} type
+         * @throws PyBaseException (TypeError) from bad {@code index} type
          * @throws Throwable from other conversion errors
          */
-        public void insert(Object index, Object v) throws TypeError, Throwable {
+        public void insert(Object index, Object v) throws PyBaseException, Throwable {
             list.add(boundedIndex(index), v);
         }
 
         /**
-         * Accept an object index, treating negative values as end-relative,
-         * and bound it to the sequence range. The index object must be
-         * convertible by
-         * {@link PyNumber#asSize(Object, java.util.function.Function)
+         * Accept an object index, treating negative values as end-relative, and
+         * bound it to the sequence range. The index object must be convertible
+         * by {@link PyNumber#asSize(Object, java.util.function.Function)
          * PyNumber.asSize}. It is not an error for the index value to fall
-         * outside the valid range. (It is simply clipped to the nearer
-         * end.)
+         * outside the valid range. (It is simply clipped to the nearer end.)
          *
          * @param index purported index (not {@code null})
          * @return converted index
-         * @throws TypeError from bad {@code index} type
+         * @throws PyBaseException (TypeError) from bad {@code index} type
          * @throws Throwable from other conversion errors
          */
-        protected int boundedIndex(Object index) throws TypeError, Throwable {
+        protected int boundedIndex(Object index) throws PyBaseException, Throwable {
 
             // Convert the argument (or raise a TypeError)
             int i, L = length();
             if (PyNumber.indexCheck(index)) {
-                i = PyNumber.asSize(index, IndexError::new);
+                i = PyNumber.asSize(index, s -> PyErr.format(PyExc.IndexError, s));
             } else {
                 throw Abstract.indexTypeError(this, index);
             }
@@ -1256,29 +1233,30 @@ public class PyList implements List<Object>, WithClass {
                 }
 
                 /*
-                 * The lists matched over the length of Pylist.this.list. The other
-                 * is the winner if it still has elements. Otherwise it's a tie.
+                 * The lists matched over the length of Pylist.this.list. The other is
+                 * the winner if it still has elements. Otherwise it's a tie.
                  */
                 return i < M ? -1 : 0;
-            } catch (PyException e) {
+            } catch (PyBaseException e) {
                 // It's ok to throw legitimate Python exceptions
                 throw e;
             } catch (Throwable t) {
                 /*
-                 * Contract of Comparable prohibits propagation of checked
-                 * exceptions, but richCompareBool in principle throws anything.
+                 * Contract of Comparable prohibits propagation of checked exceptions,
+                 * but richCompareBool in principle throws anything.
                  */
-                // XXX perhaps need a PyException to wrap Java Throwable
+                // XXX perhaps need a PyBaseException to wrap Java
+                // Throwable
                 throw new InterpreterError(t, "non-Python exeption in comparison");
             }
         }
 
         /**
-         * Compare this delegate with the delegate of the other {@code list}
-         * for equality. We do this separately from
-         * {@link #cmp(Object, Comparison)} because it is slightly cheaper,
-         * but also because so we don't panic where an element is capable of
-         * an equality test, but not a less-than test.
+         * Compare this delegate with the delegate of the other {@code list} for
+         * equality. We do this separately from {@link #cmp(Object, Comparison)}
+         * because it is slightly cheaper, but also because so we don't panic
+         * where an element is capable of an equality test, but not a less-than
+         * test.
          *
          * @param other delegate of list at right of comparison
          * @return {@code true} if equal, {@code false} if not.
@@ -1295,7 +1273,7 @@ public class PyList implements List<Object>, WithClass {
                 }
                 // The arrays matched over their length.
                 return true;
-            } catch (PyException e) {
+            } catch (PyBaseException e) {
                 // It's ok to throw legitimate Python exceptions
                 throw e;
             } catch (Throwable t) {
@@ -1304,9 +1282,8 @@ public class PyList implements List<Object>, WithClass {
         }
 
         /**
-         * Compare this delegate with the delegate of the other
-         * {@code list}, or return {@code NotImplemented} if the other is
-         * not a {@code list}.
+         * Compare this delegate with the delegate of the other {@code list}, or
+         * return {@code NotImplemented} if the other is not a {@code list}.
          *
          * @param other list at right of comparison
          * @param op type of operation

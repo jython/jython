@@ -1,8 +1,8 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.internal;
 
-import org.python.core.PyObjectUtil.NoConversion;
+import org.python.core.PyUtil.NoConversion;
 
 /**
  * Static methods and classes for representing a format string and
@@ -11,32 +11,31 @@ import org.python.core.PyObjectUtil.NoConversion;
 public class Formats {
 
     /**
-     * Create a {@link Spec} object by parsing a format specification.
+     * Create a {@link FormatSpec} object by parsing a format specification.
      *
      * @param text to parse
      * @return parsed equivalent to text
      * @throws IllegalArgumentException on a parse error
      */
-    public static Spec fromText(String text) throws IllegalArgumentException {
+    public static FormatSpec fromText(String text) throws IllegalArgumentException {
         Parser parser = new Parser(text);
         return parser.parse();
     }
 
     /**
-     * A class that provides the base for implementations of
-     * type-specific formatting. In a limited way, it acts like a
-     * StringBuilder to which text and one or more numbers may be
-     * appended, formatted according to the format specifier supplied at
-     * construction. These are ephemeral objects that are not, on their
-     * own, thread safe.
+     * A class that provides the base for implementations of type-specific
+     * formatting. In a limited way, it acts like a StringBuilder to which
+     * text and one or more numbers may be appended, formatted according to
+     * the format specifier supplied at construction. These are ephemeral
+     * objects that are not, on their own, thread safe.
      */
     public static abstract class AbstractFormatter implements Appendable {
 
         /**
-         * The specification according to which we format any number
-         * supplied to the method.
+         * The specification according to which we format any number supplied to
+         * the method.
          */
-        protected final Spec spec;
+        protected final FormatSpec spec;
 
         /** The (partial) result. */
         protected StringBuilder result;
@@ -55,8 +54,8 @@ public class Formats {
          */
         protected int mark;
         /**
-         * The latest number we are working on floats at the end of the
-         * result, and starts here.
+         * The latest number we are working on floats at the end of the result,
+         * and starts here.
          */
         protected int start;
         /**
@@ -65,21 +64,21 @@ public class Formats {
         protected int lenSign;
         /**
          * The length of the whole part (to left of the decimal point or
-         * exponent)
+         * exponent).
          */
         protected int lenWhole;
 
         /**
          * Construct the formatter from a client-supplied buffer and a
-         * specification. Sets {@link #mark} and {@link #start} to the end
-         * of the buffer. The new formatted object will therefore be
-         * appended there and, when the time comes, padding will be applied
-         * to (just) the new text.
+         * specification. Sets {@link #mark} and {@link #start} to the end of
+         * the buffer. The new formatted object will therefore be appended there
+         * and, when the time comes, padding will be applied to (just) the new
+         * text.
          *
          * @param result destination buffer
          * @param spec parsed conversion specification
          */
-        public AbstractFormatter(StringBuilder result, Spec spec) {
+        public AbstractFormatter(StringBuilder result, FormatSpec spec) {
             this.spec = spec;
             this.result = result;
             this.start = this.mark = result.length();
@@ -92,41 +91,16 @@ public class Formats {
          * @param spec parsed conversion specification
          * @param width of buffer initially
          */
-        public AbstractFormatter(Spec spec, int width) { this(new StringBuilder(width), spec); }
+        public AbstractFormatter(FormatSpec spec, int width) {
+            this(new StringBuilder(width), spec);
+        }
 
         /**
-         * Signals the client's intention to make a PyString (or other
-         * byte-like) interpretation of {@link #result}, rather than a
-         * PyUnicode one. Only formatters that could produce characters
-         * &gt;255 are affected by this (e.g. c-format). Idiom:
-         *
-         * <pre>
-         * MyFormatter f = new MyFormatter( InternalFormatter.fromText(formatSpec) );
-         * f.setBytes(!(formatSpec instanceof PyUnicode));
-         * // ... formatting work
-         * return f.getPyResult();
-         * </pre>
-         *
-         * @param bytes true to signal the intention to make a byte-like
-         *     interpretation
-         */
-        @Deprecated
-        public void setBytes(boolean bytes) { this.bytes = bytes; }
-
-        /**
-         * Whether initialised for a byte-like interpretation.
-         *
-         * @return bytes attribute
-         */
-        @Deprecated
-        public boolean isBytes() { return bytes; }
-
-        /**
-         * Format an object into the buffer according to the specification
-         * with which this instance has been initialised. The specific
-         * behaviour, and the acceptable types, are for a sub-class to
-         * define. Also, it is usually desirable for the return type in an
-         * implementing class to be a more specific.
+         * Format an object into the buffer according to the specification with
+         * which this instance has been initialised. The specific behaviour, and
+         * the acceptable types, are for a sub-class to define. Also, it is
+         * usually desirable for the return type in an implementing class to be
+         * a more specific.
          *
          * @param o to format
          * @return this formatter
@@ -144,8 +118,8 @@ public class Formats {
         public String getResult() { return result.toString(); }
 
         /*
-         * Implement Appendable interface by delegation to the result
-         * buffer. See java.lang.Appendable#append(char)
+         * Implement Appendable interface by delegation to the result buffer.
+         * See java.lang.Appendable#append(char)
          */
         @Override
         public AbstractFormatter append(char c) {
@@ -153,6 +127,12 @@ public class Formats {
             return this;
         }
 
+        /**
+         * Append one character.
+         *
+         * @param c character to append
+         * @return {@code this} formatter
+         */
         public AbstractFormatter append(int c) {
             result.appendCodePoint(c);
             return this;
@@ -173,12 +153,11 @@ public class Formats {
 
         /**
          * Clear the instance variables describing the latest object in
-         * {@link #result}, ready to receive a new one: sets {@link #start}
-         * and calls {@link #reset()}. This is necessary when a
-         * {@code Formatter} is to be re-used. Note that this leaves
-         * {@link #mark} where it is. In the core, we need this to support
-         * {@code complex}: two floats in the same format, but padded as a
-         * unit.
+         * {@link #result}, ready to receive a new one: sets {@link #start} and
+         * calls {@link #reset()}. This is necessary when a {@code Formatter} is
+         * to be re-used. Note that this leaves {@link #mark} where it is. In
+         * the core, we need this to support {@code complex}: two floats in the
+         * same format, but padded as a unit.
          */
         public void setStart() {
             /*
@@ -212,8 +191,8 @@ public class Formats {
         /**
          * Supports {@link #toString()} by returning the lengths of the
          * successive sections in the result buffer, used for navigation
-         * relative to {@link #start}. The {@code toString} method shows a
-         * '|' character between each section when it prints out the buffer.
+         * relative to {@link #start}. The {@code toString} method shows a '|'
+         * character between each section when it prints out the buffer.
          * Override this when you define more lengths in the subclass.
          *
          * @return the lengths of the successive sections
@@ -223,8 +202,8 @@ public class Formats {
         /**
          * {@inheritDoc}
          * <p>
-         * Overridden to provide a debugging view in which the actual text
-         * is shown divided up by the {@code len*} member variables. If the
+         * Overridden to provide a debugging view in which the actual text is
+         * shown divided up by the {@code len*} member variables. If the
          * dividers don't look right, those variables have not remained
          * consistent with the text.
          */
@@ -238,10 +217,7 @@ public class Formats {
                 try {
                     int p = start;
                     buf.insert(p++, '[');
-                    for (int len : sectionLengths()) {
-                        p += len;
-                        buf.insert(p++, '|');
-                    }
+                    for (int len : sectionLengths()) { p += len; buf.insert(p++, '|'); }
                     buf.setCharAt(p - 1, ']');
                 } catch (IndexOutOfBoundsException e) {
                     /*
@@ -254,8 +230,7 @@ public class Formats {
 
         /**
          * Insert grouping characters (conventionally commas) into the whole
-         * part of the number. {@link #lenWhole} will increase
-         * correspondingly.
+         * part of the number. {@link #lenWhole} will increase correspondingly.
          *
          * @param groupSize normally 3.
          * @param comma or some other character to use as a separator.
@@ -270,8 +245,8 @@ public class Formats {
 
             if (commasNeeded > 0) {
                 /*
-                 * Index *just after* the current last digit of the whole part of
-                 * the number.
+                 * Index *just after* the current last digit of the whole part of the
+                 * number.
                  */
                 int from = start + lenSign + lenWhole;
                 // Open a space into which the whole part will expand.
@@ -279,16 +254,15 @@ public class Formats {
                 // Index *just after* the end of that space.
                 int to = from + commasNeeded;
                 /*
-                 * The whole part will be longer by the number of commas to be
-                 * inserted.
+                 * The whole part will be longer by the number of commas to be inserted.
                  */
                 lenWhole += commasNeeded;
 
                 /*
-                 * Now working from high to low, copy all the digits that have to
-                 * move. Each pass copies one group and inserts a comma, which makes
-                 * the to-pointer move one place extra. The to-pointer descends upon
-                 * the from-pointer from the right.
+                 * Now working from high to low, copy all the digits that have to move.
+                 * Each pass copies one group and inserts a comma, which makes the
+                 * to-pointer move one place extra. The to-pointer descends upon the
+                 * from-pointer from the right.
                  */
                 while (to > from) {
                     // Copy a group
@@ -302,10 +276,10 @@ public class Formats {
         }
 
         /**
-         * Make a space in {@link #result} of a certain size and position.
-         * On return, the segment lengths are likely to be invalid until the
-         * caller adjusts them corresponding to the insertion. There is no
-         * guarantee what the opened space contains.
+         * Make a space in {@link #result} of a certain size and position. On
+         * return, the segment lengths are likely to be invalid until the caller
+         * adjusts them corresponding to the insertion. There is no guarantee
+         * what the opened space contains.
          *
          * @param pos at which to make the space
          * @param size of the space
@@ -339,10 +313,10 @@ public class Formats {
 
         /**
          * Pad the result so far (defined as the contents of {@link #result}
-         * from {@link #mark} to the end) using the alignment, target width
-         * and fill character defined in {@link #spec}. The action of
-         * padding will increase the length of this segment to the target
-         * width, if that is greater than the current length.
+         * from {@link #mark} to the end) using the alignment, target width and
+         * fill character defined in {@link #spec}. The action of padding will
+         * increase the length of this segment to the target width, if that is
+         * greater than the current length.
          * <p>
          * When the padding method has decided that that it needs to add n
          * padding characters, it will affect {@link #start} or
@@ -386,19 +360,18 @@ public class Formats {
          * <td>+n</td>
          * </tr>
          * </table>
-         * Note that in the "pad after sign" mode, only the last number into
-         * the buffer receives the padding. This padding gets incorporated
-         * into the whole part of the number. (In other modes, the padding
-         * is around {@code result[mark:]}.) When this would not be
-         * appropriate, it is up to the client to disallow this (which
-         * {@code complex} does).
+         * Note that in the "pad after sign" mode, only the last number into the
+         * buffer receives the padding. This padding gets incorporated into the
+         * whole part of the number. (In other modes, the padding is around
+         * {@code result[mark:]}.) When this would not be appropriate, it is up
+         * to the client to disallow this (which {@code complex} does).
          *
          * @return this Formatter object
          */
         public AbstractFormatter pad() {
             /*
              * We'll need this many pad characters (if>0). Note
-             * Spec.UNDEFINED<0.
+             * FormatSpec.UNDEFINED<0.
              */
             int n = spec.width - (result.length() - mark);
             if (n > 0) { pad(mark, n); }
@@ -406,14 +379,14 @@ public class Formats {
         }
 
         /**
-         * Pad the last result (defined as the contents of {@link #result}
-         * from argument {@code leftIndex} to the end) using the alignment,
-         * by {@code n} repetitions of the fill character defined in
-         * {@link #spec}, and distributed according to {@code spec.align}.
-         * The value of {@code leftIndex} is only used if the alignment is
-         * '&gt;' (left) or '^' (both). The value of the critical lengths
-         * (lenWhole, lenSign, etc.) are not affected, because we assume
-         * that {@code leftIndex &lt;= } {@link #start}.
+         * Pad the last result (defined as the contents of {@link #result} from
+         * argument {@code leftIndex} to the end) using the alignment, by
+         * {@code n} repetitions of the fill character defined in {@link #spec},
+         * and distributed according to {@code spec.align}. The value of
+         * {@code leftIndex} is only used if the alignment is '&gt;' (left) or
+         * '^' (both). The value of the critical lengths (lenWhole, lenSign,
+         * etc.) are not affected, because we assume that
+         * {@code leftIndex &lt;= } {@link #start}.
          *
          * @param leftIndex the index in result at which to insert left-fill
          *     characters.
@@ -462,23 +435,29 @@ public class Formats {
             // Append the trailing space
             for (int i = 0; i < trailing; i++) { result.append(fill); }
 
-            // Check for special case
-            if (align == '=' && fill == '0' && spec.grouping) {
+            /*
+             * Check for special case where we shall extend the grouping already
+             * applied to the whole part into the left 0-padding.
+             */
+            if (align == '=' && fill == '0' && spec.group > 0) {
                 /*
-                 * We must extend the grouping separator into the padding
+                 * Extend the grouping separator into the padding, EXCEPT if there was
+                 * originally no whole part (occurs for inf, nan).
                  */
-                zeroPadAfterSignWithGroupingFixup(3, ',');
+                if (lenWhole > leading) {
+                    zeroPadAfterSignWithGroupingFixup(spec.group, spec.grouper);
+                }
             }
         }
 
         /**
          * Fix-up the zero-padding of the last formatted number in
          * {@link #result} in the special case where a sign-aware padding
-         * ({@code {@link #spec}.align='='}) was requested, the fill
-         * character is {@code '0'}, and the digits are to be grouped. In
-         * these exact circumstances, the grouping, which must already have
-         * been applied to the (whole part) number itself, has to be
-         * extended into the zero-padding.
+         * ({@code {@link #spec}.align='='}) was requested, the fill character
+         * is {@code '0'}, and the digits are to be grouped. In these exact
+         * circumstances, the grouping, which must already have been applied to
+         * the (whole part) number itself, has to be extended into the
+         * zero-padding.
          *
          * <pre>
          * &gt;&gt;&gt; format(-12e8, " =30,.3f")
@@ -494,8 +473,8 @@ public class Formats {
          * </pre>
          *
          * The padding has increased the overall length of the result to the
-         * target width. About one in three calls to this method adds one to
-         * the width, because the whole part cannot start with a comma.
+         * target width. About one in three calls to this method adds one to the
+         * width, because the whole part cannot start with a comma.
          *
          * <pre>
          * &gt;&gt;&gt; format(-12e8, " =30,.4f")
@@ -504,13 +483,13 @@ public class Formats {
          * '-<b>0</b>,000,000,001,200,000,000.0000'
          * </pre>
          *
-         * @param groupSize normally 3.
+         * @param groupSize normally 3 or 4.
          * @param comma or some other character to use as a separator.
          */
         protected void zeroPadAfterSignWithGroupingFixup(int groupSize, char comma) {
             /*
-             * Suppose the format call was format(-12e8, "0=30,.3f"). At this
-             * point, we have something like this in result: ..
+             * Suppose the format call was format(-12e8, "0=30,.3f"). At this point,
+             * we have something like this in result: ..
              * [-|0000000000001,200,000,000|.|000||]
              *
              * All we need do is over-write some of the zeros with the separator
@@ -523,8 +502,8 @@ public class Formats {
             // One beyond last digit of the whole-part.
             int p = firstZero + lenWhole;
             /*
-             * Step back down the result array visiting the commas. (Easiest to
-             * do all of them.)
+             * Step back down the result array visiting the commas. (Easiest to do
+             * all of them.)
              */
             int step = groupSize + 1;
             for (p = p - step; p >= firstZero; p -= step) { result.setCharAt(p, comma); }
@@ -540,25 +519,12 @@ public class Formats {
                  *
                  * And now, result looks like this:
                  * [-|,000,000,001,200,000,000|.|0000||] in which the first comma is
-                 * wrong, but so would be a zero. We have to insert another zero,
-                 * even though this makes the result longer than we were asked for.
+                 * wrong, but so would be a zero. We have to insert another zero, even
+                 * though this makes the result longer than we were asked for.
                  */
                 result.insert(firstZero, '0');
                 lenWhole += 1;
             }
-        }
-
-        /**
-         * Convenience method returning a {@link FormatError} reporting:
-         * "Unknown format code 'X' for object of type 'T'"
-         *
-         * @param code the presentation type
-         * @param forType the type it was found applied to
-         * @return exception to throw
-         */
-        public static FormatError unknownFormat(char code, String forType) {
-            String msg = "Unknown format code '" + code + "' for object of type '" + forType + "'";
-            return new FormatError(msg);
         }
 
         /**
@@ -588,21 +554,8 @@ public class Formats {
 
         /**
          * Convenience method returning a {@link FormatError} reporting that
-         * the given alignment flag is not allowed in a format specifier for
-         * the named type.
-         *
-         * @param align type of alignment
-         * @param forType the type it was found applied to
-         * @return exception to throw
-         */
-        public static FormatError alignmentNotAllowed(char align, String forType) {
-            return notAllowed("'" + align + "' alignment flag", forType);
-        }
-
-        /**
-         * Convenience method returning a {@link FormatError} reporting that
-         * specifying a sign is not allowed in a format specifier for the
-         * named type.
+         * specifying a sign is not allowed in a format specifier for the named
+         * type.
          *
          * @param forType the type it was found applied to
          * @param code the formatting code (or '\0' not to mention one)
@@ -614,8 +567,7 @@ public class Formats {
 
         /**
          * Convenience method returning a {@link FormatError} reporting that
-         * zero padding is not allowed in a format specifier for the named
-         * type.
+         * zero padding is not allowed in a format specifier for the named type.
          *
          * @param forType the type it was found applied to
          * @return exception to throw
@@ -626,8 +578,8 @@ public class Formats {
 
         /**
          * Convenience method returning a {@link FormatError} reporting that
-         * specifying a precision is not allowed in a format specifier for
-         * the named type.
+         * specifying a precision is not allowed in a format specifier for the
+         * named type.
          *
          * @param forType the type it was found applied to
          * @return exception to throw
@@ -638,12 +590,10 @@ public class Formats {
 
         /**
          * Convenience method returning a {@link FormatError} reporting that
-         * some format specifier feature is not allowed for the named data
-         * type.
+         * some format specifier feature is not allowed for the named data type.
          *
          * @param outrage committed in the present case
-         * @param forType the data type (e.g. "integer") where it is an
-         *     outrage
+         * @param forType the data type (e.g. "integer") where it is an outrage
          * @return exception to throw
          */
         public static FormatError notAllowed(String outrage, String forType) {
@@ -652,14 +602,13 @@ public class Formats {
 
         /**
          * Convenience method returning a {@link FormatError} reporting that
-         * some format specifier feature is not allowed for the named data
-         * type and format specifier {@code code}.
+         * some format specifier feature is not allowed for the named data type
+         * and format specifier {@code code}.
          *
          * @param outrage committed in the present case
-         * @param forType the data type (e.g. "integer") where it is an
-         *     outrage
-         * @param code the formatting code for which it is an outrage (or
-         *     '\0' not to mention one)
+         * @param forType the data type (e.g. "integer") where it is an outrage
+         * @param code the formatting code for which it is an outrage (or '\0'
+         *     not to mention one)
          * @return exception to throw
          */
         public static FormatError notAllowed(String outrage, String forType, char code) {
@@ -670,15 +619,15 @@ public class Formats {
          * Convenience method returning a {@link FormatError} reporting that
          * some format specifier feature is not allowed for the named format
          * code and data type. Produces a message like "OUTRAGE (SYMBOL) not
-         * allowed with TYPE format specifier 'X'" or "OUTRAGE not allowed
-         * in TYPE format specifier".
+         * allowed with TYPE format specifier 'X'" or "OUTRAGE not allowed in
+         * TYPE format specifier".
          *
          * @param outrage committed in the present case
          * @param symbol the modifier ('#' say) (or '\0' not to mention one)
          * @param forType the data type (e.g. "integer") it where it is an
          *     outrage
-         * @param code the formatting code for which it is an outrage (or
-         *     '\0' not to mention one)
+         * @param code the formatting code for which it is an outrage (or '\0'
+         *     not to mention one)
          * @return exception to throw
          */
         public static FormatError notAllowed(String outrage, char symbol, String forType,
@@ -714,22 +663,22 @@ public class Formats {
     }
 
     /**
-     * Parsed PEP-3101 format specification of a single field,
-     * encapsulating the format for use by formatting methods. This
-     * class holds the several attributes that might be decoded from a
-     * format specifier. Each attribute has a reserved value used to
-     * indicate "unspecified". {@code Spec} objects may be merged such
-     * that one {@code Spec} provides values, during the construction of
-     * a new {@code Spec}, for attributes that are unspecified in a
-     * primary source.
+     * Parsed PEP-3101 format specification of a single field, encapsulating
+     * the format for use by formatting methods. This class holds the
+     * several attributes that might be decoded from a format specifier.
+     * Each attribute has a reserved value used to indicate "unspecified".
+     * {@code FormatSpec} objects may be merged such that one
+     * {@code FormatSpec} provides values, during the construction of a new
+     * {@code FormatSpec}, for attributes that are unspecified in a primary
+     * source.
      * <p>
      * This structure is returned by factory method
-     * {@link #fromText(String)}, and having public final members is
-     * freely accessed by formatters such as {@link FloatFormatter}, and
-     * the __format__ methods of client object types.
+     * {@link #fromText(String)}, and having public final members is freely
+     * accessed by formatters such as {@link FloatFormatter}, and the
+     * __format__ methods of client object types.
      * <p>
-     * The fields correspond to the elements of a format specification.
-     * The grammar of a format specification is:
+     * The fields correspond to the elements of a format specification. The
+     * grammar of a format specification is:
      *
      * <pre>
      * [[fill]align][sign][#][0][width][,][.precision][type]
@@ -740,44 +689,43 @@ public class Formats {
      * <pre>{@literal
      *     private static final InternalFormatSpec FLOAT_DEFAULTS = InternalFormatSpec.from(">");
      *     ...
-     *         InternalFormat.Spec spec = InternalFormat.fromText(specString);
+     *         FormatSpec spec = InternalFormat.fromText(specString);
      *         spec = spec.withDefaults(FLOAT_DEFAULTS);
      *         ... // Validation of spec.type, and other attributes, for this type.
      *         FloatFormatter f = new FloatFormatter(spec);
      *         String result = f.format(value).getResult();
      * }</pre>
      */
-    public static class Spec {
+    public static class FormatSpec {
 
         /** The fill character specified, or U+FFFF if unspecified. */
         public final char fill;
         /**
-         * Alignment indicator is one of {'&lt;', '^', '&gt;', '=', or
-         * U+FFFF if unspecified.
+         * Alignment indicator is one of {'&lt;', '^', '&gt;', '=', or U+FFFF if
+         * unspecified.
          */
         public final char align;
         /**
-         * Sign-handling flag, one of {@code '+'}, {@code '-'}, or
-         * {@code ' '}, or {@code U+FFFF} if unspecified.
+         * Sign-handling flag, one of {@code '+'}, {@code '-'}, or {@code ' '},
+         * or {@code U+FFFF} if unspecified.
          */
         public final char sign;
         /** The alternative format flag '#' was given. */
         public final boolean alternate;
         /** Width to which to pad the result, or -1 if unspecified. */
         public final int width;
-        /**
-         * Insert the grouping separator (which in Python always indicates a
-         * group-size of 3).
-         */
-        public final boolean grouping;
+        /** Grouping size (or &le;0 for no grouping)). */
+        public final int group;
+        /** The group separator (if {@link #group} is &gt;0). */
+        public final char grouper;
         /** Precision decoded from the format, or -1 if unspecified. */
         public final int precision;
         /** Type key from the format, or U+FFFF if unspecified. */
         public final char type;
 
         /**
-         * Non-character code point used to represent "no value" in
-         * {@code char} attributes.
+         * Non-character code point used to represent "no value" in {@code char}
+         * attributes.
          */
         public static final char NONE = '\uffff';
         /**
@@ -798,10 +746,12 @@ public class Formats {
          * Test to see if an attribute has been specified.
          *
          * @param value of attribute
-         * @return true only if the attribute is &ge;0 (meaning that it has
-         *     been specified).
+         * @return true only if the attribute is &ge;0 (meaning that it has been
+         *     specified).
          */
-        public static final boolean specified(int value) { return value >= 0; }
+        public static final boolean specified(int value) {
+            return value >= 0; // UNSPECIFIED = -1
+        }
 
         /**
          * Constructor to set all the fields in the format specifier.
@@ -811,32 +761,32 @@ public class Formats {
          * </pre>
          *
          * @param fill fill character (or {@link #NONE}
-         * @param align alignment indicator, one of {'&lt;', '^', '&gt;',
-         *     '='}
-         * @param sign policy, one of {@code '+'}, {@code '-'}, or
-         *     {@code ' '}.
+         * @param align alignment indicator, one of {'&lt;', '^', '&gt;', '='}
+         * @param sign policy, one of {@code '+'}, {@code '-'}, or {@code ' '}.
          * @param alternate true to request alternate formatting mode
          *     ({@code '#'} flag).
          * @param width of field after padding or -1 to default
-         * @param grouping true to request comma-separated groups
+         * @param group if non-zero digit group size (usually 3 or 4)
+         * @param grouper character separating groups
          * @param precision (e.g. decimal places) or -1 to default
          * @param type indicator character
          */
-        public Spec(char fill, char align, char sign, boolean alternate, int width,
-                boolean grouping, int precision, char type) {
+        public FormatSpec(char fill, char align, char sign, boolean alternate, int width, int group,
+                char grouper, int precision, char type) {
             this.fill = fill;
             this.align = align;
             this.sign = sign;
             this.alternate = alternate;
             this.width = width;
-            this.grouping = grouping;
+            this.group = group;
+            this.grouper = grouper;
             this.precision = precision;
             this.type = type;
         }
 
         /**
          * Return a format specifier (text) equivalent to the value of this
-         * Spec.
+         * {@code FormatSpec}.
          */
         @Override
         public String toString() {
@@ -846,38 +796,38 @@ public class Formats {
             if (specified(sign)) { buf.append(sign); }
             if (alternate) { buf.append('#'); }
             if (specified(width)) { buf.append(width); }
-            if (grouping) { buf.append(','); }
+            if (specified(group)) { buf.append(grouper); }
             if (specified(precision)) { buf.append('.').append(precision); }
             if (specified(type)) { buf.append(type); }
             return buf.toString();
         }
 
         /**
-         * Return a merged {@code Spec} object, in which any attribute of
-         * this object that is specified (or {@code true}), has the same
-         * value in the result, and any attribute of this object that is
-         * unspecified (or {@code false}), has the value that attribute
-         * takes in the other object. Thus the second object supplies
-         * default values. (These defaults may also be unspecified.) The use
-         * of this method is to allow a {@code Spec} constructed from text
-         * to record exactly, and only, what was in the textual
-         * specification, while the __format__ method of a client object
-         * supplies its type-specific defaults. Thus "20" means "&lt;20s" to
-         * a {@code str}, "&gt;20.12" to a {@code float} and "&gt;20.12g" to
-         * a {@code complex}.
+         * Return a merged {@code FormatSpec} object, in which any attribute of
+         * this object that is specified (or {@code true}), has the same value
+         * in the result, and any attribute of this object that is unspecified
+         * (or {@code false}), has the value that attribute takes in the other
+         * object. Thus the second object supplies default values. (These
+         * defaults may also be unspecified.) The use of this method is to allow
+         * a {@code FormatSpec} constructed from text to record exactly, and
+         * only, what was in the textual specification, while the __format__
+         * method of a client object supplies its type-specific defaults. Thus
+         * "20" means "&lt;20s" to a {@code str}, "&gt;20.12" to a {@code float}
+         * and "&gt;20.12g" to a {@code complex}.
          *
-         * @param other defaults to merge where this object does not specify
-         *     the attribute.
-         * @return a new Spec object.
+         * @param other defaults to merge where this object does not specify the
+         *     attribute.
+         * @return a new {@code FormatSpec} object.
          */
-        public Spec withDefaults(Spec other) {
-            return new Spec(//
+        public FormatSpec withDefaults(FormatSpec other) {
+            return new FormatSpec(//
                     specified(fill) ? fill : other.fill, //
                     specified(align) ? align : other.align, //
                     specified(sign) ? sign : other.sign, //
                     alternate || other.alternate, //
                     specified(width) ? width : other.width, //
-                    grouping || other.grouping, //
+                    specified(group) ? group : other.group, //
+                    specified(grouper) ? grouper : other.grouper, //
                     specified(precision) ? precision : other.precision, //
                     specified(type) ? type : other.type //
             );
@@ -886,14 +836,14 @@ public class Formats {
         /**
          * Defaults applicable to most numeric types. Equivalent to " &gt;"
          */
-        public static final Spec NUMERIC = new Spec(' ', '>', Spec.NONE, false, Spec.UNSPECIFIED,
-                false, Spec.UNSPECIFIED, Spec.NONE);
+        public static final FormatSpec NUMERIC = new FormatSpec(' ', '>', NONE, false, UNSPECIFIED,
+                UNSPECIFIED, NONE, UNSPECIFIED, NONE);
 
         /**
          * Defaults applicable to string types. Equivalent to " &lt;"
          */
-        public static final Spec STRING = new Spec(' ', '<', Spec.NONE, false, Spec.UNSPECIFIED,
-                false, Spec.UNSPECIFIED, Spec.NONE);
+        public static final FormatSpec STRING = new FormatSpec(' ', '<', NONE, false, UNSPECIFIED,
+                UNSPECIFIED, NONE, UNSPECIFIED, NONE);
 
         /**
          * Constructor offering just precision and type.
@@ -905,8 +855,8 @@ public class Formats {
          * @param precision (e.g. decimal places)
          * @param type indicator character
          */
-        public Spec(int precision, char type) {
-            this(' ', '>', Spec.NONE, false, UNSPECIFIED, false, precision, type);
+        public FormatSpec(int precision, char type) {
+            this(' ', '>', NONE, false, UNSPECIFIED, UNSPECIFIED, NONE, precision, type);
         }
 
         /**
@@ -948,9 +898,9 @@ public class Formats {
     }
 
     /**
-     * Parser for PEP-3101 field format specifications. This class
-     * provides a {@link #parse()} method that translates the format
-     * specification into an {@code Spec} object.
+     * Parser for PEP-3101 field format specifications. This class provides
+     * a {@link #parse()} method that translates the format specification
+     * into an {@code FormatSpec} object.
      */
     private static class Parser {
 
@@ -968,29 +918,33 @@ public class Formats {
             this.ptr = 0;
         }
 
+        @Override
+        public String toString() { return spec.substring(0, ptr) + "|" + spec.substring(ptr); }
+
         /**
-         * Parse the specification with which this object was initialised
-         * into an {@link Spec}, which is an object encapsulating the format
-         * for use by formatting methods. This parser deals only with the
-         * format specifiers themselves, as accepted by the
-         * {@code __format__} method of a type, or the {@code format()}
-         * built-in, not format strings in general as accepted by
-         * {@code str.format()}.
+         * Parse the specification with which this object was initialised into
+         * an {@link FormatSpec}, which is an object encapsulating the format
+         * for use by formatting methods. This parser deals only with the format
+         * specifiers themselves, as accepted by the {@code __format__} method
+         * of a type, or the {@code format()} built-in, not format strings in
+         * general as accepted by {@code str.format()}.
          *
-         * @return the {@code Spec} equivalent to the string given.
+         * @return the {@code FormatSpec} equivalent to the string.
          */
         /*
          * This method is the equivalent of CPython's
          * parse_internal_render_format_spec() in
-         * ~/Objects/stringlib/formatter.h, but we deal with defaults
-         * another way.
+         * ~/Objects/stringlib/formatter.h, but we deal with defaults another
+         * way.
          */
-        Spec parse() {
+        FormatSpec parse() {
 
-            char fill = Spec.NONE, align = Spec.NONE;
-            char sign = Spec.NONE, type = Spec.NONE;
-            boolean alternate = false, grouping = false;
-            int width = Spec.UNSPECIFIED, precision = Spec.UNSPECIFIED;
+            char fill = FormatSpec.NONE, align = FormatSpec.NONE, sign = FormatSpec.NONE,
+                    type = FormatSpec.NONE, grouper = FormatSpec.NONE;
+            boolean alternate = false;
+            int width = FormatSpec.UNSPECIFIED;
+            int precision = FormatSpec.UNSPECIFIED;
+            int group = FormatSpec.UNSPECIFIED;
 
             // Scan [[fill]align] ...
             if (isAlign()) {
@@ -1020,12 +974,11 @@ public class Formats {
             // Scan [0] ...
             if (scanPast('0')) {
                 /*
-                 * Accept 0 here as equivalent to zero-fill but only not set
-                 * already.
+                 * Accept 0 here as equivalent to zero-fill but only not set already.
                  */
-                if (!Spec.specified(fill)) {
+                if (!FormatSpec.specified(fill)) {
                     fill = '0';
-                    if (!Spec.specified(align)) {
+                    if (!FormatSpec.specified(align)) {
                         /*
                          * Also accept it as equivalent to "=" alignment but only not set
                          * already.
@@ -1038,8 +991,8 @@ public class Formats {
             // Scan [width]
             if (isDigit()) { width = scanInteger(); }
 
-            // Scan [,][.precision][type]
-            grouping = scanPast(',');
+            // Scan [grouper][.precision][type]
+            if (isAt(",_")) { grouper = spec.charAt(ptr++); }
 
             // Scan [.precision]
             if (scanPast('.')) {
@@ -1053,13 +1006,20 @@ public class Formats {
             // Scan [type]
             if (ptr < spec.length()) { type = spec.charAt(ptr++); }
 
+            // If grouping was specified, work out the group size.
+            if (grouper != FormatSpec.NONE) {
+                // Hex, octal and binary group in 4s. Otherwise 3s.
+                group = "boxX".indexOf(type) < 0 ? 3 : 4;
+            }
+
             // If we haven't reached the end, something is wrong
             if (ptr != spec.length()) {
                 throw new IllegalArgumentException("Invalid format specifier");
             }
 
             // Create a specification
-            return new Spec(fill, align, sign, alternate, width, grouping, precision, type);
+            return new FormatSpec(fill, align, sign, alternate, width, group, grouper, precision,
+                    type);
         }
 
         /**
@@ -1093,44 +1053,65 @@ public class Formats {
         }
 
         /**
-         * The current character is a digit (maybe a sign). Scan the
-         * integer,
+         * The current character is a digit (maybe a sign). Scan the integer,
          */
         private int scanInteger() {
             int p = ptr++;
             while (isDigit()) { ptr++; }
             return Integer.parseInt(spec.substring(p, ptr));
         }
-
     }
 
     /**
-     * An exception signifying a problem with a format string. The
-     * client code will normally convert this to a Python
-     * {@code ValueError}.
-     */
-    /*
-     * In Jython 2 we threw a ValueError directly, but would like to
-     * keep the formatter pure from Python object types,
+     * An exception signifying a problem with a format string. The client
+     * code will normally convert this to a Python {@code ValueError} where
+     * it may have more context.
      */
     public static class FormatError extends Exception {
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Construct a generic {@link FormatError} for a particular type code.
+         *
+         * @param message for the exception
+         */
         public FormatError(String message) { super(message); }
     }
 
     /**
-     * An exception signifying an overflow (or precision too large)
-     * during a formatting operation. The client code will normally
-     * convert this to a Python {@code OverflowError}.
-     */
-    /*
-     * In Jython 2 we threw a OverflowError directly, but would like to
-     * keep the formatter pure from Python object types,
+     * An exception signifying an overflow (or precision too large) during a
+     * formatting operation. The client code will normally convert this to a
+     * Python {@code OverflowError}.
      */
     public static class FormatOverflow extends FormatError {
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Construct {@link FormatOverflow} for a particular type code.
+         *
+         * @param message for the exception
+         */
         public FormatOverflow(String message) { super(message); }
+    }
+
+    /**
+     * An exception signifying an unknown format type during a formatting
+     * operation. The client code will normally convert this to a Python
+     * {@code ValueError} mentioning the actual type of the argument to
+     * {@code __format__}. (The paradigm supports subclasses overriding
+     * {@code __format__} and delegating codes they do not handle to the
+     * super-class.
+     */
+    public static class FormatUnknown extends FormatError {
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Construct {@link FormatUnknown} for a particular type code.
+         *
+         * @param typeCode character of the unknown format type
+         */
+        public FormatUnknown(char typeCode) {
+            super(String.format("Unknown format code '%c'", typeCode));
+        }
     }
 }

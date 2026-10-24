@@ -1,11 +1,11 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.support;
 
 /**
  * Thrown when we reach a combination of circumstances in the
  * interpreter that may arise from legitimate use, but we aren't ready
  * to implement it.
- * <p>
- * What does the reference implementation do at this point?
  */
 public class MissingFeature extends InterpreterError {
     private static final long serialVersionUID = 1L;
@@ -17,6 +17,6 @@ public class MissingFeature extends InterpreterError {
      * @param args to insert in the format string
      */
     public MissingFeature(String msg, Object... args) {
-        super(String.format(msg, args));
+        super(String.format("Missing feature: " + msg, args));
     }
 }

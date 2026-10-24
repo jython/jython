@@ -1,20 +1,26 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.types;
 
 import java.util.Map;
 
 /**
- * Python objects that have instance dictionaries implement this interface.
+ * An instance of a class implementing {@code WithDict} possesses a
+ * dictionary, generally exposed as a {@code __dict__} attribute. The
+ * dictionary is not necessarily a Python {@code dict} or directly
+ * writable. (A {@code type} object, for example, implements
+ * {@link #getDict()} to return only an unmodifiable view of its
+ * dictionary.) See also {@link WithDictAssignment}.
  */
 public interface WithDict extends WithClass {
     /**
-     * The dictionary of the instance, (not necessarily a Python {@code dict} or
-     * writable. If the returned {@code Map} is not writable, it should throw a Java
-     * {@code UnsupportedOperationException} on attempts to modify it.
+     * The instance dictionary. This is not necessarily a Python
+     * {@code dict}, and may not be directly writable. Some implementing
+     * types override the signature to specify the return is a fully-fledged
+     * Python {@code dict}.
      *
-     * @implSpec A class that implements {@code PyObjectDict} should always return a
-     *     mapping, which may be {@code Collections.emptyMap()} if the instance
-     *     dictionary is intended to be permanently empty.
-     * @return a mapping to treat like a dictionary (not {@code null}).
+     * @return instance dictionary
      */
+    // @Exposed.Get(name="__dict__")
     Map<Object, Object> getDict();
 }

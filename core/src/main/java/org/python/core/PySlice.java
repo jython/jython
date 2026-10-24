@@ -1,22 +1,25 @@
-// Copyright (c)2022 Jython Developers.
-// Copyright (c) Corporation for National Research Initiatives
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
-import org.python.types.TypeFlag;
-import org.python.types.TypeSpec;
+import org.python.types.Exposed.DocString;
 import org.python.types.Exposed.Member;
+import org.python.types.Exposed.PythonMethod;
+import org.python.types.Feature;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
  * The Python {@code slice} object.
  */
-public class PySlice extends AbstractPyObject {
+public class PySlice implements WithClass {
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec( //
-            new TypeSpec("slice", MethodHandles.lookup()).flagNot(TypeFlag.BASETYPE));
+            new TypeSpec("slice", MethodHandles.lookup()) //
+                    .remove(Feature.BASETYPE));
 
     @Member
     final private Object start;
@@ -28,36 +31,42 @@ public class PySlice extends AbstractPyObject {
     final private Object step;
 
     /**
-     * Create a Python {@code slice} from {@code object} arguments.
+     * Create a Python {@code slice} from three {@code object} arguments.
      *
      * @param start index or {@code null} (for {@code None}).
      * @param stop index or {@code null} (for {@code None}).
      * @param step or {@code null} (for {@code None}).
      */
+    // Compare CPython PySlice_New in sliceobject.c
     public PySlice(Object start, Object stop, Object step) {
-        super(TYPE);
         this.start = start != null ? start : Py.None;
         this.stop = stop != null ? stop : Py.None;
         this.step = step != null ? step : Py.None;
     }
 
     /**
-     * Create a Python {@code slice} from two {@code object} arguments.
-     * The step is implicitly {@code None}.
+     * Create a Python {@code slice} from two {@code object} arguments. The
+     * step is implicitly {@code None}.
      *
      * @param start index or {@code null} (for {@code None}).
      * @param stop index or {@code null} (for {@code None}).
      */
+    // Compare CPython _PySlice_FromIndices in sliceobject.c
     public PySlice(Object start, Object stop) { this(start, stop, null); }
 
     /**
-     * Create a Python {@code slice} from Java {@code int} arguments.
+     * Create a Python {@code slice} from a single {@code object} argument.
+     * The start and step are implicitly {@code None}.
      *
-     * @param start index of first item in slice.
-     * @param stop index of first item <b>not</b> in slice.
+     * @param stop index or {@code null} (for {@code None}).
      */
-    // Compare CPython _PySlice_FromIndices in sliceobject.c
-    public PySlice(int start, int stop) { this(start, stop, Py.None); }
+    public PySlice(Object stop) { this(null, stop, null); }
+
+    @Override
+    public PyType getType() { return TYPE; }
+
+    @Override
+    public String toString() { return PyUtil.defaultToString(this); }
 
     // @formatter:off
     /*
@@ -65,9 +74,9 @@ public class PySlice extends AbstractPyObject {
     static PyObject slice_new(PyNewWrapper new_, boolean init, PyType subtype, PyObject[] args,
                               String[] keywords) {
         if (args.length == 0) {
-            throw new TypeError("slice expected at least 1 arguments, got " + args.length);
+            throw PyErr.format(PyExc.TypeError, "slice expected at least 1 arguments, got " + args.length);
         } else if (args.length > 3) {
-            throw new TypeError("slice expected at most 3 arguments, got " + args.length);
+            throw PyErr.format(PyExc.TypeError, "slice expected at most 3 arguments, got " + args.length);
         }
         ArgParser ap = new ArgParser("slice", args, keywords, "start", "stop", "step");
         PySlice slice = new PySlice();
@@ -96,34 +105,58 @@ public class PySlice extends AbstractPyObject {
         return this == o ? false : compare(o, Comparison.NE);
     }
 
-    /*
-     * @ExposedMethod(doc = BuiltinDocs.slice_indices_doc)
+    /**
+     * Python {@code slice.indices}: interpret the slice in the context of a
+     * specific array or sequence length. We returning a {@code tuple} of
+     * {@code (start, stop, stride)} providing concrete (not end-relative)
+     * cardinal indices.
+     *
+     * @param length of array or sequence
+     * @return {@code tuple(start, stop, stride)}
+     * @throws PyBaseException on overflow or type errors
+     * @throws Throwable other errors in converting {@code length}
      */
-    final Object indices(Object length) throws Throwable {
-        Indices indices = new Indices(PyNumber.asSize(length, OverflowError::new));
+    @PythonMethod
+    @DocString("""
+            S.indices(len) -> (start, stop, stride)
+
+            Assuming a sequence of length len, calculate the start and stop
+            indices, and the stride length of the extended slice described by
+            S. Out of bounds indices are clipped in a manner consistent with the
+            handling of normal slices.
+            """)
+
+    Object indices(Object length) throws PyBaseException, Throwable {
+        Indices indices =
+                new Indices(PyNumber.asSize(length, (s) -> PyErr.format(PyExc.OverflowError, s)));
         return Py.tuple(indices.start, indices.stop, indices.step);
     }
 
     /**
-     * Calculate the actual indices of this slice in relation to a
-     * sequence of length {@code length}, reporting the effective start,
-     * stop, and step, and the number of elements in the slice.
+     * Calculate the actual indices of this slice in relation to a sequence
+     * of length {@code length}, reporting the effective start, stop, and
+     * step, and the number of elements in the slice.
      *
      * @param length of the sequence
      * @return an {@link Indices} from this slice and the length
-     * @throws TypeError if any index has no {@code __index__}
+     * @throws PyBaseException (TypeError) if any index has no
+     *     {@code __index__}
+     * @throws PyBaseException (ValueError) if {@code this.step==0}
      * @throws Throwable from implementation of {@code __index__}
      */
     // Compare CPython PySlice_GetIndicesEx in sliceobject.c
-    Indices getIndices(int length) throws TypeError, Throwable { return new Indices(length); }
+    Indices getIndices(int length) throws PyBaseException, Throwable { return new Indices(length); }
 
     @SuppressWarnings("unused")
     private Object __repr__() { return String.format("slice(%s, %s, %s)", start, stop, step); }
 
-    /*
-     * @ExposedMethod
+    /**
+     * Python {@code slice.__reduce__}
+     *
+     * @return a slice of pickle
      */
-    final Object __reduce__() { return Py.tuple(TYPE, Py.tuple(start, stop, step)); }
+    @PythonMethod
+    Object __reduce__() { return Py.tuple(TYPE, Py.tuple(start, stop, step)); }
 
     /**
      * An object that presents the {@code start}, {@code stop} and
@@ -133,9 +166,8 @@ public class PySlice extends AbstractPyObject {
      * {@link Indices#Indices(int)}).
      * <p>
      * End-relative addressing (as in {@code a[-3:-1]}) and {@code None}
-     * indices (as in {@code a[:]}) have been translated in construction
-     * to absolute indices a client may use without further range
-     * checks.
+     * indices (as in {@code a[:]}) have been translated in construction to
+     * absolute indices a client may use without further range checks.
      */
     // Compare CPython PySlice_GetIndicesEx in sliceobject.c
     public class Indices {
@@ -143,17 +175,16 @@ public class PySlice extends AbstractPyObject {
         private static final int MAX = Integer.MAX_VALUE;
         /**
          * Absolute index in the source sequence of the first element to be
-         * taken by the slice. If {@link #slicelength}{@code  != 0}, this
-         * index lies within the bounds of the sequence.
+         * taken by the slice. If {@link #slicelength}{@code  != 0}, this index
+         * lies within the bounds of the sequence.
          */
         public final int start;
         /**
-         * Absolute index relative to the source sequence that is the image
-         * of {@link PySlice#stop}. Dealing correctly with a step size other
-         * than one is difficult. Clients should normally choose
-         * {@link #slicelength}, to decide how many elements to take from
-         * the sequence, rather than use {@code stop} to decide when to
-         * stop.
+         * Absolute index relative to the source sequence that is the image of
+         * {@link PySlice#stop}. Dealing correctly with a step size other than
+         * one is difficult. Clients should normally choose
+         * {@link #slicelength}, to decide how many elements to take from the
+         * sequence, rather than use {@code stop} to decide when to stop.
          */
         public final int stop;
         /**
@@ -168,12 +199,12 @@ public class PySlice extends AbstractPyObject {
         public final int slicelength;
 
         /**
-         * Extract the {@code start}, {@code stop} and {@code step} data
-         * members from the parent {@code slice} as Java {@code int}s in an
-         * instance of {@code Indices}, then adjust {@code start} and
-         * {@code stop} assuming they apply to a sequence of the specified
-         * {@code length}. Store in {@code slicelength} the number of
-         * elements the parent slice will take from that sequence.
+         * Extract the {@code start}, {@code stop} and {@code step} data members
+         * from the parent {@code slice} as Java {@code int}s in an instance of
+         * {@code Indices}, then adjust {@code start} and {@code stop} assuming
+         * they apply to a sequence of the specified {@code length}. Store in
+         * {@code slicelength} the number of elements the parent slice will take
+         * from that sequence.
          * <p>
          * Out of bounds indices are clipped in a manner consistent with the
          * handling of normal slices. The idiom:<pre>
@@ -183,26 +214,26 @@ public class PySlice extends AbstractPyObject {
          * }
          * </pre> will access only in in-range elements.
          * <p>
-         * <b>Detail:</b> Before adjusting to the specific sequence length,
-         * the following occurs. Extract the {@code start}, {@code stop} and
-         * {@code step} data members from the parent {@code slice} and
-         * convert them to Java {@code int}s using their {@code __index__}
-         * methods, or mapping {@code None} to conventional values. Silently
-         * reduce values larger than {@code Integer.MAX_VALUE} to {@code
+         * <b>Detail:</b> Before adjusting to the specific sequence length, the
+         * following occurs. Extract the {@code start}, {@code stop} and
+         * {@code step} data members from the parent {@code slice} and convert
+         * them to Java {@code int}s using their {@code __index__} methods, or
+         * mapping {@code None} to conventional values. Silently reduce values
+         * larger than {@code Integer.MAX_VALUE} to {@code
          Integer.MAX_VALUE}. Silently boost {@code start} and {@code stop}
          * values less than {@code Integer.MIN_VALUE} to {@code
-         Integer.MIN_VALUE}. And silently boost {@code step} values less
-         * than {@code -Integer.MAX_VALUE} to {@code -Integer.MAX_VALUE}.
+         Integer.MIN_VALUE}. And silently boost {@code step} values less than
+         * {@code -Integer.MAX_VALUE} to {@code -Integer.MAX_VALUE}.
          *
          * @param length of the target sequence
-         * @throws TypeError if any index not {@code None} has no
-         *     {@code __index__}
-         * @throws ValueError if {@code step==0}
+         * @throws PyBaseException (TypeError) if any index not {@code None} has
+         *     no {@code __index__}
+         * @throws PyBaseException (ValueError) if {@code step==0}
          * @throws Throwable from the implementation of {@code __index__}
          */
         // Compare CPython PySlice_Unpack in sliceobject.c
         // Compare CPython PySlice_AdjustIndices in sliceobject.c
-        public Indices(int length) throws TypeError, ValueError, Throwable {
+        public Indices(int length) throws PyBaseException, Throwable {
 
             // Counterparts while we think about final values.
             int start0, stop0, step0;
@@ -210,12 +241,12 @@ public class PySlice extends AbstractPyObject {
             // Bound and validate the step.
             step0 = PyNumber.sliceIndex(PySlice.this.step, 1);
             if (step0 == 0)
-                throw new ValueError("slice step cannot be zero");
+                throw PyErr.format(PyExc.ValueError, "slice step cannot be zero");
             /*
              * Here step0 might be MIN = -MAX-1; in this case we replace it with
-             * -MAX. This doesn't affect the semantics, and it guards against
-             * later undefined behaviour resulting from code that does
-             * "step = -step" as part of a slice reversal.
+             * -MAX. This doesn't affect the semantics, and it guards against later
+             * undefined behaviour resulting from code that does "step = -step" as
+             * part of a slice reversal.
              */
             step = Math.max(step0, -MAX);
 
@@ -263,7 +294,7 @@ public class PySlice extends AbstractPyObject {
 
         @Override
         public String toString() {
-            return String.format("[%d:%d:%d] len= %d", start, stop, step, slicelength);
+            return String.format("[%d:%d:%d] len=%d", start, stop, step, slicelength);
         }
     }
 

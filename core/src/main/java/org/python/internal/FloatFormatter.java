@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.internal;
 
@@ -6,27 +6,27 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
-import org.python.internal.Formats.AbstractFormatter;
 import org.python.internal.Formats.FormatError;
 import org.python.internal.Formats.FormatOverflow;
-import org.python.internal.Formats.Spec;
+import org.python.internal.Formats.FormatSpec;
+import org.python.internal.Formats.FormatUnknown;
 
 /**
  * A class that provides the implementation of floating-point
- * formatting. In a limited way, it acts like a StringBuilder to
- * which text and one or more numbers may be appended, formatted
- * according to the format specifier supplied at construction. These
- * are ephemeral objects that are not, on their own, thread safe.
+ * formatting. In a limited way, it acts like a StringBuilder to which
+ * text and one or more numbers may be appended, formatted according to
+ * the format specifier supplied at construction. These are ephemeral
+ * objects that are not, on their own, thread safe.
  */
 public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
     /** The rounding mode dominant in the formatter. */
     static final RoundingMode ROUND_PY = RoundingMode.HALF_EVEN;
 
-    /**
-     * Limit the size of results. No-one needs more than
-     * {@code log(Double.MAX_VALUE) - log2(Double.MIN_VALUE) = 1383}
-     * digits.
+    /** Limit the size of results. */
+    /*
+     * No-one needs more than log(Double.MAX_VALUE) -
+     * log2(Double.MIN_VALUE) = 1383 digits.
      */
     static final int MAX_PRECISION = 1400;
     /**
@@ -64,22 +64,25 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * @param result destination buffer
      * @param spec parsed conversion specification
      */
-    public FloatFormatter(StringBuilder result, Spec spec) {
+    public FloatFormatter(StringBuilder result, FormatSpec spec) {
         super(result, spec);
         if (spec.alternate) {
             /*
-             * Alternate form means do not trim the zero fractional digits.
+             * Alternate form means do not trim the zero fractional
+             * digits.
              */
             minFracDigits = -1;
-        } else if (spec.type == 'r' || spec.type == Spec.NONE) {
+        } else if (spec.type == 'r' || spec.type == FormatSpec.NONE) {
             /*
-             * These formats by default show at least one fractional digit.
+             * These formats by default show at least one fractional
+             * digit.
              */
             minFracDigits = 1;
         } else {
             /*
-             * Every other format (if it does not ignore the setting) will by
-             * default trim off all the trailing zero fractional digits.
+             * Every other format (if it does not ignore the setting)
+             * will by default trim off all the trailing zero fractional
+             * digits.
              */
             minFracDigits = 0;
         }
@@ -91,7 +94,9 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      *
      * @param spec parsed conversion specification
      */
-    public FloatFormatter(Spec spec) { this(new StringBuilder(size(spec)), spec); }
+    public FloatFormatter(FormatSpec spec) {
+        this(new StringBuilder(size(spec)), spec);
+    }
 
     /**
      * Recommend a buffer size for a given specification, assuming one
@@ -101,7 +106,7 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * @param spec parsed conversion specification
      * @return recommended a buffer size
      */
-    public static int size(Spec spec) {
+    public static int size(FormatSpec spec) {
         // Rule of thumb used here (no right answer):
         // in e format a float occupies: (p-1) + len("+1.e+300") = p+7;
         // in f format a float occupies: p + len("1,000,000.%") = p+11;
@@ -121,7 +126,9 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      *     all fractional digits are zero, the decimal point will also
      *     be removed.
      */
-    public void setMinFracDigits(int minFracDigits) { this.minFracDigits = minFracDigits; }
+    public void setMinFracDigits(int minFracDigits) {
+        this.minFracDigits = minFracDigits;
+    }
 
     @Override
     protected void reset() {
@@ -167,7 +174,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * @throws FormatError if an unsupported format character is
      *     encountered
      */
-    public FloatFormatter format(double value) throws FormatOverflow, FormatError {
+    public FloatFormatter format(double value)
+            throws FormatOverflow, FormatError {
         return format(value, null);
     }
 
@@ -178,7 +186,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * here. At the point this is used, we know the {@link #spec} is one
      * of the floating-point types. This entry point allows explicit
      * control of the prefix of positive numbers, overriding defaults
-     * for the format type.
+     * for the format type. (We use this before the imaginary part of a
+     * complex number.)
      *
      * @param value to convert
      * @param positivePrefix to use before positive values (e.g. "+") or
@@ -193,30 +202,35 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
             throws FormatOverflow, FormatError {
 
         /*
-         * Puts all instance variables back to their starting defaults, and
-         * start = result.length().
+         * Puts all instance variables back to their starting defaults,
+         * and start = result.length().
          */
         setStart();
 
-        // Precision defaults to 6 (or 12 for none-format)
-        int precision = spec.getPrecision(Spec.specified(spec.type) ? 6 : 12);
+        // Precision defaults to 6 (or 17 for none-format)
+        int precision = spec
+                .getPrecision(FormatSpec.specified(spec.type) ? 6 : 17);
 
         // Guard against excessive result precision
         // XXX Possibly better raised before result is allocated/sized.
-        if (precision > MAX_PRECISION) { throw precisionTooLarge("float"); }
+        if (precision > MAX_PRECISION) {
+            throw precisionTooLarge("float");
+        }
 
         /*
-         * By default, the prefix of a positive number is "", but the format
-         * specifier may override it, and the built-in type complex needs to
-         * override the format.
+         * By default, the prefix of a positive number is "", but the
+         * format specifier may override it, and the built-in type
+         * complex needs to override the format.
          */
         char sign = spec.sign;
-        if (positivePrefix == null && Spec.specified(sign) && sign != '-') {
+        if (positivePrefix == null && FormatSpec.specified(sign)
+                && sign != '-') {
             positivePrefix = Character.toString(sign);
         }
 
         /*
-         * Different process for each format type, ignoring case for now.
+         * Different process for each format type, ignoring case for
+         * now.
          */
         switch (Character.toLowerCase(spec.type)) {
             case 'e':
@@ -231,37 +245,41 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
             case 'n':
                 /*
-                 * Locale-sensitive version of g-format should be here. (Désolé de
-                 * vous decevoir.)
+                 * Locale-sensitive version of g-format should be here.
+                 * (Désolé de vous decevoir.)
                  */
                 /*
-                 * XXX Set flag to signal localisation in/after groupDigits?
+                 * XXX Set flag to signal localisation in/after
+                 * groupDigits?
                  */
             case 'g':
                 /*
-                 * General format: fixed or exponential according to value.
+                 * General format: fixed or exponential according to
+                 * value.
                  */
                 format_g(value, positivePrefix, precision, 0);
                 break;
 
-            case Spec.NONE:
+            case FormatSpec.NONE:
                 /*
-                 * None format like g-format but goes exponential at precision-1
+                 * None format like g-format but goes exponential at
+                 * precision-1
                  */
                 format_g(value, positivePrefix, precision, -1);
                 break;
 
             case 'r':
                 /*
-                 * For float.__repr__, very special case, breaks all the rules.
+                 * For float.__repr__, very special case, breaks all the
+                 * rules.
                  */
                 format_r(value, positivePrefix);
                 break;
 
             case '%':
                 /*
-                 * Multiplies by 100 and displays in f-format, followed by a percent
-                 * sign.
+                 * Multiplies by 100 and displays in f-format, followed
+                 * by a percent sign.
                  */
                 format_f(100. * value, positivePrefix, precision);
                 result.append('%');
@@ -269,19 +287,20 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
             default:
                 /*
-                 * Should never get here, since this was checked in PyFloat.
+                 * Should never get here, since this was checked in
+                 * PyFloat.
                  */
-                throw unknownFormat(spec.type, "float");
+                throw new FormatUnknown(spec.type);
         }
 
         /*
-         * If the format type is an upper-case letter, convert the result to
-         * upper case.
+         * If the format type is an upper-case letter, convert the
+         * result to upper case.
          */
         if (Character.isUpperCase(spec.type)) { uppercase(); }
 
         // If required to, group the whole-part digits.
-        if (spec.grouping) { groupDigits(3, ','); }
+        if (spec.group > 0) { groupDigits(spec.group, spec.grouper); }
 
         return this;
     }
@@ -319,7 +338,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * @param positivePrefix to use before positive values (e.g. "+") or
      *     null to default to ""
      */
-    private boolean signAndSpecialNumber(double value, String positivePrefix) {
+    private boolean signAndSpecialNumber(double value,
+            String positivePrefix) {
 
         // This is easiest via the raw bits
         long bits = Double.doubleToRawLongBits(value);
@@ -335,8 +355,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
         } else if (positivePrefix != null) {
             /*
-             * Positive, and a prefix is required. Note CPython 2.7 produces
-             * "+nan", " nan".
+             * Positive, and a prefix is required. Note CPython 2.7
+             * produces "+nan", " nan".
              */
             result.append(positivePrefix);
             lenSign = positivePrefix.length();
@@ -344,8 +364,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
         if (bits == 0L) {
             /*
-             * All zero means it's zero. (It may have been negative, producing
-             * -0.)
+             * All zero means it's zero. (It may have been negative,
+             * producing -0.)
              */
             result.append('0');
             lenWhole = 1;
@@ -377,21 +397,23 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      *     null to default to ""
      * @param precision precision (maximum number of fractional digits)
      */
-    private void format_e(double value, String positivePrefix, int precision) {
+    private void format_e(double value, String positivePrefix,
+            int precision) {
 
         // Exponent (default value is for 0.0 and -0.0)
         int exp = 0;
 
         if (!signAndSpecialNumber(value, positivePrefix)) {
             /*
-             * Convert abs(value) to decimal with p+1 digits of accuracy.
+             * Convert abs(value) to decimal with p+1 digits of
+             * accuracy.
              */
             MathContext mc = new MathContext(precision + 1, ROUND_PY);
             BigDecimal vv = new BigDecimal(Math.abs(value), mc);
 
             /*
-             * Take explicit control in order to get exponential notation out of
-             * BigDecimal.
+             * Take explicit control in order to get exponential
+             * notation out of BigDecimal.
              */
             String digits = vv.unscaledValue().toString();
             int digitCount = digits.length();
@@ -428,32 +450,36 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      *     null to default to ""
      * @param precision precision (maximum number of fractional digits)
      */
-    private void format_f(double value, String positivePrefix, int precision) {
+    private void format_f(double value, String positivePrefix,
+            int precision) {
 
         if (!signAndSpecialNumber(value, positivePrefix)) {
             /*
-             * Convert value to decimal exactly. (This can be very long.)
+             * Convert value to decimal exactly. (This can be very
+             * long.)
              */
             BigDecimal vLong = new BigDecimal(Math.abs(value));
 
             /*
-             * Truncate to the defined number of places to the right of the
-             * decimal point).
+             * Truncate to the defined number of places to the right of
+             * the decimal point).
              */
             BigDecimal vv = vLong.setScale(precision, ROUND_PY);
 
             /*
-             * When converted to text, the number of fractional digits is
-             * exactly the scale we set.
+             * When converted to text, the number of fractional digits
+             * is exactly the scale we set.
              */
             String raw = vv.toPlainString();
             result.append(raw);
             if ((lenFraction = vv.scale()) > 0) {
                 // There is a decimal point and some digits following
-                lenWhole = result.length() - (start + lenSign + (lenPoint = 1) + lenFraction);
+                lenWhole = result.length() - (start + lenSign
+                        + (lenPoint = 1) + lenFraction);
             } else {
                 /*
-                 * There are no fractional digits and so no decimal point
+                 * There are no fractional digits and so no decimal
+                 * point
                  */
                 lenWhole = result.length() - (start + lenSign);
             }
@@ -484,8 +510,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
         // Do we have a decimal point already?
         if (lenPoint == 0) {
             /*
-             * No decimal point: add one if there will be any fractional digits
-             * (a defined number or "alternate mode").
+             * No decimal point: add one if there will be any fractional
+             * digits (a defined number or "alternate mode").
              */
             if (n > 0 || minFracDigits < 0) {
                 // First need to add a decimal point.
@@ -508,7 +534,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * {@link BigDecimal} to provide conversion and rounding. These
      * variants are g-format proper, alternate g-format (available for
      * "%#g" formatting), n-format (as g but subsequently
-     * "internationalised"), and none-format (type code Spec.NONE).
+     * "internationalised"), and none-format (type code
+     * FormatSpec.NONE).
      * <p>
      * None-format is the basis of {@code float.__str__}.
      * <p>
@@ -578,18 +605,19 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * @param expThresholdAdj {@code +precision =} the exponent at which
      *     to resume using exponential notation
      */
-    private void format_g(double value, String positivePrefix, int precision, int expThresholdAdj) {
+    private void format_g(double value, String positivePrefix,
+            int precision, int expThresholdAdj) {
 
         // Precision 0 behaves as 1
         precision = Math.max(1, precision);
 
-        // Use exponential notation if exponent would be bigger thatn:
+        // Use exponential notation if exponent would be bigger than:
         int expThreshold = precision + expThresholdAdj;
 
         if (signAndSpecialNumber(value, positivePrefix)) {
             /*
-             * Finish formatting if zero result. (This is a no-op for nan or
-             * inf.)
+             * Finish formatting if zero result. (This is a no-op for
+             * nan or inf.)
              */
             zeroHelper(precision, expThreshold);
 
@@ -600,19 +628,21 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
             BigDecimal vv = new BigDecimal(Math.abs(value), mc);
 
             /*
-             * This gives us the digits we need for either fixed or exponential
-             * format.
+             * This gives us the digits we need for either fixed or
+             * exponential format.
              */
             String pointlessDigits = vv.unscaledValue().toString();
 
             /*
-             * If we were to complete this as e-format, the exponent would be:
+             * If we were to complete this as e-format, the exponent
+             * would be:
              */
             int exp = pointlessDigits.length() - vv.scale() - 1;
 
             if (-4 <= exp && exp < expThreshold) {
                 /*
-                 * Finish the job as f-format with variable-precision p-(exp+1).
+                 * Finish the job as f-format with variable-precision
+                 * p-(exp+1).
                  */
                 appendFixed(pointlessDigits, exp, precision);
 
@@ -649,23 +679,25 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
         if (signAndSpecialNumber(value, positivePrefix)) {
             /*
-             * Finish formatting if zero result. (This is a no-op for nan or
-             * inf.)
+             * Finish formatting if zero result. (This is a no-op for
+             * nan or inf.)
              */
             zeroHelper(precision, expThreshold);
 
         } else {
 
             /*
-             * Generate digit sequence (with no decimal point) with custom
-             * rounding.
+             * Generate digit sequence (with no decimal point) with
+             * custom rounding.
              */
             StringBuilder pointlessBuffer = new StringBuilder(20);
-            int exp = reprDigits(Math.abs(value), precision, pointlessBuffer);
+            int exp = reprDigits(Math.abs(value), precision,
+                    pointlessBuffer);
 
             if (-4 <= exp && exp < expThreshold) {
                 /*
-                 * Finish the job as f-format with variable-precision p-(exp+1).
+                 * Finish the job as f-format with variable-precision
+                 * p-(exp+1).
                  */
                 appendFixed(pointlessBuffer, exp, precision);
 
@@ -692,19 +724,21 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
             // May be 0 or -0 so we still need to ...
             if (minFracDigits < 0) {
                 /*
-                 * In "alternate format", we won't economise trailing zeros.
+                 * In "alternate format", we won't economise trailing
+                 * zeros.
                  */
                 appendPointAndTrailingZeros(precision - 1);
             } else if (lenFraction < minFracDigits) {
                 /*
-                 * Otherwise, it should be at least the stated minimum length.
+                 * Otherwise, it should be at least the stated minimum
+                 * length.
                  */
                 appendTrailingZeros(minFracDigits);
             }
 
             /*
-             * And just occasionally (in none-format) we go exponential even
-             * when exp = 0...
+             * And just occasionally (in none-format) we go exponential
+             * even when exp = 0...
              */
             if (0 >= expThreshold) { appendExponent(0); }
         }
@@ -728,11 +762,12 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * @param precision of conversion (number of significant digits).
      */
 
-    private void appendFixed(CharSequence digits, int exp, int precision) {
+    private void appendFixed(CharSequence digits, int exp,
+            int precision) {
 
         /*
-         * Check for "alternate format", where we won't economise trailing
-         * zeros.
+         * Check for "alternate format", where we won't economise
+         * trailing zeros.
          */
         boolean noTruncate = (minFracDigits < 0);
 
@@ -740,37 +775,39 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
         if (exp < 0) {
             /*
-             * For a negative exponent, we must insert leading zeros 0.000 ...
+             * For a negative exponent, we must insert leading zeros
+             * 0.000 ...
              */
             result.append("0.");
             lenWhole = lenPoint = 1;
             for (int i = -1; i > exp; --i) { result.append('0'); }
             /*
-             * Then the generated digits (always enough to satisfy no-truncate
-             * mode).
+             * Then the generated digits (always enough to satisfy
+             * no-truncate mode).
              */
             result.append(digits);
             lenFraction = digitCount - exp - 1;
 
         } else {
             /*
-             * For a non-negative exponent, it's a question of placing the
-             * decimal point.
+             * For a non-negative exponent, it's a question of placing
+             * the decimal point.
              */
             int w = exp + 1;
             if (w < digitCount) {
                 // There are w whole-part digits
                 result.append(digits.subSequence(0, w));
                 lenWhole = w;
-                result.append('.').append(digits.subSequence(w, digitCount));
+                result.append('.')
+                        .append(digits.subSequence(w, digitCount));
                 lenPoint = 1;
                 lenFraction = digitCount - w;
             } else {
                 // All the digits are whole-part digits.
                 result.append(digits);
                 /*
-                 * Just occasionally (in r-format) we need more digits than the
-                 * precision.
+                 * Just occasionally (in r-format) we need more digits
+                 * than the precision.
                  */
                 while (digitCount < w) {
                     result.append('0');
@@ -781,7 +818,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
             if (noTruncate) {
                 /*
-                 * Extend the fraction as BigDecimal will have economised on zeros.
+                 * Extend the fraction as BigDecimal will have
+                 * economised on zeros.
                  */
                 appendPointAndTrailingZeros(precision - digitCount);
             }
@@ -794,7 +832,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
         if (!noTruncate) {
             if (lenFraction < minFracDigits) {
                 /*
-                 * Otherwise, it should be at least the stated minimum length.
+                 * Otherwise, it should be at least the stated minimum
+                 * length.
                  */
                 appendTrailingZeros(minFracDigits);
             } else {
@@ -831,12 +870,13 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
         lenFraction = digitCount - 1;
 
         /*
-         * In no-truncate mode, the fraction is full precision. Otherwise
-         * trim it.
+         * In no-truncate mode, the fraction is full precision.
+         * Otherwise trim it.
          */
         if (minFracDigits >= 0) {
             /*
-             * Note positive minFracDigits only applies to fixed formats.
+             * Note positive minFracDigits only applies to fixed
+             * formats.
              */
             removeTrailingZeros(0);
         }
@@ -864,7 +904,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * @param buf for digits of result (recommend size be 20)
      * @return the exponent
      */
-    private static int reprDigits(double value, int maxDigits, StringBuilder buf) {
+    private static int reprDigits(double value, int maxDigits,
+            StringBuilder buf) {
 
         // Most of the work is done by Double.
         String s = Double.toString(value);
@@ -894,8 +935,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
             } else if (c == '.') {
                 /*
-                 * We remember this location (one *after* '.') to calculate the
-                 * exponent later.
+                 * We remember this location (one *after* '.') to
+                 * calculate the exponent later.
                  */
                 point = p;
 
@@ -906,26 +947,26 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
         }
 
         /*
-         * Possibly followed by an exponent. p has already advanced past the
-         * 'E'.
+         * Possibly followed by an exponent. p has already advanced past
+         * the 'E'.
          */
         if (p < end && c == 'E') {
             /*
-             * If there is an exponent, the mantissa must be in standard form:
-             * m.mmmm
+             * If there is an exponent, the mantissa must be in standard
+             * form: m.mmmm
              */
             assert point == first + 1;
             exp = Integer.parseInt(s.substring(p));
 
         } else {
             /*
-             * Exponent is based on relationship of decimal point and first
-             * non-zero digit.
+             * Exponent is based on relationship of decimal point and
+             * first non-zero digit.
              */
             exp = point - first - 1;
             /*
-             * But that's only correct when the point is to the right (or
-             * absent).
+             * But that's only correct when the point is to the right
+             * (or absent).
              */
             if (exp < 0) {
                 // The point is to the left of the first digit
@@ -934,34 +975,37 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
         }
 
         /*
-         * XXX This still does not round in all the cases it could. I think
-         * Java stops generating digits when the residual is <= ulp/2. This
-         * is to neglect the possibility that the extra ulp/2 (before it
-         * becomes a different double) could take us to a rounder numeral.
-         * To fix this, we could express ulp/2 as digits in the same scale
-         * as those in the buffer, and consider adding them. But Java's
-         * behaviour here is probably a manifestation of bug JDK-4511638.
+         * XXX This still does not round in all the cases it could. I
+         * think Java stops generating digits when the residual is <=
+         * ulp/2. This is to neglect the possibility that the extra
+         * ulp/2 (before it becomes a different double) could take us to
+         * a rounder numeral. To fix this, we could express ulp/2 as
+         * digits in the same scale as those in the buffer, and consider
+         * adding them. But Java's behaviour here is probably a
+         * manifestation of bug JDK-4511638.
          */
 
         // Sometimes the result is more digits than we want for repr.
         if (buf.length() > maxDigits) {
             /*
-             * Chop the trailing digits, remembering the most significant lost
-             * digit.
+             * Chop the trailing digits, remembering the most
+             * significant lost digit.
              */
             int d = buf.charAt(maxDigits);
             buf.setLength(maxDigits);
             /*
-             * We round half up. Not absolutely correct since Double has already
-             * rounded.
+             * We round half up. Not absolutely correct since Double has
+             * already rounded.
              */
             if (d >= '5') {
                 /*
-                 * Treat this as a "carry one" into the numeral buf[0:maxDigits].
+                 * Treat this as a "carry one" into the numeral
+                 * buf[0:maxDigits].
                  */
                 for (p = maxDigits - 1; p >= 0; p--) {
                     /*
-                     * Each pass of the loop does one carry from buf[p+1] to buf[p].
+                     * Each pass of the loop does one carry from
+                     * buf[p+1] to buf[p].
                      */
                     d = buf.charAt(p) + 1;
                     if (d <= '9') {
@@ -975,10 +1019,11 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
                 }
                 if (p < 0) {
                     /*
-                     * We fell off the bottom of the buffer with one carry still to
-                     * propagate. You may expect: buf.insert(0, '1') here, but note that
-                     * every digit in buf[0:maxDigits] is currently '0', so all we need
-                     * is:
+                     * We fell off the bottom of the buffer with one
+                     * carry still to propagate. You may expect:
+                     * buf.insert(0, '1') here, but note that every
+                     * digit in buf[0:maxDigits] is currently '0', so
+                     * all we need is:
                      */
                     buf.setCharAt(0, '1');
                     exp += 1;
@@ -1004,7 +1049,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
         if (n > f) {
             if (lenPoint == 0) {
                 /*
-                 * First need to add a decimal point. (Implies lenFraction=0.)
+                 * First need to add a decimal point. (Implies
+                 * lenFraction=0.)
                  */
                 result.append('.');
                 lenPoint = 1;
@@ -1029,7 +1075,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
 
         if (lenPoint == 0) {
             /*
-             * First need to add a decimal point. (Implies lenFraction=0.)
+             * First need to add a decimal point. (Implies
+             * lenFraction=0.)
              */
             result.append('.');
             lenPoint = 1;
@@ -1069,12 +1116,13 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
                 }
 
                 /*
-                 * f is now the number of fractional digits we wish to retain.
+                 * f is now the number of fractional digits we wish to
+                 * retain.
                  */
                 if (f == 0 && lenPoint > 0) {
                     /*
-                     * We will be stripping all the fractional digits. Take the decimal
-                     * point too.
+                     * We will be stripping all the fractional digits.
+                     * Take the decimal point too.
                      */
                     lenPoint = lenFraction = 0;
                     f = -1;
@@ -1083,7 +1131,9 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
                 }
 
                 // Snip the characters we are going to remove (if any).
-                if (fracStart + f < result.length()) { result.setLength(fracStart + f); }
+                if (fracStart + f < result.length()) {
+                    result.setLength(fracStart + f);
+                }
             }
         }
     }
@@ -1117,6 +1167,8 @@ public abstract class FloatFormatter extends Formats.AbstractFormatter {
      * Return the index in {@link #result} of the first letter. This is
      * a helper for {@link #uppercase()} and {@link #getExponent()}
      */
-    private int indexOfMarker() { return start + lenSign + lenWhole + lenPoint + lenFraction; }
+    private int indexOfMarker() {
+        return start + lenSign + lenWhole + lenPoint + lenFraction;
+    }
 
 }

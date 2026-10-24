@@ -1,17 +1,23 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.support;
 
-/** Exposers are of type or module kind. */
-enum ScopeKind {
-
-    MODULE("$module"), //
+/**
+ * The scope within which a method was found affects argument
+ * processing, how it is processed for exposure, and how its signature
+ * is presented in documentation.
+ */
+public enum ScopeKind {
+    /** The method is for a module. */
+    MODULE("$module"),
+    /** The method is for a type. */
     TYPE("$self");
 
+    /** @param selfName appearance of self in a documentation string. */
     ScopeKind(String selfName) {
         this.selfName = selfName;
     }
 
     /** Name of a "self" parameter in instance methods. */
-    String selfName;
+    public String selfName;
 }

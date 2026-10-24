@@ -1,3 +1,5 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.support;
 
 /**
@@ -6,12 +8,12 @@ package org.python.support;
  */
 public enum MethodKind {
     /**
-     * The method must be defined by a Java static method. An initial
-     * self or module argument is not expected. (If the writer attempts
-     * to declare one it will simply be the first parameter.) In a call
-     * from Python that uses dot notation, which is attribute lookup,
-     * the target object (or its type) is used to find the method, but
-     * is not bound to the first parameter.
+     * The method must be defined by a Java static method. An initial self
+     * or module argument is not expected. (If the writer attempts to
+     * declare one it will simply be the first parameter.) In a call from
+     * Python that uses dot notation, which is attribute lookup, the target
+     * object (or its type) is used to find the method, but the object is
+     * not bound to the first parameter.
      */
     /*
      * In CPython STATIC cannot be used for functions in modules, but we
@@ -20,22 +22,30 @@ public enum MethodKind {
     STATIC,
 
     /**
-     * The first argument is self or a module. The method must be
-     * defined either by a Java instance method or by a static method in
-     * which an initial self or module argument is declared. In a call
-     * from Python that uses dot notation, which is attribute lookup,
-     * the target object (or module) is used to find the method, and is
-     * bound to the first parameter.
+     * The method must be defined by a Java static method. An initial self
+     * or module argument is not expected. The first parameter must be a
+     * Python {@code type}. In a call from Python that uses dot notation,
+     * which is attribute lookup, the target object (or its type) is used to
+     * find the method.
+     */
+    NEW,
+
+    /**
+     * The first argument is self or a module. The method must be defined
+     * either by a Java instance method or by a static method in which an
+     * initial self or module argument is declared. In a call from Python
+     * that uses dot notation, which is attribute lookup, the target object
+     * (or module) is used to find the method, and is bound to the first
+     * parameter.
      */
     INSTANCE,
 
     /**
-     * The first argument is the Python type of the target. The method
-     * must be defined either by a Java static method in which an
-     * initial type argument is declared. In a call from Python that
-     * uses dot notation, which is attribute lookup, the target object's
-     * type is used to find the method, and is bound to the first
-     * parameter.
+     * The first argument is the Python type of the target. The method must
+     * be defined either by a Java static method in which an initial type
+     * argument is declared. In a call from Python that uses dot notation,
+     * which is attribute lookup, the target object's type is used to find
+     * the method, and is bound to the first parameter.
      */
     // CLASS cannot be used for functions in modules.
     CLASS

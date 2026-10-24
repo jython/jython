@@ -1,108 +1,108 @@
-// Copyright (c)2023 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandle;
 
-import org.python.core.Slot.EmptyException;
+import org.python.internal.EmptyException;
+import org.python.kernel.Representation;
+import org.python.kernel.SpecialMethod;
 
 /**
- * Selects a particular "rich comparison" operation from the
- * repertoire supported by {@code Opcode.COMPARE_OP}, the argument
- * to which is the {@code code} attribute of the name in this
- * {@code enum}.
+ * Selects a particular "rich comparison" operation from the repertoire
+ * supported by opcode {@code COMPARE_OP}, the argument to which is the
+ * {@code code} attribute of the name in this {@code enum}.
  *
- * @apiNote The order matches CPython's enumeration of operations
- *     used in the argument to {@code COMPARE_OP}, so that we can
- *     rely on it in the CPython byte code interpreter.
+ * @apiNote The order matches CPython's enumeration of operations used
+ *     in the argument to {@code COMPARE_OP}, so that we can rely on it
+ *     in the CPython byte code interpreter.
  */
-enum Comparison {
+public enum Comparison {
     // Order and number must be reflected in swap[].
 
     /** The {@code __lt__} operation. */
-    LT("<", Slot.op_lt) {
+    LT("<", SpecialMethod.op_lt) {
 
         @Override
         boolean toBool(int c) { return c < 0; }
     },
 
     /** The {@code __le__} operation. */
-    LE("<=", Slot.op_le) {
+    LE("<=", SpecialMethod.op_le) {
 
         @Override
         boolean toBool(int c) { return c <= 0; }
     },
 
     /** The {@code __eq__} operation. */
-    EQ("==", Slot.op_eq) {
+    EQ("==", SpecialMethod.op_eq) {
 
         @Override
         boolean toBool(int c) { return c == 0; }
     },
 
     /** The {@code __ne__} operation. */
-    NE("!=", Slot.op_ne) {
+    NE("!=", SpecialMethod.op_ne) {
 
         @Override
         boolean toBool(int c) { return c != 0; }
     },
 
     /** The {@code __gt__} operation. */
-    GT(">", Slot.op_gt) {
+    GT(">", SpecialMethod.op_gt) {
 
         @Override
         boolean toBool(int c) { return c > 0; }
     },
 
     /** The {@code __ge__} operation. */
-    GE(">=", Slot.op_ge) {
+    GE(">=", SpecialMethod.op_ge) {
 
         @Override
         boolean toBool(int c) { return c >= 0; }
     },
 
     /**
-     * The {@code in} operation (reflected {@code __contains__}). Note
-     * that "{@code v in seq}" compiles to<pre>
+     * The {@code in} operation (reflected {@code __contains__}). Note that
+     * "{@code v in seq}" compiles to<pre>
      *    LOAD_NAME    0 (v)
      *    LOAD_NAME    1 (seq)
-     *    COMPARE_OP   6 (in)
+     *    CONTAINS_OP  0
      * </pre> which must lead to {@code seq.__contains__(v)}.
      */
-    IN("in", Slot.op_contains) {
+    IN("in", SpecialMethod.op_contains) {
 
         @Override
         boolean toBool(int c) { return c >= 0; }
 
         @Override
         Object apply(Object v, Object seq) throws Throwable {
-            Operations ops = Operations.of(seq);
+            Representation rep = TypeSystem.registry.get(seq.getClass());
             try {
-                MethodHandle contains = slot.getSlot(ops);
+                MethodHandle contains = rep.op_contains();
                 return (boolean)contains.invokeExact(seq, v);
-            } catch (Slot.EmptyException e) {
-                throw new TypeError(NOT_CONTAINER, ops.type(seq).name);
+            } catch (EmptyException e) {
+                throw PyErr.format(PyExc.TypeError, NOT_CONTAINER, rep.pythonType(seq).getName());
             }
         }
     },
 
     /**
-     * The inverted {@code in} operation (reflected
-     * {@code __contains__}).
+     * The inverted {@code in} operation (reflected {@code __contains__}).
      */
-    NOT_IN("not in", Slot.op_contains) {
+    NOT_IN("not in", SpecialMethod.op_contains) {
 
         @Override
         boolean toBool(int c) { return c < 0; }
 
         @Override
         Object apply(Object v, Object seq) throws Throwable {
-            Operations ops = Operations.of(seq);
+            Representation rep = TypeSystem.registry.get(seq.getClass());
             try {
-                MethodHandle contains = slot.getSlot(ops);
+                MethodHandle contains = slot.handle(rep);
                 return !(boolean)contains.invokeExact(seq, v);
-            } catch (Slot.EmptyException e) {
-                throw new TypeError(NOT_CONTAINER, ops.type(seq).name);
+            } catch (EmptyException e) {
+                throw PyErr.format(PyExc.TypeError, NOT_CONTAINER, rep.pythonType(seq).getName());
             }
         }
     },
@@ -136,7 +136,7 @@ enum Comparison {
 
         @Override
         Object apply(Object v, Object w) throws Throwable {
-            return Py.NotImplemented; // XXX implement me!
+            return Py.NotImplemented; // TODO implement me!
         }
     },
 
@@ -150,19 +150,22 @@ enum Comparison {
         Object apply(Object v, Object w) throws Throwable { return Py.NotImplemented; }
     };
 
+    /** Representation of the operator. */
     final String text;
-    final Slot slot;
 
-    Comparison(String text, Slot slot) {
+    /** Corresponding special method. */
+    final SpecialMethod slot;
+
+    private Comparison(String text, SpecialMethod slot) {
         this.text = text;
         this.slot = slot;
     }
 
-    Comparison(String text) { this(text, null); }
+    private Comparison(String text) { this(text, null); }
 
     /**
-     * The text corresponding to the value, e.g. "!=" for {@code NE},
-     * "is not" for {@code IS_NOT}. Mostly for error messages.
+     * The text corresponding to the value, e.g. "!=" for {@code NE}, "is
+     * not" for {@code IS_NOT}. Mostly for error messages.
      *
      * @return text corresponding
      */
@@ -195,12 +198,12 @@ enum Comparison {
     /**
      * Translate a comparison result into the appropriate boolean, for
      * example {@code GE.toBool(1)} is {@link Py#True}. For the the six
-     * operations LT to GE inclusive, this is typically wrapped onto a
-     * call to {@code Comparable.compareTo()}). For the others we assume
-     * c==0 indicates equality.
+     * operations LT to GE inclusive, this is typically wrapped onto a call
+     * to {@code Comparable.compareTo()}). For the others we assume c==0
+     * indicates equality.
      * <p>
-     * Avoid the temptation to use the result of a subtraction here
-     * unless there is no possibility of overflow in the subtraction.
+     * Avoid the temptation to use the result of a subtraction here unless
+     * there is no possibility of overflow in the subtraction.
      *
      * @param c comparison result
      * @return boolean equivalent for this operation
@@ -209,8 +212,8 @@ enum Comparison {
     abstract boolean toBool(int c);
 
     /**
-     * Perform this comparison, raising {@code TypeError} when the
-     * requested comparison operator is not supported.
+     * Perform this comparison, raising {@code TypeError} when the requested
+     * comparison operator is not supported.
      *
      * @param v left operand
      * @param w right operand
@@ -219,25 +222,25 @@ enum Comparison {
      */
     // Compare CPython PyObject_RichCompare, do_richcompare in object.c
     Object apply(Object v, Object w) throws Throwable {
-        Operations vOps = Operations.of(v);
-        PyType vType = vOps.type(v);
-        Operations wOps = Operations.of(w);
-        PyType wType = wOps.type(w);
-        Slot swappedSlot = null;
+        Representation vRep = TypeSystem.registry.get(v.getClass());
+        PyType vType = vRep.pythonType(v);
+        Representation wRep = TypeSystem.registry.get(w.getClass());
+        PyType wType = wRep.pythonType(w);
+        SpecialMethod swappedSlot = null;
 
         // Try the swapped operation first if w is a sub-type of v
 
         if (vType != wType && wType.isSubTypeOf(vType)) {
             swappedSlot = swapped().slot;
             try {
-                Object r = swappedSlot.getSlot(wOps).invokeExact(w, v);
+                Object r = swappedSlot.handle(wRep).invokeExact(w, v);
                 if (r != Py.NotImplemented) { return r; }
             } catch (EmptyException e) {}
         }
 
         // Try the forward operation
         try {
-            Object r = slot.getSlot(vOps).invokeExact(v, w);
+            Object r = slot.handle(vRep).invokeExact(v, w);
             if (r != Py.NotImplemented) { return r; }
         } catch (EmptyException e) {}
 
@@ -245,7 +248,7 @@ enum Comparison {
         if (swappedSlot == null) {
             swappedSlot = swapped().slot;
             try {
-                Object r = swappedSlot.getSlot(wOps).invokeExact(w, v);
+                Object r = swappedSlot.handle(wRep).invokeExact(w, v);
                 if (r != Py.NotImplemented) { return r; }
             } catch (EmptyException e) {}
         }
@@ -262,15 +265,16 @@ enum Comparison {
     }
 
     /**
-     * Create a TypeError along the lines "OP not supported between
-     * instances of V and W"
+     * Create a {@link PyBaseException TypeError} along the lines "OP not
+     * supported between instances of V and W"
      *
      * @param v left arg
      * @param w right arg
      * @return the exception
      */
-    PyException comparisonTypeError(Object v, Object w) {
-        return new TypeError(NOT_SUPPORTED, this, PyType.of(v).name, PyType.of(w).name);
+    PyBaseException comparisonTypeError(Object v, Object w) {
+        return PyErr.format(PyExc.TypeError, NOT_SUPPORTED, this, PyType.of(v).getName(),
+                PyType.of(w).getName());
     }
 
     private static String NOT_SUPPORTED =
