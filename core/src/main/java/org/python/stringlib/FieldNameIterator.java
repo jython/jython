@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.stringlib;
 
@@ -7,27 +7,26 @@ import java.lang.invoke.MethodHandles;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.support.MissingFeature;
-import org.python.types.TypeFlag;
+import org.python.types.Feature;
 import org.python.types.TypeSpec;
 import org.python.types.WithClass;
 
-
 /**
- * This class is an implementation of the iterator object returned
- * by {@code string.formatter_field_name_split()}. The function
+ * This class is an implementation of the iterator object returned by
+ * {@code string.formatter_field_name_split()}. The function
  * {@code formatter_field_name_split()} returns a pair (tuple)
- * consisting of a head element and an instance of this iterator.
- * The constructor of this class effectively implements that
- * function, since as well as being the iterator (second member),
- * the object has an extra method {@link #head()} to return the
- * required first member of the pair.
+ * consisting of a head element and an instance of this iterator. The
+ * constructor of this class effectively implements that function, since
+ * as well as being the iterator (second member), the object has an
+ * extra method {@link #head()} to return the required first member of
+ * the pair.
  */
 public class FieldNameIterator implements WithClass {
 
     /** The Python type {@code fieldnameiterator} of this class. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new TypeSpec("fieldnameiterator", MethodHandles.lookup())
-                    .flagNot(TypeFlag.BASETYPE));
+            new TypeSpec("fieldnameiterator", MethodHandles.lookup()) //
+                    .remove(Feature.BASETYPE));
 
     /** The UTF-16 string from which elements are being returned. */
     private final String markup;
@@ -42,10 +41,10 @@ public class FieldNameIterator implements WithClass {
     private Object head;
 
     /**
-     * Create an iterator for the parts of this field name (and extract
-     * the head name field, which may be an empty string). According to
-     * the Python Standard Library documentation, a replacement field
-     * name has the structure:
+     * Create an iterator for the parts of this field name (and extract the
+     * head name field, which may be an empty string). According to the
+     * Python Standard Library documentation, a replacement field name has
+     * the structure:
      *
      * <pre>
      * field_name        ::=  arg_name ("." attribute_name | "[" element_index "]")*
@@ -54,8 +53,8 @@ public class FieldNameIterator implements WithClass {
      * element_index     ::=  integer | index_string
      * </pre>
      *
-     * The object is used from PyUnicode and from PyString, and we have
-     * to signal which it is, so that returned values may match in type.
+     * The object is used from PyUnicode and from PyString, and we have to
+     * signal which it is, so that returned values may match in type.
      *
      * @param fieldName the field name as UTF-16
      * @param bytes true if elements returned should be bytes
@@ -73,15 +72,15 @@ public class FieldNameIterator implements WithClass {
     }
 
     /**
-     * Create an iterator for the parts of this field name (and extract
-     * the head name field, which may be an empty string).
+     * Create an iterator for the parts of this field name (and extract the
+     * head name field, which may be an empty string).
      *
      * @param fieldName to parse
      */
     public FieldNameIterator(String fieldName) {
         /*
-         * XXX Extract UTF-16 string but remember whether str or bytes
-         * should result.
+         * XXX Extract UTF-16 string but remember whether str or bytes should
+         * result.
          */
         this(fieldName, false);
     }
@@ -96,7 +95,7 @@ public class FieldNameIterator implements WithClass {
     private final Object __next__() {
         Chunk chunk = nextChunk();
         if (chunk == null) { throw new MissingFeature("StopIteration"); }
-        return new PyTuple(chunk.is_attr, chunk.value);
+        return PyTuple.of(chunk.is_attr, chunk.value);
     }
 
     private int nextDotOrBracket(String markup) {
@@ -116,8 +115,8 @@ public class FieldNameIterator implements WithClass {
     public Object head() { return head; }
 
     /**
-     * Return the next "chunk" of the field name (or return null if
-     * ended). A chunk is a 2-tuple describing:
+     * Return the next "chunk" of the field name (or return null if ended).
+     * A chunk is a 2-tuple describing:
      * <ol start=0>
      * <li>whether the chunk is an attribute name,</li>
      * <li>the name or number (as a String or Integer) for accessing the

@@ -1,61 +1,62 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
 import org.python.support.InterpreterError;
 import org.python.support.MethodKind;
+import org.python.support.ScopeKind;
 import org.python.types.Exposed;
 
 /**
- * This class provides a parser for the positional and keyword
- * arguments supplied during a call to a built-in function or
- * method. The purpose of an argument parser is to provide the body
- * of a function, or perhaps a {@code MethodHandle} with an array of
- * values, corresponding in order and number to its parameters
- * (formal arguments).
+ * This class provides a parser for the positional and keyword arguments
+ * supplied during a call to a function or method. This parser
+ * transforms several argument presentations that occur in a Python
+ * implementation, and arranges them into an array.
  * <p>
- * This parser transforms several argument presentations that occur
- * in a Python implementation, and arranges them into an array. This
- * array is either created by the parser, or designated by the
- * caller. The parser may therefore be used to prepare arguments for
- * a pure a Java method (or {@code MethodHandle}) that accepts an
- * array, or to insert arguments as initial values of local
- * variables in an an optimised interpreter frame ({@link PyFrame}).
+ * This array is either created by the parser, or designated by the
+ * caller. The parser may therefore be used to prepare arguments for a
+ * pure a Java method (or {@code MethodHandle}) that accepts an array,
+ * or to insert arguments as initial values of local variables in an an
+ * optimised interpreter frame ({@link PyFrame}). Alternatively, the
+ * {@code ArgParser} may be read simply as a description of the function
+ * signature, in order to select an optimised call that avoids the
+ * intermediate copy.
  * <p>
- * The fields of the parser that determine the acceptable numbers of
+ * The fields of the parser that determine the acceptable number of
  * positional arguments and their names are essentially those of a
- * {@code code} object ({@link PyCode}). Defaults are provided
- * values that mirror the defaults built into a {@code function}
- * object ({@link PyFunction}).
+ * {@code code} object ({@link PyCode}). Default values are provided for
+ * in a way that parallels the semantics of the Python {@code function}
+ * object ({@link PyFunction}), even for those defined in Java.
  * <p>
  * Consider for example a function that in Python would have the
  * function definition:<pre>
  * def func(a, b, c=3, d=4, /, e=5, f=6, *aa, g=7, h, i=9, **kk):
  *     pass
- * </pre> This could be described by a constructor call and
- * modifiers: <pre>
+ * </pre> This could be described by a constructor call and modifiers:
+ * <pre>
  * String[] names = {"a", "b", "c", "d",  "e", "f",  "g", "h", "i",
  *         "aa", "kk"};
  * ArgParser ap = new ArgParser("func", names,
  *         names.length - 2, 4, 3, true, true) //
  *                 .defaults(3, 4, 5, 6) //
  *                 .kwdefaults(7, null, 9);
- * </pre> Note that "aa" and "kk" are at the end of the parameter
- * names. (This is how a CPython frame is laid out.)
+ * </pre> Note that "aa" and "kk" are at the end of the parameter names.
+ * (This is how a CPython frame is laid out.)
  * <p>
  * Defaults are provided, after the parser has been constructed, as
- * values corresponding to parameter names, when right-justified in
- * the space to which they apply. (See diagram below.) Both the
- * positional and keyword defaults are given by position in this
- * formulation. The {@link #kwdefaults(Object...)} call is allowed
- * to supply {@code null} values at positions it does not define.
+ * values corresponding to parameter names, when right-justified in the
+ * space to which they apply. (See diagram below.) Both the positional
+ * and keyword defaults are given by position in this formulation. The
+ * {@link #kwdefaults(Object...)} call is allowed to supply {@code null}
+ * values at positions it does not define.
  * <p>
  * When parsed to an array, the layout of the argument values, in
  * relation to fields of the parser will be as follows.
@@ -88,15 +89,15 @@ import org.python.types.Exposed;
  * </tr>
  * </table>
  * <p>
- * The most readable way of specifying a parser (although one that
- * is a little costly to construct) is to list the parameters as
- * they would be declared in Python, including the furniture that
- * marks up the positional-only, keyword-only, positional varargs,
- * and keyword varargs. This is the API offered by
- * {@link #fromSignature(String, String...)}. In practice we only
- * use this in unit tests. For serious applications we construct the
- * {@code ArgParser} with a complex of arguments derived by
- * inspection of the Java or Python signature.
+ * The most readable way of specifying a parser (although one that is a
+ * little costly to construct) is to list the parameters as they would
+ * be declared in Python, including the furniture that marks up the
+ * positional-only, keyword-only, positional varargs, and keyword
+ * varargs. This is the API offered by
+ * {@link #fromSignature(String, String...)}. In practice we only use
+ * this in unit tests. For serious applications we construct the
+ * {@code ArgParser} with a complex of arguments derived by inspection
+ * of the Java or Python signature.
  */
 class ArgParser {
 
@@ -119,35 +120,34 @@ class ArgParser {
     final ScopeKind scopeKind;
 
     /**
-     * The kind of method (instance, static or class) that this parser
-     * works for.
+     * The kind of method (instance, static or class) that this parser works
+     * for.
      */
     final MethodKind methodKind;
 
     /**
-     * Names of parameters that could be satisfied by position or
-     * keyword, including the collector parameters. Elements are
-     * guaranteed to be interned, and not {@code null} or empty. The
-     * array must name all the parameters, of which there are:
-     * {@code argcount + kwonlyargcount
+     * Names of parameters that could be satisfied by position or keyword,
+     * including the collector parameters. Elements are guaranteed to be
+     * interned, and not {@code null} or empty. The array must name all the
+     * parameters, of which there are: {@code argcount + kwonlyargcount
                 + (hasVarArgs() ? 1 : 0) + (hasVarKeywords() ? 1 : 0)}
      * <p>
-     * It is often is longer since it suits us to re-use an array that
-     * names all the local variables of a frame.
+     * It is often is longer since it suits us to re-use an array that names
+     * all the local variables of a frame.
      */
     /*
-     * Here and elsewhere we use the same field names as the CPython
-     * code, even though it tends to say "argument" when it could mean
-     * that or "parameter". In comments and documentation
-     * "positional parameter" means a parameter eligible to be satisfied
-     * by an argument given by position.
+     * Here and elsewhere we use the same field names as the CPython code,
+     * even though it tends to say "argument" when it could mean that or
+     * "parameter". In comments and documentation "positional parameter"
+     * means a parameter eligible to be satisfied by an argument given by
+     * position.
      */
     final String[] argnames;
 
     /**
      * The number of positional or keyword parameters, excluding the
-     * "collector" ({@code *args} and {@code **kwargs}) parameters, and
-     * any data that may follow the legitimate parameter names. Equal to
+     * "collector" ({@code *args} and {@code **kwargs}) parameters, and any
+     * data that may follow the legitimate parameter names. Equal to
      * {@code argcount + kwonlyargcount}.
      */
     final int regargcount;
@@ -157,18 +157,16 @@ class ArgParser {
 
     /**
      * The number of parameters that can only be satisfied by arguments
-     * given by position. This differs from {@link #argcount} by
-     * excluding parameters that may be given by keyword or position.
+     * given by position. This differs from {@link #argcount} by excluding
+     * parameters that may be given by keyword or position.
      */
     final int posonlyargcount;
 
     /** The number of keyword-only parameters. */
     final int kwonlyargcount;
 
-    /**
-     * The documentation string of the method.
-     */
-    String doc;
+    /** The documentation string of the method. */
+    private String doc;
 
     /**
      * The (positional) default parameters or {@code null} if there are
@@ -178,8 +176,8 @@ class ArgParser {
     private Object[] defaults;
 
     /**
-     * The keyword defaults, may be a {@code dict} or {@code null} if
-     * there are none.
+     * The keyword defaults, may be a {@code dict} or {@code null} if there
+     * are none.
      */
     // Compare CPython PyFunctionObject::func_kwdefaults
     private Map<Object, Object> kwdefaults;
@@ -191,28 +189,28 @@ class ArgParser {
     final int varArgsIndex;
 
     /**
-     * The frame has a collector ({@code dict}) for excess keyword
-     * arguments at this index, if it is {@code >=0}.
+     * The frame has a collector ({@code dict}) for excess keyword arguments
+     * at this index, if it is {@code >=0}.
      */
     final int varKeywordsIndex;
 
     /**
      * Construct a parser for a named function, with defined numbers of
-     * positional-only and keyword-only parameters, and parameter names
-     * in an array prepared by client code.
+     * positional-only and keyword-only parameters, and parameter names in
+     * an array prepared by client code.
      * <p>
      * The array of names is used in-place (not copied). The client code
-     * must therefore ensure that it cannot be modified after the parser
-     * has been constructed.
+     * must therefore ensure that it cannot be modified after the parser has
+     * been constructed.
      * <p>
      * The array of names may be longer than is necessary: the caller
      * specifies how much of the array should be treated as regular
-     * parameter names, and whether zero, one or two further elements
-     * will name collectors for excess positional or keyword arguments.
-     * The rest of the elements will not be examined by the parser. The
-     * motivation for this design is to permit efficient construction
-     * when the the array of names is the local variable names in a
-     * Python {@code code} object.
+     * parameter names, and whether zero, one or two further elements will
+     * name collectors for excess positional or keyword arguments. The rest
+     * of the elements will not be examined by the parser. The motivation
+     * for this design is to permit efficient construction when the the
+     * array of names is the local variable names in a Python {@code code}
+     * object.
      *
      * @param name of the function
      * @param names of the parameters including any collectors (varargs)
@@ -229,10 +227,9 @@ class ArgParser {
     }
 
     /**
-     * Construct a parser from descriptive parameters that may be
-     * derived from a the annotated declarations ({@link Exposed}
-     * methods) that appear in type and module definitions written in
-     * Java. For;<pre>
+     * Construct a parser from descriptive parameters that may be derived
+     * from a the annotated declarations ({@link Exposed} methods) that
+     * appear in type and module definitions written in Java. For;<pre>
      * def func(a, b, c=3, d=4, /, e=5, f=6, *aa, g=7, h, i=9, **kk):
      *     pass
      * </pre>The constructor arguments should specify this layout:
@@ -304,8 +301,8 @@ class ArgParser {
     /**
      * Create a parser, for a named function, with defined numbers of
      * positional-only and keyword-only parameters, and naming the
-     * parameters. Parameters that may only be given by position need
-     * not be named. ("" is acceptable in the names array.)
+     * parameters. Parameters that may only be given by position need not be
+     * named. ("" is acceptable in the names array.)
      * <p>
      * This is a convenient way to construct a reference result in unit
      * tests.
@@ -323,8 +320,8 @@ class ArgParser {
         int posOnly = 0, posCount = 0;
 
         /*
-         * Scan names, looking out for /, * and ** markers. Nameless
-         * parameters are tolerated in the positional-only section.
+         * Scan names, looking out for /, * and ** markers. Nameless parameters
+         * are tolerated in the positional-only section.
          */
         for (String param : decl) {
             int paramLen = param.length();
@@ -365,26 +362,19 @@ class ArgParser {
         /*
          * If there was no "/" or "*", all are positional arguments. This is
          * consistent with the output of inspect.signature, where e.g.
-         * inspect.signature(exec) is (source, globals=None, locals=None,
-         * /).
+         * inspect.signature(exec) is (source, globals=None, locals=None, /).
          */
-        if (posCount == 0) { posCount = N; }
+        if (varargs == null && varkw == null) { posCount = N; }
 
         // Number of regular arguments (not *, **)
         int regArgCount = N;
         int kwOnly = N - posCount;
 
         // Add any *args to the names
-        if (varargs != null) {
-            args.add(varargs);
-            N++;
-        }
+        if (varargs != null) { args.add(varargs); N++; }
 
         // Add any **kwargs to the names
-        if (varkw != null) {
-            args.add(varkw);
-            N++;
-        }
+        if (varkw != null) { args.add(varkw); N++; }
 
         String[] names = N == 0 ? NO_STRINGS : args.toArray(new String[N]);
 
@@ -423,6 +413,14 @@ class ArgParser {
      */
     boolean hasVarKeywords() { return varKeywordsIndex >= 0; }
 
+    /** @return the documentation string (or {@code null}). */
+    String doc() { return doc; }
+
+    /** @param doc the documentation string (or {@code null}). */
+    void doc(String doc) {
+        this.doc = doc;
+    }
+
     /**
      * The representation of an {@code ArgParser} is based on the
      * {@code __text_signature__} attribute of built-in methods (see
@@ -434,8 +432,8 @@ class ArgParser {
 
     /**
      * Return a string representing the argument list of the method. The
-     * string is like that found in the {@code __text_signature__}
-     * attribute of built-in methods.
+     * string is like that found in the {@code __text_signature__} attribute
+     * of built-in methods.
      *
      * @return the signature of the arguments
      */
@@ -526,8 +524,8 @@ class ArgParser {
     }
 
     /**
-     * Weak substitute for {@code repr()} that will do for common types
-     * of default argument.
+     * Weak substitute for {@code repr()} that will do for common types of
+     * default argument.
      *
      * @param o object to reproduce
      * @return poorman's {@code repr(o)}
@@ -548,20 +546,21 @@ class ArgParser {
      * Parse {@code __call__} arguments and create an array, using the
      * arguments supplied and the defaults held in the parser.
      *
-     * @param args all arguments, positional then keyword
-     * @param names of keyword arguments
+     * @param args all arguments, positional then keyword, (or {@code null})
+     * @param names of keyword arguments (or {@code null})
      * @return array of parsed arguments
      */
     Object[] parse(Object[] args, String[] names) {
         Object[] a = new Object[argnames.length];
         FrameWrapper w = new ArrayFrameWrapper(a);
+        if (args == null) { args = NO_OBJECTS; names = NO_STRINGS; }
         parseToFrame(w, args, 0, args.length, names);
         return a;
     }
 
     /**
-     * Parse CPython-style vector call arguments and create an array,
-     * using the arguments supplied and the defaults held in the parser.
+     * Parse CPython-style vector call arguments and create an array, using
+     * the arguments supplied and the defaults held in the parser.
      *
      * @param s positional and keyword arguments
      * @param p position of arguments in the array
@@ -592,15 +591,15 @@ class ArgParser {
     }
 
     /**
-     * Provide the positional defaults. * The {@code ArgParser} keeps a
-     * reference to this array, so that subsequent changes to it will
-     * affect argument parsing. (Concurrent access to the array and
-     * parser is a client issue.)
+     * Provide the positional defaults. The {@code ArgParser} keeps a
+     * reference to this array, so that subsequent changes to it will affect
+     * argument parsing. (Concurrent access to the array and parser is a
+     * client issue.)
      * <p>
      * If L values are provided, they correspond to
-     * {@code arg[max-L] ... arg[max-1]}, where {@code max} is the index
-     * of the first keyword-only parameter, or the number of parameters
-     * if there are no keyword-only parameters. The minimum number of
+     * {@code arg[max-L] ... arg[max-1]}, where {@code max} is the index of
+     * the first keyword-only parameter, or the number of parameters if
+     * there are no keyword-only parameters. The minimum number of
      * positional arguments will then be {@code max-L}.
      *
      * @param values replacement positional defaults (or {@code null})
@@ -615,17 +614,17 @@ class ArgParser {
     /**
      * Provide the keyword-only defaults as values. If K values are
      * provided, they correspond to {@code arg[N-K] ... arg[N-1]}, where
-     * {@code N} is the number of regular parameters
-     * ({@link #regargcount}). If the argument is empty, it is converted
-     * to {@code null} internally. The number of keyword-only parameters
-     * and positional-only parameters must not together exceed the
-     * number of regular parameters named in the constructor.
+     * {@code N} is the number of regular parameters ({@link #regargcount}).
+     * If any value is {@code null}, and for keyword parameters before
+     * {@code arg[N-K]}, there is no default. The number of keyword-only
+     * parameters and positional-only parameters must not together exceed
+     * the number of regular parameters named in the constructor.
      *
      * @param values keyword values aligned to the parameter names
      * @return {@code this}
      */
     ArgParser kwdefaults(Object... values) {
-        PyDict d = new PyDict();
+        Map<Object, Object> d = new HashMap<>();
         int K = values.length;
         for (int i = 0, p = regargcount - K; i < K; i++, p++) {
             Object v = values[i];
@@ -638,10 +637,10 @@ class ArgParser {
 
     /**
      * Provide the keyword-only defaults, perhaps as a {@code dict}. The
-     * {@code ArgParser} keeps a reference to this map, so that
-     * subsequent changes to it will affect argument parsing, as
-     * required for a Python {@link PyFunction function}. (Concurrent
-     * access to the mapping and parser is a client issue.)
+     * {@code ArgParser} keeps a reference to this map, so that subsequent
+     * changes to it will affect argument parsing, as required for a Python
+     * {@link PyFunction function}. (Concurrent access to the mapping and
+     * parser is a client issue.)
      *
      * @param kwd replacement keyword defaults (or {@code null})
      * @return {@code this}
@@ -653,11 +652,10 @@ class ArgParser {
     }
 
     /**
-     * The number of keyword-only parameters and positional-only
-     * parameters must not together exceed the number of parameters
-     * named in the constructor. (The last two are defined in the
-     * constructor.) Nor must there be excess default values for the
-     * number of parameters.
+     * The number of keyword-only parameters and positional-only parameters
+     * must not together exceed the number of parameters named in the
+     * constructor. (The last two are defined in the constructor.) Nor must
+     * there be excess default values for the number of parameters.
      */
     private void checkShape() {
         // XXX This may be too fussy, given that Python function is not
@@ -675,11 +673,11 @@ class ArgParser {
     }
 
     private static final String TOO_MANY_DEFAULTS = "More defaults (%d given) than "
-            + "positional parameters (%d allowed) when specifying '%s'";
+            + "positional parameters (%d allowed) " + "when specifying '%s'";
 
     private static final String TOO_MANY_KWDEFAULTS =
             "More keyword defaults (%d given) than remain after "
-                    + "positional-only parameters (%d left) when specifying '%s'";
+                    + "positional-only parameters (%d left) " + "when specifying '%s'";
 
     /** Get the name of arg i or make one up. */
     private String nameArg(int i) {
@@ -690,12 +688,28 @@ class ArgParser {
 
     /**
      * Abstract wrapper for storage that the enclosing argument parser
-     * should be able to fill from the arguments to a Python call.
-     * Typically this wrapper is a window onto the local variables of a
-     * function invocation (a {@link PyFrame}) that the run-time is in
-     * the process of initialising during a call.
+     * should be able to fill from the arguments to a Python call. Typically
+     * this wrapper is a window onto the local variables of a function
+     * invocation (a {@link PyFrame}) that the run-time is in the process of
+     * initialising during a call.
      */
     abstract class FrameWrapper {
+
+        @Override
+        public String toString() {
+            StringJoiner sj = new StringJoiner(", ", "Frame[", "]");
+            int n = argnames.length;
+            for (int i = 0; i < n; i++) {
+                String value;
+                try {
+                    value = Abstract.repr(getLocal(i)).toString();
+                } catch (Throwable e) {
+                    value = "null";
+                }
+                sj.add(value);
+            }
+            return sj.toString();
+        }
 
         /**
          * Get the local variable named by {@code argnames[i]}
@@ -714,26 +728,26 @@ class ArgParser {
         abstract void setLocal(int i, Object v);
 
         /**
-         * Copy positional arguments into local variables, making sure we
-         * don't copy more than have been allowed for in the frame.
-         * Providing too many or too few is not an error at this stage, as
-         * there may be a collector to catch the excess arguments or
-         * positional or keyword defaults to make up the shortfall.
+         * Copy positional arguments into local variables, making sure we don't
+         * copy more than have been allowed for in the frame. Providing too many
+         * or too few is not an error at this stage, as there may be a collector
+         * to catch the excess arguments or positional or keyword defaults to
+         * make up the shortfall.
          *
          * @param args positional arguments
          */
         void setPositionalArguments(PyTuple args) {
-            int n = Math.min(args.value.length, argcount);
+            int n = Math.min(args.size(), argcount);
             for (int i = 0; i < n; i++)
-                setLocal(i, args.value[i]);
+                setLocal(i, args.get(i));
         }
 
         /**
-         * Copy positional arguments into local variables, making sure we
-         * don't copy more than have been allowed for in the frame.
-         * Providing too many or too few is not an error at this stage, as
-         * there may be a collector to catch the excess arguments or
-         * positional or keyword defaults to make up the shortfall.
+         * Copy positional arguments into local variables, making sure we don't
+         * copy more than have been allowed for in the frame. Providing too many
+         * or too few is not an error at this stage, as there may be a collector
+         * to catch the excess arguments or positional or keyword defaults to
+         * make up the shortfall.
          *
          * @param stack positional and keyword arguments
          * @param pos position of arguments in the array
@@ -746,33 +760,30 @@ class ArgParser {
         }
 
         /**
-         * For each of the names used as keywords in the call, match it with
-         * an allowable parameter name, and assign that frame-local variable
-         * the keyword argument given in the call. If the variable is not
-         * null, this is an error.
+         * For each of the names used as keywords in the call, match it with an
+         * allowable parameter name, and assign that frame-local variable the
+         * keyword argument given in the call. If the variable is not null, this
+         * is an error.
          * <p>
          * "Allowable parameter name" here means the names in
          * {@code argnames[p:q]} where {@code p=posonlyargcount} and
-         * {@code q=argcount + kwonlyargcount}. If the name used in the call
-         * is not an allowable keyword, then if this parser allows for
-         * excess keywords, add it to the frame's keyword dictionary,
-         * otherwise throw an informative error.
+         * {@code q=argcount + kwonlyargcount}. If the name used in the call is
+         * not an allowable keyword, then if this parser allows for excess
+         * keywords, add it to the frame's keyword dictionary, otherwise throw
+         * an informative error.
          * <p>
-         * In this version, accept the keyword arguments passed as a
-         * dictionary, as in the "classic" {@code (*args, **kwargs)} call.
+         * In this version, accept the keyword arguments passed as a dictionary,
+         * as in the "classic" {@code (*args, **kwargs)} call.
          *
          * @param kwargs keyword arguments given in call
          */
         void setKeywordArguments(PyDict kwargs) {
             /*
-             * Create a dictionary for the excess keyword parameters, and insert
-             * it in the local variables at the proper position.
+             * Create a dictionary for the excess keyword parameters, and insert it
+             * in the local variables at the proper position.
              */
             PyDict kwdict = null;
-            if (hasVarKeywords()) {
-                kwdict = Py.dict();
-                setLocal(varKeywordsIndex, kwdict);
-            }
+            if (hasVarKeywords()) { kwdict = Py.dict(); setLocal(varKeywordsIndex, kwdict); }
 
             /*
              * For each entry in kwargs, search argnames for a match, and either
@@ -796,26 +807,26 @@ class ArgParser {
                         setLocal(index, value);
                     else
                         // Unfortunately, that seat is already taken
-                        throw new TypeError(MULTIPLE_VALUES, name, name);
+                        throw PyErr.format(PyExc.TypeError, MULTIPLE_VALUES, name, name);
                 }
             }
         }
 
         /**
-         * For each of the names used as keywords in the call, match it with
-         * an allowable parameter name, and assign that frame-local variable
-         * the keyword argument given in the call. If the variable is not
-         * null, this is an error.
+         * For each of the names used as keywords in the call, match it with an
+         * allowable parameter name, and assign that frame-local variable the
+         * keyword argument given in the call. If the variable is not null, this
+         * is an error.
          * <p>
          * "Allowable parameter name" here means the names in
          * {@code argnames[p:q]} where {@code p=posonlyargcount} and
-         * {@code q=argcount + kwonlyargcount}. If the name used in the call
-         * is not an allowable keyword, then if this parser allows for
-         * excess keywords, add it to the frame's keyword dictionary,
-         * otherwise throw an informative error.
+         * {@code q=argcount + kwonlyargcount}. If the name used in the call is
+         * not an allowable keyword, then if this parser allows for excess
+         * keywords, add it to the frame's keyword dictionary, otherwise throw
+         * an informative error.
          * <p>
-         * In this version, accept the keyword arguments passed as a
-         * dictionary, as in the "classic" {@code (*args, **kwargs)} call.
+         * In this version, accept the keyword arguments passed as a dictionary,
+         * as in the "classic" {@code (*args, **kwargs)} call.
          *
          * @param stack {@code [kwstart:kwstart+len(kwnames)]} values
          *     corresponding to {@code kwnames} in order
@@ -827,17 +838,17 @@ class ArgParser {
             PyDict kwdict = null;
             if (varKeywordsIndex >= 0) {
                 /*
-                 * Create a dictionary for the excess keyword parameters, and insert
-                 * it in the local variables at the proper position.
+                 * Create a dictionary for the excess keyword parameters, and insert it
+                 * in the local variables at the proper position.
                  */
                 kwdict = Py.dict();
                 setLocal(varKeywordsIndex, kwdict);
             }
 
             /*
-             * For each of the names in kwnames, search argnames for a match,
-             * and either assign the local variable or add the name-value pair
-             * to kwdict.
+             * For each of the names in kwnames, search argnames for a match, and
+             * either assign the local variable or add the name-value pair to
+             * kwdict.
              */
             int kwcount = kwnames == null ? 0 : kwnames.length;
             for (int i = 0, j = kwstart; i < kwcount; i++) {
@@ -859,16 +870,16 @@ class ArgParser {
                         setLocal(index, value);
                     else
                         // Unfortunately, that seat is already taken
-                        throw new TypeError(MULTIPLE_VALUES, name, key);
+                        throw PyErr.format(PyExc.TypeError, MULTIPLE_VALUES, name, key);
                 }
             }
         }
 
         /**
          * Find the given name in {@code argnames}, and if it is not found,
-         * return -1. Only the "allowable parameter names", those acceptable
-         * as keyword arguments, are searched. It is an error if the name is
-         * not a Python {@code str}.
+         * return -1. Only the "allowable parameter names", those acceptable as
+         * keyword arguments, are searched. It is an error if the name is not a
+         * Python {@code str}.
          *
          * @param name parameter name given as keyword
          * @return index of {@code name} in {@code argnames} or -1
@@ -878,12 +889,12 @@ class ArgParser {
             int end = regargcount;
 
             if (name == null || !(PyUnicode.TYPE.check(name))) {
-                throw new TypeError(KEYWORD_NOT_STRING, name);
+                throw PyErr.format(PyExc.TypeError, KEYWORD_NOT_STRING, name);
             }
 
             /*
-             * For speed, try raw pointer comparison. As names are normally
-             * interned Strings this should almost always hit.
+             * For speed, try raw pointer comparison. As names are normally interned
+             * Strings this should almost always hit.
              */
             for (int i = posonlyargcount; i < end; i++) {
                 if (argnames[i] == name)
@@ -891,8 +902,8 @@ class ArgParser {
             }
 
             /*
-             * It's not definitive until we have repeated the search using
-             * proper object comparison.
+             * It's not definitive until we have repeated the search using proper
+             * object comparison.
              */
             for (int i = posonlyargcount; i < end; i++) {
                 if (Abstract.richCompareBool(name, argnames[i], Comparison.EQ, null))
@@ -903,27 +914,28 @@ class ArgParser {
         }
 
         /**
-         * Fill in missing positional parameters from a from {@code defs}.
-         * If any positional parameters are cannot be filled, this is an
-         * error. The number of positional arguments {@code nargs} is
-         * provided so we know where to start only for their number.
+         * Fill in missing positional parameters from a from {@code defs}. If
+         * any positional parameters are cannot be filled, this is an error. The
+         * number of positional arguments {@code nargs} is provided so we know
+         * where to start only for their number.
          * <p>
          * It is harmless (but a waste) to call this when
          * {@code nargs >= argcount}.
          *
          * @param nargs number of positional arguments given in call
          * @param defs default values by position or {@code null}
-         * @throws TypeError if there are still missing arguments.
+         * @throws PyBaseException ({@link PyExc#TypeError TypeError}) if there
+         *     are still missing arguments.
          */
-        void applyDefaults(int nargs, Object[] defs) throws TypeError {
+        void applyDefaults(int nargs, Object[] defs) throws PyBaseException {
 
             int ndefs = defs == null ? 0 : defs.length;
             /*
-             * At this stage, the first nargs parameter slots have been filled
-             * and some (or all) of the remaining argcount-nargs positional
-             * parameters may have been assigned using keyword arguments.
-             * Meanwhile, defs is available to provide values for (only) the
-             * last defs.length positional parameters.
+             * At this stage, the first nargs parameter slots have been filled and
+             * some (or all) of the remaining argcount-nargs positional parameters
+             * may have been assigned using keyword arguments. Meanwhile, defs is
+             * available to provide values for (only) the last defs.length
+             * positional parameters.
              */
             // locals[nargs:m] have no default values, where:
             int m = argcount - ndefs;
@@ -933,8 +945,8 @@ class ArgParser {
 
             /*
              * Variables in locals[m:argcount] may take defaults from defs, but
-             * perhaps nargs > m. Begin at index nargs, but not necessarily at
-             * the start of defs.
+             * perhaps nargs > m. Begin at index nargs, but not necessarily at the
+             * start of defs.
              */
             for (int i = nargs, j = Math.max(nargs - m, 0); j < ndefs; i++, j++) {
                 if (getLocal(i) == null) { setLocal(i, defs[j]); }
@@ -943,20 +955,20 @@ class ArgParser {
 
         /**
          * Deal with missing keyword arguments, attempting to fill them from
-         * {@code kwdefs}. If any parameters are unfilled after that, this
-         * is an error.
+         * {@code kwdefs}. If any parameters are unfilled after that, this is an
+         * error.
          *
          * It is harmless (but a waste) to call this when
          * {@code kwonlyargcount == 0}.
          *
          * @param kwdefs default values by keyword or {@code null}
-         * @throws TypeError if there are too many or missing arguments.
+         * @throws PyBaseException ({@link PyExc#TypeError TypeError}) if there
+         *     are too many or missing arguments.
          */
-        void applyKWDefaults(Map<Object, Object> kwdefs) throws TypeError {
+        void applyKWDefaults(Map<Object, Object> kwdefs) throws PyBaseException {
             /*
              * Variables in locals[argcount:end] are keyword-only parameters. If
-             * they have not been assigned yet, they take values from dict
-             * kwdefs.
+             * they have not been assigned yet, they take values from dict kwdefs.
              */
             int end = regargcount;
             int missing = 0;
@@ -969,27 +981,28 @@ class ArgParser {
             if (missing > 0) { throw missingArguments(missing, -1); }
         }
 
-        static final String KEYWORD_NOT_STRING = "%.200s(): keywords must be strings";
-        static final String KEYWORD_NOT_COMPARABLE = "Keyword names %s not comparable.";
-        static final String MULTIPLE_VALUES = "%.200s(): multiple values for parameter '%s'";
-        static final String POSITIONAL_ONLY =
+        private static final String KEYWORD_NOT_STRING = "%.200s(): keywords must be strings";
+        private static final String MULTIPLE_VALUES =
+                "%.200s(): multiple values for parameter '%s'";
+        private static final String POSITIONAL_ONLY =
                 "%.200s(): positional-only argument%s passed by keyword: %s";
-        static final String UNEXPECTED_KEYWORD = "%.200s(): unexpected keyword argument '%s'";
+        private static final String UNEXPECTED_KEYWORD =
+                "%.200s(): unexpected keyword argument '%s'";
 
-        /*
-         * Compare CPython ceval.c::too_many_positional(). Unlike that
-         * function, on diagnosing a problem, we do not have to set a
-         * message and return status. Also, when called there is *always* a
-         * problem, and therefore an exception.
+        /**
+         * Create an exception to throw when there are too many positional
+         * arguments. The method works hard to create a precise (and
+         * grammatical) message.
+         * <p>
+         * The caller must defer the test until after kw processing, just so the
+         * actual kw-args given can be reported accurately. Otherwise, the test
+         * could be after (or part of) positional argument processing.
+         *
+         * @param posGiven Number of positional arguments given.
+         * @return to throw.
          */
-        // XXX Do not report kw arguments given: unnatural constraint.
-        /*
-         * The caller must defer the test until after kw processing, just so
-         * the actual kw-args given can be reported accurately. Otherwise,
-         * the test could be after (or part of) positional argument
-         * processing.
-         */
-        protected TypeError tooManyPositional(int posGiven) {
+        // Compare CPython ceval.c::too_many_positional().
+        PyBaseException tooManyPositional(int posGiven) {
             boolean posPlural = false;
             int kwGiven = 0;
             String posText, givenText;
@@ -1014,51 +1027,50 @@ class ArgParser {
             }
 
             if (kwGiven > 0) {
-                String format = " positional argument%s (and %d keyword-only argument%s)";
+                String format = " positional argument%s" + " (and %d keyword-only argument%s)";
                 givenText = String.format(format, posGiven != 1 ? "s" : "", kwGiven,
                         kwGiven != 1 ? "s" : "");
             } else {
                 givenText = "";
             }
 
-            return new TypeError("%s() takes %s positional argument%s but %d%s %s given", name,
-                    posText, posPlural ? "s" : "", posGiven, givenText,
+            return PyErr.format(PyExc.TypeError,
+                    "%s() takes %s positional argument%s but %d%s %s given", name, posText,
+                    posPlural ? "s" : "", posGiven, givenText,
                     (posGiven == 1 && kwGiven == 0) ? "was" : "were");
         }
 
         /**
-         * Diagnose an unexpected keyword occurring in a call and represent
-         * the problem as an exception. The particular keyword may
-         * incorrectly name a positional parameter, or it may be entirely
-         * unexpected (not be a parameter at all). In any case, since this
-         * error is going to be fatal to the call, this method looks at
-         * <i>all</i> the keywords to see if any are positional-only
-         * parameters, and if that's not the problem, reports just the
-         * originally-offending keyword as unexpected.
+         * Diagnose an unexpected keyword occurring in a call and represent the
+         * problem as an exception. The particular keyword may incorrectly name
+         * a positional parameter, or it may be entirely unexpected (not be a
+         * parameter at all). In any case, since this error is going to be fatal
+         * to the call, this method looks at <i>all</i> the keywords to see if
+         * any are positional-only parameters, and if that's not the problem,
+         * reports just the originally-offending keyword as unexpected.
          * <p>
-         * We call this method when any keyword has been encountered that
-         * does not match a legitimate parameter, and there is no
-         * {@code **kwargs} dictionary to catch it. Because Python makes it
-         * possible to supply keyword arguments from a {@code map} with
-         * {@code object} keys, we accept any object as a keyword name.
+         * We call this method when any keyword has been encountered that does
+         * not match a legitimate parameter, and there is no {@code **kwargs}
+         * dictionary to catch it. Because Python makes it possible to supply
+         * keyword arguments from a {@code map} with {@code object} keys, we
+         * accept any object as a keyword name.
          *
          * @param <K> type of element in keyword collection
          * @param kw the unexpected keyword encountered in the call
          * @param kwnames all the keywords used in the call
-         * @return TypeError diagnosing the problem
+         * @return PyBaseException diagnosing the problem
          */
         /*
-         * Compare CPython ceval.c::positional_only_passed_as_keyword(), and
-         * the code around its call. Unlike that function, on diagnosing a
-         * problem, we do not have to set a message and return status. Also,
-         * when called there is *always* a problem, and therefore an
-         * exception.
+         * Compare CPython ceval.c::positional_only_passed_as_keyword(), and the
+         * code around its call. Unlike that function, on diagnosing a problem,
+         * we do not have to set a message and return status. Also, when called
+         * there is *always* a problem, and therefore an exception.
          */
-        protected <K> TypeError unexpectedKeyword(Object kw, Collection<? extends K> kwnames) {
+        protected <K> PyBaseException unexpectedKeyword(Object kw,
+                Collection<? extends K> kwnames) {
             /*
-             * Compare each of the positional only parameter names with each of
-             * the keyword names given in the call. Collect the matches in a
-             * list.
+             * Compare each of the positional only parameter names with each of the
+             * keyword names given in the call. Collect the matches in a list.
              */
             List<String> names = new ArrayList<>();
             for (int k = 0; k < posonlyargcount; k++) {
@@ -1071,31 +1083,31 @@ class ArgParser {
 
             if (!names.isEmpty()) {
                 // We caught one or more matches: throw
-                return new TypeError(POSITIONAL_ONLY, name, names.size() == 1 ? "" : "s",
-                        String.join(", ", names));
+                return PyErr.format(PyExc.TypeError, POSITIONAL_ONLY, name,
+                        names.size() == 1 ? "" : "s", String.join(", ", names));
             } else {
                 // No match, so it is just unexpected altogether
-                return new TypeError(UNEXPECTED_KEYWORD, name, kw);
+                return PyErr.format(PyExc.TypeError, UNEXPECTED_KEYWORD, name, kw);
             }
         }
 
         /**
          * Diagnose which positional or keywords arguments are missing, and
-         * throw {@link TypeError} listing them. We call this when we have
-         * already detected a problem, and the process is one of going over
-         * the data again to create an accurate message.
+         * throw {@link PyBaseException TypeError} listing them. We call this
+         * when we have already detected a problem, and the process is one of
+         * going over the data again to create an accurate message.
          *
          * @param missing number of missing arguments
          * @param defcount number of positional defaults available (or -1)
          * @return TypeError listing names of the missing arguments
          */
         /*
-         * Compare CPython ceval.c::missing_arguments(). Unlike that
-         * function, on diagnosing a problem, we do not have to set a
-         * message and return status so the caller can "goto fail" and clean
-         * up. We can just throw directly.
+         * Compare CPython ceval.c::missing_arguments(). Unlike that function,
+         * on diagnosing a problem, we do not have to set a message and return
+         * status so the caller can "goto fail" and clean up. We can just throw
+         * directly.
          */
-        protected TypeError missingArguments(int missing, int defcount) {
+        protected PyBaseException missingArguments(int missing, int defcount) {
             String kind;
             int start, end;
 
@@ -1121,15 +1133,16 @@ class ArgParser {
         }
 
         /**
-         * Compose a {@link TypeError} from the missing argument names.
+         * Compose a {@link PyBaseException TypeError} from the missing argument
+         * names.
          */
         /*
-         * Compare CPython ceval.c::format_missing(). Unlike that function,
-         * on diagnosing a problem, we do not have to set a message and
-         * return status so the caller can "goto fail" and clean up. We can
-         * just throw directly.
+         * Compare CPython ceval.c::format_missing(). Unlike that function, on
+         * diagnosing a problem, we do not have to set a message and return
+         * status so the caller can "goto fail" and clean up. We can just throw
+         * directly.
          */
-        private TypeError missingNamesTypeError(String kind, ArrayList<String> names) {
+        private PyBaseException missingNamesTypeError(String kind, ArrayList<String> names) {
             int len = names.size();
             String joinedNames;
 
@@ -1155,32 +1168,32 @@ class ArgParser {
                     joinedNames = String.join(", ", names) + tail;
             }
 
-            return new TypeError("%s() missing %d required %s argument%s: %s", name, len, kind,
-                    len == 1 ? "" : "s", joinedNames);
+            return PyErr.format(PyExc.TypeError, "%s() missing %d required %s argument%s: %s", name,
+                    len, kind, len == 1 ? "" : "s", joinedNames);
         }
     }
 
     /**
      * Wrap an array provided by a client so that the enclosing argument
-     * parser may fill it from the arguments to a Python call. This
-     * array could be the local variables in the frame of a function
-     * being called, or an argument in the call of a method handle that
-     * accepts its arguments as an array. See:
+     * parser may fill it from the arguments to a Python call. This array
+     * could be the local variables in the frame of a function being called,
+     * or an argument in the call of a method handle that accepts its
+     * arguments as an array. See:
      * {@link ArgParser#parseToFrame(FrameWrapper, PyTuple, PyDict)}.
      */
     class ArrayFrameWrapper extends FrameWrapper {
 
         private final Object[] vars;
-        final int start;
+        private final int start;
 
         /**
-         * Wrap a slice of an existing array. The elements to fill are a
-         * slice of the destination array with specified starting index. The
-         * intended use is that {@code start = 1} allows space for a
-         * {@code self} reference not in the argument list. The capacity of
-         * the array, between the start index and the end, must be
-         * sufficient to hold the parse result may be larger, e.g. to
-         * accommodate other local variables.
+         * Wrap a slice of an existing array. The elements to fill are a slice
+         * of the destination array with specified starting index. The intended
+         * use is that {@code start = 1} allows space for a {@code self}
+         * reference not in the argument list. The capacity of the array,
+         * between the start index and the end, must be sufficient to hold the
+         * parse result may be larger, e.g. to accommodate other local
+         * variables.
          *
          * @param vars destination array
          * @param start at which to place first parsed argument
@@ -1193,8 +1206,8 @@ class ArgParser {
         }
 
         /**
-         * Wrap an existing array. The capacity of the array must be
-         * sufficient to hold the parse result.
+         * Wrap an existing array. The capacity of the array must be sufficient
+         * to hold the parse result.
          *
          * @param vars destination array
          */
@@ -1208,8 +1221,8 @@ class ArgParser {
 
         @Override
         void setPositionalArguments(PyTuple argsTuple) {
-            int n = Math.min(argsTuple.value.length, argcount);
-            System.arraycopy(argsTuple.value, 0, vars, start, n);
+            int n = Math.min(argsTuple.size(), argcount);
+            argsTuple.copyTo(0, vars, start, n);
         }
 
         @Override
@@ -1220,8 +1233,8 @@ class ArgParser {
     }
 
     /**
-     * Parse when an args tuple and keyword dictionary are supplied,
-     * that is, for a classic call.
+     * Parse when an args tuple and keyword dictionary are supplied, that
+     * is, for a classic call.
      *
      * @param frame to populate with argument values
      * @param args positional arguments given
@@ -1229,7 +1242,7 @@ class ArgParser {
      */
     void parseToFrame(FrameWrapper frame, PyTuple args, PyDict kwargs) {
 
-        final int nargs = args.value.length;
+        final int nargs = args.size();
 
         // Set parameters from the positional arguments in the call.
         frame.setPositionalArguments(args);
@@ -1243,7 +1256,7 @@ class ArgParser {
             if (hasVarArgs()) {
                 // Locate the * parameter in the frame
                 // Put the excess positional arguments there
-                frame.setLocal(varArgsIndex, new PyTuple(args.value, argcount, nargs - argcount));
+                frame.setLocal(varArgsIndex, new PyTuple(args, argcount, nargs - argcount));
             } else {
                 // Excess positional arguments but no *args for them.
                 throw frame.tooManyPositional(nargs);
@@ -1268,14 +1281,14 @@ class ArgParser {
     }
 
     /**
-     * Parse when an args array and keyword array are supplied, that is,
-     * for a vector call on a stack slice.
+     * Parse when an args array and keyword array are supplied, that is, for
+     * a vector call on a stack slice.
      *
      * @param frame to populate with argument values
      * @param stack array containing all arguments
      * @param start of the slice in the stack
-     * @param nargs number of arguments in the slice, whether position
-     *     or keyword
+     * @param nargs number of arguments in the slice, whether position or
+     *     keyword
      * @param kwnames (implying number) of keyword arguments
      */
     void parseToFrame(FrameWrapper frame, Object[] stack, int start, int nargs, String[] kwnames) {
@@ -1286,10 +1299,9 @@ class ArgParser {
         nargs = nargs - nkwargs;
 
         /*
-         * Here, CPython applies certain criteria for calling a fast path
-         * that (in our terms) calls only setPositionalArguments(). Those
-         * that depend only on code or defaults we make when those
-         * attributes are defined.
+         * Here, CPython applies certain criteria for calling a fast path that
+         * (in our terms) calls only setPositionalArguments(). Those that depend
+         * only on code or defaults we make when those attributes are defined.
          */
 
         // Set parameters from the positional arguments in the call.
@@ -1330,8 +1342,8 @@ class ArgParser {
     }
 
     /**
-     * Parse when an args array and keyword array are supplied, that is,
-     * for a standard {@code __call__}.
+     * Parse when an args array and keyword array are supplied, that is, for
+     * a standard {@code __call__}.
      *
      * @param frame to populate with argument values
      * @param args all arguments, positional then keyword
@@ -1345,10 +1357,9 @@ class ArgParser {
         int nargs = args.length - nkwargs;
 
         /*
-         * Here, CPython applies certain criteria for calling a fast path
-         * that (in our terms) calls only setPositionalArguments(). Those
-         * that depend only on code or defaults we make when those
-         * attributes are defined.
+         * Here, CPython applies certain criteria for calling a fast path that
+         * (in our terms) calls only setPositionalArguments(). Those that depend
+         * only on code or defaults we make when those attributes are defined.
          */
 
         // Set parameters from the positional arguments in the call.

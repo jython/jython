@@ -1,3 +1,5 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.stringlib;
 
 import java.util.Iterator;
@@ -6,23 +8,23 @@ import java.util.ListIterator;
 import org.python.core.PySequence;
 
 /**
- * The base of two classes that that provide elastic buffers of
- * integer values, somewhat like the
- * {@code java.lang.StringBuilder}, but for arrays of integers.
- * There is an abstract base for arrays to which a client appends,
- * and one for arrays to which the client prepends new values.
+ * The base of two classes that that provide elastic buffers of integer
+ * values, somewhat like the {@code java.lang.StringBuilder}, but for
+ * arrays of integers. There is an abstract base for arrays to which a
+ * client appends, and one for arrays to which the client prepends new
+ * values.
  * <p>
- * The particular virtue of these classes is that, if the ultimate
- * size of the built array may be known in advance, then the result
- * may be returned without a copy, using {@link #take()}.
+ * The particular virtue of these classes is that, if the ultimate size
+ * of the built array may be known in advance, then the result may be
+ * returned without a copy, using {@link #take()}.
  */
 public abstract class AbstractIntArrayBuilder {
 
-    /** An empty array of int for builder initial state, etc.. */
-    protected static final int[] EMPTY_INT_ARRAY = new int[0];
+    /** Zero length array as sharable constant. */
+    public static final int[] EMPTY_INT_ARRAY = new int[0];
 
     /** Number of elements by default. */
-    protected static final int MINSIZE = 16;
+    static final int MINSIZE = 16;
 
     /**
      * The number of elements currently
@@ -34,26 +36,25 @@ public abstract class AbstractIntArrayBuilder {
     /**
      * The maximum value stored.
      *
-     * @implNote The motivation for this is to know the range of code
-     *     point values when representing a string. An over-estimate
-     *     would be ok.)
+     * @implNote The motivation for this is to know the range of code point
+     *     values when representing a string. An over-estimate would be ok.)
      *
      * @return The maximum int stored.
      */
     public abstract int max();
 
     /**
-     * Ensure there is room for another {@code n} elements. In general,
-     * this will mean allocating new storage (of a carefully-chosen size
-     * &ge; {@code n+length()}) and copying the existing contents to it.
+     * Ensure there is room for another {@code n} elements. In general, this
+     * will mean allocating new storage (of a carefully-chosen size &ge;
+     * {@code n+length()}) and copying the existing contents to it.
      *
      * @param n to make additional space for
      */
     protected abstract void ensure(int n);
 
     /**
-     * An array of the elements in the buffer (not modified by methods
-     * on this object hereafter).
+     * An array of the elements in the buffer (not modified by methods on
+     * this object hereafter).
      *
      * @return the elements in the buffer
      */
@@ -61,25 +62,27 @@ public abstract class AbstractIntArrayBuilder {
 
     /**
      * Provide the contents as an array and reset the builder to empty.
-     * (This is a "destructive read".) The return type is Object in
-     * order that sub-classes may define the specific type (for example,
+     * (This is a "destructive read".) The return type is Object in order
+     * that sub-classes may define the specific type (for example,
      * {@code int[]} or {@code byte[]}).
      *
      * @implNote In many implementations, if the client has chosen an
-     *     initial capacity exactly matching {@link #length()} at the
-     *     time this method is called, then the result may be returned
-     *     without a copy. (This must be the last remaining reference to
-     *     the array originally allocated: it must be impossible for the
-     *     the builder to re-use it.) Otherwise, returning a new array
-     *     is inevitable.
+     *     initial capacity exactly matching {@link #length()} at the time
+     *     this method is called, then the result may be returned without a
+     *     copy. (This must be the last remaining reference to the array
+     *     originally allocated: it must be impossible for the the builder
+     *     to re-use it.) Otherwise, returning a new array is inevitable.
      *
      * @return the contents as a Python {@code str}
      */
     public abstract Object take();
 
+    /** Reset the builder to empty (zero {@link #length()}). */
+    public abstract void reset();
+
     /**
-     * Provide the contents as a Java {@code String} (non-destructively,
-     * but inefficiently).
+     * Provide the contents as a Java {@code String} (non-destructively, but
+     * inefficiently).
      */
     @Override
     public String toString() {
@@ -88,16 +91,16 @@ public abstract class AbstractIntArrayBuilder {
     }
 
     /**
-     * Abstract base of integer array builders that append to their
-     * content, building the result left to right. Implementations need
-     * only define {@link #appendUnchecked(int)}.
+     * Abstract base of integer array builders that append to their content,
+     * building the result left to right. Implementations need only define
+     * {@link #appendUnchecked(int)}.
      */
     public static abstract class Forward extends AbstractIntArrayBuilder {
         /**
-         * Append one element without ensuring that there is space. This
-         * method is for use when it is known that there is space for the
-         * element, for example, inside a loop before which when
-         * {@link #ensure(int)} has been called.
+         * Append one element without ensuring that there is space. This method
+         * is for use when it is known that there is space for the element, for
+         * example, inside a loop before which when {@link #ensure(int)} has
+         * been called.
          *
          * @param v to append
          */
@@ -145,15 +148,15 @@ public abstract class AbstractIntArrayBuilder {
 
     /**
      * Abstract base of integer array builders that prepend to their
-     * content, building the result right to left. Implementations need
-     * only define {@link #prependUnchecked(int)}.
+     * content, building the result right to left. Implementations need only
+     * define {@link #prependUnchecked(int)}.
      */
     public static abstract class Reverse extends AbstractIntArrayBuilder {
         /**
-         * Prepend one element without ensuring that there is space. This
-         * method is for use when it is known that there is space for the
-         * element, for example, inside a loop before which when
-         * {@link #ensure(int)} has been called.
+         * Prepend one element without ensuring that there is space. This method
+         * is for use when it is known that there is space for the element, for
+         * example, inside a loop before which when {@link #ensure(int)} has
+         * been called.
          *
          * @param v to prepend
          */

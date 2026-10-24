@@ -1,50 +1,51 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.stringlib;
 
 import java.lang.invoke.MethodHandles;
 
 import org.python.core.Py;
+import org.python.core.PyErr;
+import org.python.core.PyExc;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
-import org.python.core.ValueError;
 import org.python.support.MissingFeature;
-import org.python.types.TypeFlag;
+import org.python.types.Feature;
 import org.python.types.TypeSpec;
 import org.python.types.WithClass;
 
 /**
  * Provides an implementation of the object that
  * {@code string.formatter_parser()} returns, which is an iterator
- * returning successive 4-tuples, the sequence being equivalent to
- * the original string.
+ * returning successive 4-tuples, the sequence being equivalent to the
+ * original string.
  */
 public class MarkupIterator implements WithClass {
 
     /** The Python type {@code formatteriterator} of this class. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new TypeSpec("formatteriterator", MethodHandles.lookup())
-                    .flagNot(TypeFlag.BASETYPE));
+            new TypeSpec("formatteriterator", MethodHandles.lookup()) //
+                    .remove(Feature.BASETYPE));
 
     /** The UTF-16 string from which elements are being returned. */
     private final String markup;
     /**
      * True if originally given a {@code bytes} or {@code bytearray} (so
-     * that when a value is formatted using a chunk, it should be to
-     * bytes not the code points of a {@code str}).
+     * that when a value is formatted using a chunk, it should be to bytes
+     * not the code points of a {@code str}).
      */
     private final boolean bytes;
     /** How far along that string we are. */
     private int index;
     /**
-     * A counter used to auto-number fields when not explicitly numbered
-     * in the format.
+     * A counter used to auto-number fields when not explicitly numbered in
+     * the format.
      */
     private final FieldNumbering numbering;
 
     /**
      * Constructor used at top-level to enumerate a format.
-     * 
+     *
      * @param markup to parse
      * @param bytes if originally bytes-like
      * @param numbering for automatically numbered arguments
@@ -57,15 +58,15 @@ public class MarkupIterator implements WithClass {
 
     /**
      * Constructor used at top-level to enumerate a format.
-     * 
+     *
      * @param markup to parse
      */
     public MarkupIterator(String markup) { this(markup, false, new FieldNumbering()); }
 
     /**
-     * Constructor used at top-level to enumerate a format that may be
-     * for a bytes-like object.
-     * 
+     * Constructor used at top-level to enumerate a format that may be for a
+     * bytes-like object.
+     *
      * @param markup to parse
      * @param bytes if originally bytes-like
      */
@@ -75,7 +76,7 @@ public class MarkupIterator implements WithClass {
 
     /**
      * Variant constructor used when formats are nested.
-     * 
+     *
      * @param enclosingIterator within which this is nested
      * @param subMarkup the substring this is to parse
      */
@@ -119,8 +120,7 @@ public class MarkupIterator implements WithClass {
 
                 if (chunk.fieldName == null) {
                     /*
-                     * A fieldName is null only if there was no replacement field at
-                     * all.
+                     * A fieldName is null only if there was no replacement field at all.
                      */
                     for (int i = 1; i < elements.length; i++) { elements[i] = Py.None; }
 
@@ -145,19 +145,18 @@ public class MarkupIterator implements WithClass {
             }
 
         } catch (IllegalArgumentException e) {
-            throw new ValueError(e.getMessage());
+            throw PyErr.format(PyExc.ValueError, e.getMessage());
         }
     }
 
     /**
      * Convenience method for populating the return tuple, returning a
-     * {@code String} or {@code Py.None} if both arguments are
-     * {@code null}.
+     * {@code String} or {@code Py.None} if both arguments are {@code null}.
      *
-     * @param value to wrap as a PyObject or null if
-     *     {@code defaultValue} should be wrapped.
-     * @param defaultValue to return or {@code null} if default return
-     *     is {@code None}.
+     * @param value to wrap as a PyObject or null if {@code defaultValue}
+     *     should be wrapped.
+     * @param defaultValue to return or {@code null} if default return is
+     *     {@code None}.
      * @return object for tuple
      */
     private Object wrap(String value, String defaultValue) {
@@ -174,11 +173,11 @@ public class MarkupIterator implements WithClass {
     }
 
     /**
-     * Return the next {@link Chunk} from the iterator, which is a
-     * structure containing parsed elements of the replacement field (if
-     * any), and its preceding text. This is the Java equivalent of the
-     * tuple returned by {@link #__next__()}. This finds use in the
-     * implementation of {@code str.format} and {@code unicode.format}.
+     * Return the next {@link Chunk} from the iterator, which is a structure
+     * containing parsed elements of the replacement field (if any), and its
+     * preceding text. This is the Java equivalent of the tuple returned by
+     * {@link #__next__()}. This finds use in the implementation of
+     * {@code str.format} and {@code unicode.format}.
      *
      * @return the chunk
      */
@@ -194,8 +193,8 @@ public class MarkupIterator implements WithClass {
         int pos = index;
 
         /*
-         * Advance pos to the first '{' that is not a "{{" (escaped brace),
-         * or pos<0 if none such.
+         * Advance pos to the first '{' that is not a "{{" (escaped brace), or
+         * pos<0 if none such.
          */
         while (true) {
             pos = indexOfFirst(markup, pos, '{', '}');
@@ -303,8 +302,8 @@ public class MarkupIterator implements WithClass {
 
         if (pos >= 0) {
             /*
-             * There's a '!' or a ':', so what precedes the first of them is a
-             * field name.
+             * There's a '!' or a ':', so what precedes the first of them is a field
+             * name.
              */
             result.fieldName = fieldMarkup.substring(0, pos);
             if (fieldMarkup.charAt(pos) == '!') {
@@ -330,8 +329,7 @@ public class MarkupIterator implements WithClass {
                 }
             } else {
                 /*
-                 * No '!', so the format specifier is from the ':' to the end. Or
-                 * empty.
+                 * No '!', so the format specifier is from the ':' to the end. Or empty.
                  */
                 result.formatSpec = fieldMarkup.substring(pos + 1);
             }
@@ -357,8 +355,8 @@ public class MarkupIterator implements WithClass {
         }
 
         /*
-         * Finally, remember the argument number was specified (perhaps
-         * complain of mixed use).
+         * Finally, remember the argument number was specified (perhaps complain
+         * of mixed use).
          */
         if (Character.isDigit(c)) { numbering.useManualFieldNumbering(); }
     }
@@ -373,9 +371,9 @@ public class MarkupIterator implements WithClass {
     }
 
     /**
-     * Class used locally to assign indexes to the
-     * automatically-numbered arguments (see String Formatting section
-     * of the Python Standard Library).
+     * Class used locally to assign indexes to the automatically-numbered
+     * arguments (see String Formatting section of the Python Standard
+     * Library).
      */
     static final class FieldNumbering {
 
@@ -383,8 +381,8 @@ public class MarkupIterator implements WithClass {
         private int automaticFieldNumber = 0;
 
         /**
-         * Generate a numeric argument index automatically, or raise an
-         * error if already started numbering manually.
+         * Generate a numeric argument index automatically, or raise an error if
+         * already started numbering manually.
          *
          * @return index as string
          */

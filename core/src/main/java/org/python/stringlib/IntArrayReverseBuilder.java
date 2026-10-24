@@ -1,3 +1,5 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.stringlib;
 
 import java.util.Arrays;
@@ -77,4 +79,16 @@ public final class IntArrayReverseBuilder extends AbstractIntArrayBuilder.Revers
         max = 0;
         return v;
     }
+
+    @Override
+    public void reset() {
+        ptr = value.length;
+        max = 0;
+    }
+
+    /**
+     * Provide the contents as a Java {@code String} (non-destructively).
+     */
+    @Override
+    public String toString() { return new String(value, ptr, length()); }
 }

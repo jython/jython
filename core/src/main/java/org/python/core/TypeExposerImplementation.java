@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -12,62 +12,66 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Function;
 
-import org.python.core.Operations.BinopGrid;
 import org.python.core.PyMemberDescr.Flag;
-import org.python.core.Slot.Signature;
+import org.python.kernel.BaseType;
+import org.python.kernel.SpecialMethod;
+import org.python.kernel.TypeExposer;
 import org.python.support.InterpreterError;
+import org.python.support.MethodKind;
+import org.python.support.ScopeKind;
 import org.python.types.Exposed.Deleter;
 import org.python.types.Exposed.DocString;
 import org.python.types.Exposed.Getter;
 import org.python.types.Exposed.Member;
-import org.python.types.Exposed.PythonMethod;
-import org.python.types.Exposed.PythonStaticMethod;
+import org.python.types.Exposed.PythonNewMethod;
 import org.python.types.Exposed.Setter;
 
-class TypeExposerImplementation extends Exposer {
+/**
+ * Concrete implementation of the {@link TypeExposer} used by the kernel
+ * type factory
+ */
+class TypeExposerImplementation extends Exposer implements TypeExposer {
 
     /**
-     * Type for which attributes are to be exposed (or {@code null}
-     * during certain tests). It is referenced (e.g. where we create a
-     * descriptor), but is not otherwise accessed, since it is
-     * (necessarily) incomplete at this time.
+     * Type for which attributes are to be exposed (or {@code null} during
+     * certain tests). It is referenced (e.g. where we create a descriptor),
+     * but is not otherwise accessed, since it is (necessarily) incomplete
+     * at this time.
      */
-    final PyType type;
+    final BaseType type;
 
     /**
      * The table of intermediate descriptions for members. They will
-     * eventually become descriptors in a built-in object type. Every
-     * entry here is also a value in {@link Exposer#specs}.
+     * eventually become descriptors in a built-in object type. Every entry
+     * here is also a value in {@link Exposer#specs}.
      */
     final Set<MemberSpec> memberSpecs;
 
     /**
      * The table of intermediate descriptions for get-sets. They will
-     * eventually become descriptors in a built-in object type. Every
-     * entry here is also a value in {@link Exposer#specs}.
+     * eventually become descriptors in a built-in object type. Every entry
+     * here is also a value in {@link Exposer#specs}.
      */
     final Set<GetSetSpec> getSetSpecs;
 
     /**
-     * Construct the {@code TypeExposer} instance for a particular
-     * Python type. The {@code type} object is referenced (e.g. in
-     * intermediate specification objects), but is not otherwise
-     * accessed, since it is (necessarily) incomplete at this time. It
-     * will be interrogated as to its implementing classes, where we
-     * create descriptors, at the point {@link #expose(Class)} is
-     * called.
+     * Construct the {@code TypeExposer} instance for a particular Python
+     * type. The {@code type} object is referenced (e.g. in intermediate
+     * specification objects), but is not otherwise accessed, since it is
+     * (necessarily) incomplete at this time. It will be interrogated as to
+     * its implementing classes when we create descriptors, at the point
+     * {@link #scanJavaMethods(Class)} and {@link #scanJavaFields(Class)}
+     * are called.
      *
      * @param type being exposed
      */
-    TypeExposerImplementation(PyType type) {
+    TypeExposerImplementation(BaseType type) {
         this.type = type;
         this.memberSpecs = new TreeSet<>();
         this.getSetSpecs = new TreeSet<>();
@@ -76,100 +80,123 @@ class TypeExposerImplementation extends Exposer {
     @Override
     ScopeKind kind() { return ScopeKind.TYPE; }
 
-    /**
-     * Build the result from the defining class.
-     *
-     * @param definingClass to scan for definitions
-     */
-    void expose(Class<?> definingClass) {
-        // Scan the defining class for exposed and special methods
-        scanJavaMethods(definingClass);
-        // ... and for fields.
-        scanJavaFields(definingClass);
-    }
+    @Override
+    public void scanJavaMethods(Class<?> methodClass) throws InterpreterError {
+        super.scanJavaMethods(methodClass);
 
-    /**
-     * For each name having a definition in {@link #specs}, construct
-     * the attribute and add it to the map passed in. The map is
-     * normally the dictionary of the type. Attributes may rely on a
-     * {@code MethodHandle} or {@code VarHandle}, so a lookup object
-     * must be provided that can create them.
-     *
-     * @param dict to which the attributes should be delivered
-     * @param lookup authorisation to access members
-     */
-    void populate(Map<? super String, Object> dict, Lookup lookup) {
-        if (type == null)
-            // type may only properly be null during certain tests
-            throw new InterpreterError("Cannot generate descriptors for type 'null'");
-        for (Spec spec : specs.values()) {
-            spec.checkFormation();
-            Object attr = spec.asAttribute(type, lookup);
-            dict.put(spec.name, attr);
+        // Some annotations, and special methods, are only for types.
+        for (Method m : methodClass.getDeclaredMethods()) {
+
+            // TODO Check for class method
+            // PythonClassMethod pcm =
+            // m.getDeclaredAnnotation(PythonClassMethod.class);
+            // if (pcm != null) { addClassMethodSpec(m, pcm); }
+
+            // Check for getter, setter, deleter methods
+            Getter get = m.getAnnotation(Getter.class);
+            if (get != null) { addGetter(m, get); }
+            Setter set = m.getAnnotation(Setter.class);
+            if (set != null) { addSetter(m, set); }
+            Deleter del = m.getAnnotation(Deleter.class);
+            if (del != null) { addDeleter(m, del); }
+
+            /*
+             * If it has a special method name record a definition without needing
+             * specific annotation. (This is excluded during tests applicable before
+             * the type system works, indicated by type==null.)
+             */
+            if (type != null) {
+                String name = m.getName();
+                SpecialMethod sm = SpecialMethod.forMethodName(name);
+                if (sm != null) { addWrapperSpec(m, sm); }
+            }
+
+            // Check for __new__ method
+            PythonNewMethod pnm = m.getDeclaredAnnotation(PythonNewMethod.class);
+            if (pnm != null) { addNewMethodSpec(m, pnm); }
         }
     }
 
     /**
-     * Add to {@link #specs}, definitions based on methods found in the
-     * given class and either annotated for exposure or having the name
-     * of a special method.
+     * Add to {@link #specs}, definitions of fields found in the given class
+     * and annotated for exposure.
      *
-     * @param defsClass to introspect for methods
+     * @param fieldClass to introspect for field definitions
      * @throws InterpreterError on duplicates or unsupported types
      */
     @Override
-    void scanJavaMethods(Class<?> defsClass) throws InterpreterError {
+    public void scanJavaFields(Class<?> fieldClass) throws InterpreterError {
 
-        // Iterate over methods looking for those to expose
-        for (Class<?> c : superClasses(defsClass)) {
-            for (Method m : c.getDeclaredMethods()) {
-                /*
-                 * Note: method annotations (and special names) are not treated as
-                 * alternatives, to catch exposure of methods by multiple routes.
-                 */
+        logger.atTrace().addArgument(fieldClass).log("Finding fields  in {}");
 
-                // Check for instance method
-                PythonMethod pm = m.getDeclaredAnnotation(PythonMethod.class);
-                if (pm != null) { addMethodSpec(m, pm); }
-
-                // Check for static method
-                PythonStaticMethod psm = m.getDeclaredAnnotation(PythonStaticMethod.class);
-                if (psm != null) { addStaticMethodSpec(m, psm); }
-
-                // Check for getter, setter, deleter methods
-                Getter get = m.getAnnotation(Getter.class);
-                if (get != null) { addGetter(m, get); }
-                Setter set = m.getAnnotation(Setter.class);
-                if (set != null) { addSetter(m, set); }
-                Deleter del = m.getAnnotation(Deleter.class);
-                if (del != null) { addDeleter(m, del); }
-
-                // If it has a special method name record that definition.
-                String name = m.getName();
-                Slot slot = Slot.forMethodName(name);
-                if (slot != null) { addWrapperSpec(m, slot); }
-            }
+        // Iterate over fields looking for the relevant annotations
+        for (Field f : fieldClass.getDeclaredFields()) {
+            Member m = f.getDeclaredAnnotation(Member.class);
+            if (m != null) { addMemberSpec(f, m); }
         }
     }
 
+    @Override
+    public Iterable<Entry> entries(Lookup lookup) {
+        if (type == null)
+            // type may only properly be null during certain tests
+            throw new InterpreterError("Cannot generate entries for type 'null'");
+        logger.atDebug().addArgument(type.getName()).log("Populating '{}'");
+
+        // The returned object will stream name-attr pairs
+        return new Iterable<Entry>() {
+
+            @Override
+            public Iterator<Entry> iterator() {
+                return new Iterator<Entry>() {
+                    // Entries derive from the specs table
+                    Iterator<Spec> specIter = specs.values().iterator();
+
+                    @Override
+                    public boolean hasNext() {
+                        // ... if there are specs left to process
+                        return specIter.hasNext();
+                    }
+
+                    @Override
+                    public Entry next() {
+                        Spec spec = specIter.next();
+                        logger.atTrace().addArgument(type.getName()).addArgument(spec.name)
+                                .addArgument(spec.annoClassName()).log("- Add {}.{} ({})");
+                        spec.checkFormation();
+                        // Create attribute according to spec type
+                        Object attr = spec.asAttribute(type, lookup);
+                        return new Entry(spec.name, attr);
+                    }
+                };
+            }
+        };
+    }
+
     /**
-     * Process a method annotated as an exposed attribute get method,
-     * into a specification, and find a {@link GetSetSpec} to the table
-     * of specifications by name (or add one) to hold it.
+     * Process a method annotated as an exposed attribute get method, into a
+     * specification, and find a {@link GetSetSpec} to the table of
+     * specifications by name (or add one) to hold it.
      *
      * @param m method annotated
      * @param anno annotation encountered
      * @throws InterpreterError on duplicates or unsupported types
      */
     private void addGetter(Method m, Getter anno) {
-        addSpec(m, anno.value(), TypeExposerImplementation::castGetSet, GetSetSpec::new,
-                ms -> getSetSpecs.add(ms), GetSetSpec::addGetter);
+        // Define custom actions for a Getter
+        GetSetSpecAdder adder = new GetSetSpecAdder() {
+
+            @Override
+            void addMember(Method m, GetSetSpec s) { s.addGetter(m); }
+        };
+
+        adder.add(m, anno.value());
     }
 
     /**
-     * Process a method annotated as an exposed attribute set method,
-     * into a specification, and find a {@link GetSetSpec} to the table
-     * of specifications by name (or add one) to hold it.
+     * Process a method annotated as an exposed attribute set method, into a
+     * specification, and find a {@link GetSetSpec} to the table of
+     * specifications by name (or add one) to hold it.
      *
      *
      * @param m method annotated
@@ -177,14 +204,20 @@ class TypeExposerImplementation extends Exposer {
      * @throws InterpreterError on duplicates or unsupported types
      */
     private void addSetter(Method m, Setter anno) {
-        addSpec(m, anno.value(), TypeExposerImplementation::castGetSet, GetSetSpec::new,
-                ms -> getSetSpecs.add(ms), GetSetSpec::addSetter);
+        // Define custom actions for a Setter
+        GetSetSpecAdder adder = new GetSetSpecAdder() {
+
+            @Override
+            void addMember(Method m, GetSetSpec s) { s.addSetter(m); }
+        };
+
+        adder.add(m, anno.value());
     }
 
     /**
-     * Process a method annotated as an exposed attribute get method,
-     * into a specification, and find a {@link GetSetSpec} to the table
-     * of specifications by name (or add one) to hold it.
+     * Process a method annotated as an exposed attribute delete method,
+     * into a specification, and find a {@link GetSetSpec} to the table of
+     * specifications by name (or add one) to hold it.
      *
      *
      * @param m method annotated
@@ -192,98 +225,100 @@ class TypeExposerImplementation extends Exposer {
      * @throws InterpreterError on duplicates or unsupported types
      */
     private void addDeleter(Method m, Deleter anno) {
-        addSpec(m, anno.value(), TypeExposerImplementation::castGetSet, GetSetSpec::new,
-                ms -> getSetSpecs.add(ms), GetSetSpec::addDeleter);
+        // Define custom actions for a Deleter
+        GetSetSpecAdder adder = new GetSetSpecAdder() {
+
+            @Override
+            void addMember(Method m, GetSetSpec s) { s.addDeleter(m); }
+        };
+
+        adder.add(m, anno.value());
     }
 
     /**
-     * Cast an arbitrary {@link Spec} to a {@link GetSetSpec} or return
-     * {@code null}.
-     *
-     * @param spec to cast
-     * @return {@code spec} or {@code null}
-     */
-    private static GetSetSpec castGetSet(Spec spec) {
-        return spec instanceof GetSetSpec ? (GetSetSpec)spec : null;
-    }
-
-    /**
-     * Process a method that matches a slot name to a descriptor
+     * Process a method that matches a special method name to a descriptor
      * specification and add it to the table of specifications by name.
      *
      * @param meth method annotated
-     * @param slot annotation encountered
+     * @param sm annotation encountered
      * @throws InterpreterError on duplicates or unsupported types
      */
-    private void addWrapperSpec(Method meth, Slot slot) throws InterpreterError {
+    void addWrapperSpec(Method meth, SpecialMethod sm) throws InterpreterError {
+        // Define custom actions for a SpecialMethod
+        SpecAdder<WrapperSpec, Method> adder = new SpecAdder<>() {
 
-        // For clarity, name lambda expression for cast
-        Function<Spec, WrapperSpec> cast =
-                // Test and cast a found Spec to MethodSpec
-                spec -> spec instanceof WrapperSpec ? (WrapperSpec)spec : null;
-        // Now use the generic create/update
-        addSpec(meth, slot.methodName, cast, (String ignored) -> new WrapperSpec(slot), ms -> {},
-                WrapperSpec::add);
+            @Override
+            boolean check(Spec spec) { return spec instanceof WrapperSpec; }
+
+            @Override
+            WrapperSpec makeSpec(String name) { return new WrapperSpec(sm); }
+
+            @Override
+            void addMember(Method m, WrapperSpec s) { s.add(meth); }
+
+            @Override
+            void addSpec(WrapperSpec s) {}
+        };
+
+        adder.add(meth, sm.methodName);
+
     }
 
     /**
-     * Add to {@link #specs}, definitions of fields found in the given
-     * class and annotated for exposure.
+     * Process an annotation that identifies a {@code __new__} method of a
+     * Python type defined in Java, into a specification for a method, and
+     * add it to the table of specifications by name.
      *
-     * @param defsClass to introspect for field definitions
+     * @param anno annotation encountered
+     * @param meth method annotated
      * @throws InterpreterError on duplicates or unsupported types
      */
-    void scanJavaFields(Class<?> defsClass) throws InterpreterError {
-        // Iterate over fields looking for the relevant annotations
-        for (Class<?> c : superClasses(defsClass)) {
-            for (Field f : c.getDeclaredFields()) {
-                Member m = f.getDeclaredAnnotation(Member.class);
-                if (m != null) { addMemberSpec(f, m); }
-            }
-        }
+    void addNewMethodSpec(Method meth, PythonNewMethod anno) throws InterpreterError {
+        // Define custom actions for a PythonNewMethod
+        SpecAdder<NewMethodSpec, Method> adder = new SpecAdder<>() {
+
+            @Override
+            boolean check(Spec spec) { return spec instanceof NewMethodSpec; }
+
+            @Override
+            NewMethodSpec makeSpec(String name) { return new NewMethodSpec(name, type); }
+
+            @Override
+            void addMember(Method m, NewMethodSpec s) { s.add(m, true, true, MethodKind.NEW); }
+
+            @Override
+            void addSpec(NewMethodSpec s) { methodSpecs.add(s); }
+        };
+
+        adder.add(meth, anno.value());
     }
 
     /**
-     * Process an annotated field, that describes an exposed attribute,
-     * into a specification, and add it to the table of specifications
-     * by name.
+     * Process an annotated field, that describes an exposed attribute, into
+     * a specification, and add it to the table of specifications by name.
      *
      * @param f field annotated
      * @param anno annotation encountered
      * @throws InterpreterError on duplicates or unsupported types
      */
-    void addMemberSpec(Field f, Member anno) throws InterpreterError {
+    private void addMemberSpec(Field f, Member anno) throws InterpreterError {
+        // Define custom actions for a Member
+        SpecAdder<MemberSpec, Field> adder = new SpecAdder<>() {
 
-        // The name is as annotated or the "natural" one
-        String name = anno.value();
-        if (name == null || name.length() == 0)
-            name = f.getName();
+            @Override
+            boolean check(Spec spec) { return spec instanceof MemberSpec; }
 
-        /*
-         * XXX we follow the same pattern as with other spec types, in
-         * accumulating multiple definitions in a list. Repeat definition is
-         * almost certainly an error, and at this time, MemberSpec.add
-         * treats it as such. This makes Member annotations incompatible
-         * with the idea of multiple accepted implementations of a type.
-         */
-        // Find any existing definition
-        Spec spec = specs.get(name);
-        MemberSpec memberSpec;
-        if (spec == null) {
-            // A new entry is needed
-            memberSpec = new MemberSpec(name);
-            specs.put(memberSpec.name, memberSpec);
-            memberSpecs.add(memberSpec);
-        } else if (spec instanceof MemberSpec) {
-            // Existing entry will be updated
-            memberSpec = (MemberSpec)spec;
-        } else {
-            // Existing entry is not compatible
-            memberSpec = new MemberSpec(name);
-            throw duplicateError(name, f, memberSpec, spec);
-        }
-        // Add the field, processing the additional properties
-        memberSpec.add(f, anno.optional(), anno.readonly());
+            @Override
+            MemberSpec makeSpec(String name) { return new MemberSpec(name); }
+
+            @Override
+            void addMember(Field f, MemberSpec s) { s.add(f, anno.optional(), anno.readonly()); }
+
+            @Override
+            void addSpec(MemberSpec s) { memberSpecs.add(s); }
+        };
+
+        adder.add(f, anno.value());
     }
 
     @Override
@@ -299,13 +334,18 @@ class TypeExposerImplementation extends Exposer {
         final List<Field> fields;
 
         /**
-         * The member disappears when the field is {@code null}. This is
-         * always {@code false} for primitive types.
+         * The member disappears when the field is {@code null}. This is always
+         * {@code false} for primitive types.
          */
         boolean optional;
         /** The member may be read but not written or deleted. */
         boolean readonly;
 
+        /**
+         * Begin a specification for member.
+         *
+         * @param name of the member
+         */
         MemberSpec(String name) {
             super(name, ScopeKind.TYPE);
             this.fields = new ArrayList<>(1);
@@ -329,12 +369,8 @@ class TypeExposerImplementation extends Exposer {
             if (javaStatic) { throw new InterpreterError(CANNOT_BE_JAVA_STATIC, getJavaName()); }
 
             // Disallow optional if primitive (in Java)
-            if (optional) {
-                if (field.getType().isPrimitive()) {
-                    throw new InterpreterError(CANNOT_BE_OPTIONAL, "Primitive", getJavaName());
-                } else if (readonly) {
-                    throw new InterpreterError(CANNOT_BE_OPTIONAL, "Read-only", getJavaName());
-                }
+            if (optional && field.getType().isPrimitive()) {
+                throw new InterpreterError(CANNOT_BE_OPTIONAL, "Primitive", getJavaName());
             }
 
             // Add the only definition (do we actually need a list?)
@@ -351,7 +387,7 @@ class TypeExposerImplementation extends Exposer {
         }
 
         private static final String CANNOT_BE_JAVA_STATIC =
-                "The definition of '%s' cannot be Java static because it is a Python member";
+                "The definition of '%s' cannot be Java static " + "because it is a Python member";
         private static final String CANNOT_BE_OPTIONAL = "%s field '%s' cannot be optional";
 
         @Override
@@ -360,18 +396,17 @@ class TypeExposerImplementation extends Exposer {
         /**
          * {@inheritDoc}
          * <p>
-         * In a type, the attribute must be represented by a descriptor for
-         * the Python member attribute from this specification.
+         * In a type, the attribute must be represented by a descriptor for the
+         * Python member attribute from this specification.
          * <p>
-         * Note that specification may have collected multiple Java
-         * definitions of the same name. This method checks there is exactly
-         * one.
+         * Note that specification may have collected multiple Java definitions
+         * of the same name. This method checks there is exactly one.
          *
          * @return descriptor for access to the methods
          * @throws InterpreterError if the method type is not supported
          */
         @Override
-        PyMemberDescr asAttribute(PyType objclass, Lookup lookup) {
+        PyMemberDescr asAttribute(BaseType objclass, Lookup lookup) {
             EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
             if (readonly) { flags.add(Flag.READONLY); }
             if (optional) { flags.add(Flag.OPTIONAL); }
@@ -433,6 +468,11 @@ class TypeExposerImplementation extends Exposer {
         /** Java class of attribute from setter parameter. */
         Class<?> klass = Object.class;
 
+        /**
+         * Begin a specification for an attribute (get-set).
+         *
+         * @param name of the attribute
+         */
         GetSetSpec(String name) {
             super(name, ScopeKind.TYPE);
             this.getters = methods;
@@ -493,9 +533,9 @@ class TypeExposerImplementation extends Exposer {
         }
 
         /**
-         * Deduce the attribute type from the (raw) set method signature. We
-         * do this in order to give a sensible {@link TypeError} when a cast
-         * fails for the {@link PyGetSetDescr#__set__} operation.
+         * Deduce the attribute type from the (raw) set method signature. We do
+         * this in order to give a sensible {@link PyBaseException TypeError}
+         * when a cast fails for the {@link PyGetSetDescr#__set__} operation.
          *
          * @param method annotated with a {@code Setter}
          */
@@ -516,8 +556,8 @@ class TypeExposerImplementation extends Exposer {
         }
 
         @Override
-        Object asAttribute(PyType objclass, Lookup lookup) throws InterpreterError {
-            if (objclass.acceptedCount == 1)
+        Object asAttribute(BaseType objclass, Lookup lookup) throws InterpreterError {
+            if (objclass.selfClasses().size() == 1)
                 return createDescrSingle(objclass, lookup);
             else
                 return createDescrMultiple(objclass, lookup);
@@ -526,29 +566,56 @@ class TypeExposerImplementation extends Exposer {
         @Override
         public void checkFormation() throws InterpreterError {}
 
-        private Object createDescrSingle(PyType objclass, Lookup lookup) {
-            // TODO Stop-gap: do general case first
-            return createDescrMultiple(objclass, lookup);
-        }
-
         /**
-         * Create a {@code PyGetSetDescr} from this specification. Note that
-         * a specification collects all the methods as declared with this
-         * name (in separate getter, setter and deleter lists). Normally
-         * there is at most one of each.
-         * <p>
-         * Normally also, a Python type has just one Java implementation. If
-         * a type has N accepted implementations, there should be
-         * definitions of the getter, setter, and deleter methods, if
-         * defined at all, applicable to each accepted implementation. This
-         * method matches defined methods to the supported implementations.
+         * Create a {@code PyGetSetDescr} from this specification. Note that a
+         * specification collects all the methods as declared with this name (in
+         * separate getter, setter and deleter lists). Here there should be at
+         * most one of each.
          *
          * @param objclass Python type that owns the descriptor
          * @param lookup authorisation to access fields
          * @return descriptor for access to the field
          * @throws InterpreterError if the method type is not supported
          */
-        private PyGetSetDescr createDescrMultiple(PyType objclass, Lookup lookup)
+        private Object createDescrSingle(BaseType objclass, Lookup lookup) {
+            /*
+             * Lazily, we use the mechanism unreflect() that works for types with
+             * multiple self-classes, knowing there can be only one implementation.
+             */
+            // Handles on implementation methods
+            MethodHandle g, s = null, d = null;
+            g = unreflect(objclass, lookup, PyGetSetDescr.GETTER, getters)[0];
+            if (!readonly()) {
+                // We can set this attribute
+                s = unreflect(objclass, lookup, PyGetSetDescr.SETTER, setters)[0];
+                if (optional()) {
+                    // We can delete this attribute
+                    d = unreflect(objclass, lookup, PyGetSetDescr.DELETER, deleters)[0];
+                }
+            }
+
+            // Create a descriptor from the get, set and delete handles
+            return new PyGetSetDescr.Single(objclass, name, g, s, d, doc, klass);
+        }
+
+        /**
+         * Create a {@code PyGetSetDescr} from this specification. Note that a
+         * specification collects all the methods as declared with this name (in
+         * separate getter, setter and deleter lists). Normally there is at most
+         * one of each.
+         * <p>
+         * Normally also, a Python type has just one Java implementation. If a
+         * type has N accepted implementations, there should be definitions of
+         * the getter, setter, and deleter methods, if defined at all,
+         * applicable to each accepted implementation. This method matches
+         * defined methods to the supported implementations.
+         *
+         * @param objclass Python type that owns the descriptor
+         * @param lookup authorisation to access fields
+         * @return descriptor for access to the field
+         * @throws InterpreterError if the method type is not supported
+         */
+        private PyGetSetDescr createDescrMultiple(BaseType objclass, Lookup lookup)
                 throws InterpreterError {
 
             // Handles on implementation methods
@@ -566,16 +633,27 @@ class TypeExposerImplementation extends Exposer {
             return new PyGetSetDescr.Multiple(objclass, name, g, s, d, doc, klass);
         }
 
+        /**
+         * Build a method handle array for use in a descriptor defined by the
+         * given Python type and having an entry for each self-class of the
+         * type.
+         *
+         * @param objclass defining the descriptor
+         * @param lookup rights to form handles on the methods
+         * @param mt of the handles to return
+         * @param methods to consider as candidates
+         * @return the array of handles
+         * @throws InterpreterError
+         */
         private MethodHandle[] unreflect(PyType objclass, Lookup lookup, MethodType mt,
                 List<Method> methods) throws InterpreterError {
-
             /*
-             * In the first stage, translate each method to a handle. There
-             * could be any number of candidates in the defining classes. There
-             * may be a method for each accepted implementation of the type , or
-             * a method may match more than one (e.g. Number matching Long and
-             * Integer). We build a list with the more type-specific handles (in
-             * the first argument) before the less type-specific.
+             * In the first stage, translate each method to a handle. There could be
+             * any number of candidates in the defining classes. There may be a
+             * method for each accepted implementation of the type, or a method may
+             * match more than one (e.g. Number matching Long and Integer). We build
+             * a list with the more type-specific handles (in the first argument)
+             * before the less type-specific.
              */
             LinkedList<MethodHandle> candidates = new LinkedList<>();
             for (Method m : methods) {
@@ -589,28 +667,28 @@ class TypeExposerImplementation extends Exposer {
             }
 
             /*
-             *
-             * We will try to create a handle for each implementation of an
-             * instance method.
+             * We will try to create a handle for each self-class of the type
+             * defining the instance method.
              */
-            final int N = objclass.acceptedCount;
+            List<Class<?>> classes = objclass.selfClasses();
+            final int N = classes.size();
             MethodHandle[] method = new MethodHandle[N];
 
             // Fill the method array with matching method handles
             for (int i = 0; i < N; i++) {
-                Class<?> acceptedClass = objclass.classes[i];
+                Class<?> klass = classes.get(i);
                 /*
-                 * Fill method[i] with the method handle where the first parameter
-                 * is the most specific match for class accepted[i].
+                 * Fill method[i] with the method handle where the first parameter is
+                 * the most specific match for class accepted[i].
                  */
                 // Try the candidate method until one matches
                 for (MethodHandle mh : candidates) {
                     MethodType mt1 = mh.type();
-                    if (mt1.parameterType(0).isAssignableFrom(acceptedClass)) {
+                    if (mt1.parameterType(0).isAssignableFrom(klass)) {
                         /*
-                         * Each sub-type of MethodDef handles callMethod(self, args, kwargs)
-                         * in its own way, and must prepare the arguments of the generic
-                         * method handle to match.
+                         * Each sub-type of MethodDef handles callMethod(self, args, kwargs) in
+                         * its own way, and must prepare the arguments of the generic method
+                         * handle to match.
                          */
                         try {
                             // XXX not yet supporting Java args
@@ -626,8 +704,7 @@ class TypeExposerImplementation extends Exposer {
                 // We should have a value in each of method[]
                 if (method[i] == null) {
                     PyGetSetDescr.Type dt = PyGetSetDescr.Type.fromMethodType(mt);
-                    throw new InterpreterError(ATTR_NOT_IMPL, dt, name, objclass.name,
-                            objclass.classes[i]);
+                    throw new InterpreterError(ATTR_NOT_IMPL, dt, name, objclass.getName(), klass);
                 }
             }
 
@@ -641,7 +718,7 @@ class TypeExposerImplementation extends Exposer {
         }
 
         private static String ATTR_NOT_IMPL =
-                "%s of attribute '%s' of '%s' objects is not defined for implementation %s";
+                "%s of attribute '%s' of '%s' objects" + " is not defined for implementation %s";
 
         @Override
         Class<? extends Annotation> annoClass() {
@@ -664,26 +741,30 @@ class TypeExposerImplementation extends Exposer {
     }
 
     /**
-     * Specification in which we assemble information about a Python
-     * special method in advance of creating a special method
-     * descriptor.
+     * Specification in which we assemble information about a Python special
+     * method in advance of creating a special method descriptor.
      */
     static class WrapperSpec extends BaseMethodSpec {
 
         /** The special method being defined. */
-        final Slot slot;
+        final SpecialMethod sm;
 
-        WrapperSpec(Slot slot) {
-            super(slot.methodName, ScopeKind.TYPE);
-            this.slot = slot;
+        /**
+         * Begin a specification for a special method.
+         *
+         * @param sm being defined for this type.
+         */
+        WrapperSpec(SpecialMethod sm) {
+            super(sm.methodName, ScopeKind.TYPE);
+            this.sm = sm;
         }
 
         @Override
-        Object asAttribute(PyType objclass, Lookup lookup) throws InterpreterError {
+        Object asAttribute(BaseType objclass, Lookup lookup) throws InterpreterError {
             /*
-             * We will try to create a handle for each implementation of a
-             * special (instance) method. See corresponding logic in
-             * Slot.setSlot(Operations, Object)
+             * We will try to create a handle for each implementation of a special
+             * (instance) method. See corresponding logic in
+             * SpecialMethod.setSlot(Representation, Object)
              */
             return createDescrForInstanceMethod(objclass, lookup);
         }
@@ -705,36 +786,34 @@ class TypeExposerImplementation extends Exposer {
         /**
          * {@inheritDoc}
          * <p>
-         * In this case, we name the slot function, as there is no
-         * annotation.
+         * In this case, we name the special method, as there is no annotation.
          */
         @Override
-        protected String annoClassName() { return slot.toString(); }
+        protected String annoClassName() { return sm.name(); }
 
         /**
-         * Create a {@code PyWrapperDescr} from this specification. Note
-         * that a specification describes the methods as declared, and that
-         * there may be any number. This method matches them to the
-         * supported implementations.
+         * Create a {@code PyWrapperDescr} from this specification. Note that a
+         * specification describes the methods as declared, and that there may
+         * be any number. This method matches them to the supported
+         * implementations.
          *
          * @param objclass Python type that owns the descriptor
          * @param lookup authorisation to access fields
          * @return descriptor for access to the field
          * @throws InterpreterError if the method type is not supported
          */
-        private PyWrapperDescr createDescrForInstanceMethod(PyType objclass, Lookup lookup)
+        private PyWrapperDescr createDescrForInstanceMethod(BaseType objclass, Lookup lookup)
                 throws InterpreterError {
 
             // Acceptable methods can be coerced to this signature
-            MethodType slotType = slot.getType();
+            MethodType slotType = sm.getType();
             final int L = slotType.parameterCount();
             assert L >= 1;
 
             /*
              * There could be any number of candidates in the implementation. An
-             * implementation method could match multiple accepted
-             * implementations of the type (e.g. Number matching Long and
-             * Integer).
+             * implementation method could match multiple accepted implementations
+             * of the type (e.g. Number matching Long and Integer).
              */
             LinkedList<MethodHandle> candidates = new LinkedList<>();
             for (Method m : methods) {
@@ -749,24 +828,26 @@ class TypeExposerImplementation extends Exposer {
             }
 
             /*
-             * We will try to create a handle for each implementation of an
-             * instance method, but only one handle for static/class methods
-             * (like __new__). See corresponding logic in
-             * Slot.setSlot(Operations, Object)
+             * We will try to create a handle for each implementation of an instance
+             * method, but only one handle for static/class methods (like __new__).
+             * See corresponding logic in SpecialMethod.setSlot(Representation,
+             * Object)
              */
-            final int N = objclass.acceptedCount;
+            // TODO Rationalise with PyMethodDescr.prepareCandidates
+            List<Class<?>> selfClasses = objclass.selfClasses();
+            final int N = selfClasses.size();
             MethodHandle[] wrapped = new MethodHandle[N];
 
-            // Fill the wrapped array with matching method handles
+            /*
+             * Fill the method array with matching method handles for the primary,
+             * adopted and accepted Java representation classes of this type.
+             */
             for (int i = 0; i < N; i++) {
-                Class<?> acceptedClass = objclass.classes[i];
-                /*
-                 * Fill wrapped[i] with the method handle where the first parameter
-                 * is the most specific match for class accepted[i].
-                 */
-                // Try the candidate method until one matches
+                // Seek most specific match for the i.th self-class
+                Class<?> sc = selfClasses.get(i);
+                // The candidates are sorted most specific first
                 for (MethodHandle mh : candidates) {
-                    if (mh.type().parameterType(0).isAssignableFrom(acceptedClass)) {
+                    if (mh.type().parameterType(0).isAssignableFrom(sc)) {
                         try {
                             // must have the expected signature
                             checkCast(mh, slotType);
@@ -781,33 +862,33 @@ class TypeExposerImplementation extends Exposer {
 
                 // We should have a value in each of wrapped[]
                 if (wrapped[i] == null) {
-                    throw new InterpreterError("'%s.%s' not defined for %s", objclass.name,
-                            slot.methodName, objclass.classes[i]);
+                    throw new InterpreterError("'%s.%s' not defined for %s", objclass.getName(),
+                            sm.methodName, sc);
                 }
             }
 
             if (N == 1)
                 /*
-                 * There is only one definition so use the simpler form of
-                 * slot-wrapper. This is the frequent case.
+                 * There is only one definition so use the simpler form of slot-wrapper.
+                 * This is the frequent case.
                  */
-                return new PyWrapperDescr.Single(objclass, slot, wrapped[0]);
+                return new PyWrapperDescr.Single(objclass, sm, wrapped[0]);
             else
                 /*
-                 * There are multiple definitions so use the array form of
-                 * slot-wrapper. This is the case for types that have multiple
-                 * accepted implementations and methods on them that are not static
-                 * or "Object self".
+                 * There are multiple definitions so use the array form of slot-wrapper.
+                 * This is the case for types that have multiple accepted
+                 * implementations and methods on them that are not static or
+                 * "Object self".
                  */
-                return new PyWrapperDescr.Multiple(objclass, slot, wrapped);
+                return new PyWrapperDescr.Multiple(objclass, sm, wrapped);
         }
 
         /**
-         * Throw a {@code WrongMethodTypeException} if the offered method
-         * (e.g. a special method) cannot be called with arguments matching
-         * the specified type. This makes up for the fact that
-         * {@code MethodHandle.asType} does not do much checking. This way,
-         * we get an error at specification time, not run-time.
+         * Throw a {@code WrongMethodTypeException} if the offered method (e.g.
+         * a special method) cannot be called with arguments matching the
+         * specified type. This makes up for the fact that
+         * {@code MethodHandle.asType} does not do much checking. This way, we
+         * get an error at specification time, not run-time.
          *
          * @param mh handle of method offered
          * @param slotType required type
@@ -817,82 +898,94 @@ class TypeExposerImplementation extends Exposer {
                 throws WrongMethodTypeException {
             MethodType mt = mh.type();
             int n = mt.parameterCount();
-            if (n != slotType.parameterCount())
-                throw new WrongMethodTypeException();
-            boolean ok = slotType.returnType().isAssignableFrom(mt.returnType());
-            if (!ok) { throw new WrongMethodTypeException(); }
-            for (int i = 0; i < n; i++) {
+            boolean ok = (n == slotType.parameterCount())
+                    && slotType.returnType().isAssignableFrom(mt.returnType());
+            for (int i = 0; ok && i < n; i++) {
                 ok = slotType.parameterType(i).isAssignableFrom(mt.parameterType(i));
-                if (!ok) { throw new WrongMethodTypeException(); }
             }
+            if (!ok) { throw new WrongMethodTypeException(); }
         }
     }
 
     /**
-     * Create a table of {@code MethodHandle}s from binary operations
-     * defined in the given class, on behalf of the type given. This
-     * table is 3-dimensional, being indexed by the slot of the method
-     * being defined, which must be a binary operation, and the indices
-     * of the operand classes in the type. These handles are used
-     * privately by the type to create call sites. Although the process
-     * of creating them is similar to making wrapper descriptors, these
-     * structures do not become exposed as descriptors.
-     *
-     * @param lookup authorisation to access methods
-     * @param binops to introspect for binary operations
-     * @param type to which these descriptors apply
-     * @return attributes defined (in the order first encountered)
-     * @throws InterpreterError on duplicates or unsupported types
+     * Specification in which we assemble information about a Python
+     * {@code __new__} method in advance of creating a function
+     * {@link PyJavaFunction}.
      */
-    static Map<Slot, BinopGrid> binopTable(Lookup lookup, Class<?> binops, PyType type)
-            throws InterpreterError {
+    static class NewMethodSpec extends CallableSpec {
 
-        // Iterate over methods looking for the relevant annotations
-        Map<Slot, BinopGrid> defs = new HashMap<>();
+        /** The defining Python type. */
+        final private PyType type;
 
-        for (Method m : binops.getDeclaredMethods()) {
-            // If it is a special method, record the definition.
-            String name = m.getName();
-            Slot slot = Slot.forMethodName(name);
-            if (slot != null && slot.signature == Signature.BINARY) {
-                binopTableAdd(defs, slot, m, lookup, binops, type);
+        /**
+         * Begin a specification for a {@code __new__} method.
+         *
+         * @param name generally {@code __new__}
+         * @param type to create when called
+         */
+        NewMethodSpec(String name, BaseType type) {
+            super(name, ScopeKind.TYPE);
+            this.type = type;
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * In a type, the attribute representing a {@code __new__} method is a
+         * {@code PyJavaFunction}. This method creates it from the
+         * specification.
+         * <p>
+         * Note that a specification describes the method as declared, and that
+         * there must be exactly one, even if there are multiple implementations
+         * of the type.
+         *
+         * @param objclass Python type that owns the method
+         * @param lookup authorisation to access members
+         * @return function for access to the method
+         * @throws InterpreterError if the method type is not supported
+         */
+        @Override
+        PyJavaFunction asAttribute(BaseType objclass, Lookup lookup) {
+            assert methodKind == MethodKind.NEW;
+            ArgParser ap = getParser();
+
+            // There should be exactly one candidate implementation.
+            if (methods.size() != 1) {
+                throw new InterpreterError("%s has %d definitions in ", name, methods.size(),
+                        getJavaName());
+            }
+
+            Method m = methods.get(0);
+            try {
+                // Convert m to a handle (if accessible)
+                MethodHandle mh = lookup.unreflect(m);
+                PyJavaFunction javaFunction = PyJavaFunction.forNewMethod(ap, mh, type);
+                return javaFunction;
+            } catch (IllegalAccessException e) {
+                throw cannotGetHandle(m, e);
             }
         }
 
-        // Check for nulls in the table.
-        for (BinopGrid grid : defs.values()) { grid.checkFilled(); }
-
-        return defs;
+        @Override
+        Class<? extends Annotation> annoClass() { return PythonNewMethod.class; }
     }
+
+    // TODO Not ready for binary operation call-sites this yet
 
     /**
-     * Add a method handle to the table, verifying that the method type
-     * produced is compatible with the {@link #slot}.
-     *
-     * @param defs the method table to add to
-     * @param slot being matched
-     * @param m implementing method
-     * @param lookup authorisation to access fields
-     * @param binops class defining class-specific binary operations
-     * @param type to which these belong
+     * Specialisation of {@link SpecAdder} to {@link GetSetSpec}, useful as
+     * three of the abstract methods have the same definition, leaving only
+     * {@link SpecAdder#addMember(java.lang.reflect.Member, Spec) addMember}
+     * to define.
      */
-    private static void binopTableAdd(Map<Slot, BinopGrid> defs, Slot slot, Method m, Lookup lookup,
-            Class<?> binops, PyType type) {
+    abstract class GetSetSpecAdder extends SpecAdder<GetSetSpec, Method> {
+        @Override
+        boolean check(Spec spec) { return spec instanceof GetSetSpec; }
 
-        // Get (or create) the table for this slot
-        BinopGrid def = defs.get(slot);
-        if (def == null) {
-            // A new special method has been encountered
-            def = new BinopGrid(slot, type);
-            defs.put(slot, def);
-        }
+        @Override
+        GetSetSpec makeSpec(String name) { return new GetSetSpec(name); }
 
-        try {
-            // Convert the method to a handle
-            def.add(lookup.unreflect(m));
-        } catch (IllegalAccessException | WrongMethodTypeException e) {
-            throw new InterpreterError(e, "ill-formed or inaccessible binary op '%s'", m);
-        }
+        @Override
+        void addSpec(GetSetSpec s) { getSetSpecs.add(s); }
     }
-
 }

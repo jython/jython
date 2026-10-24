@@ -1,13 +1,18 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.stringlib;
 
 /**
  * An elastic buffer of byte values, somewhat like the
- * {@code java.lang.StringBuilder}, but for arrays of bytes. The
- * client appends data and may finally take the built array, often
- * without copying the data.
+ * {@code java.lang.StringBuilder}, but for arrays of bytes. The client
+ * appends data and may finally take the built array, often without
+ * copying the data.
  */
 public final class ByteArrayBuilder extends AbstractIntArrayBuilder.Forward {
+
+    /** Zero length array as sharable constant. */
     static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+
     private byte[] value;
     private int len = 0;
     private byte max = 0;
@@ -73,6 +78,12 @@ public final class ByteArrayBuilder extends AbstractIntArrayBuilder.Forward {
         len = 0;
         max = 0;
         return v;
+    }
+
+    @Override
+    public void reset() {
+        len = 0;
+        max = 0;
     }
 
     /**
