@@ -1,9 +1,14 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.python.types.Exposed;
 
 /**
  * A {@code ModuleDef} is a definition from which instances of a module
@@ -29,6 +34,9 @@ import java.lang.invoke.MethodHandles.Lookup;
 public class ModuleDef {
     // Compare CPython PyModuleDef
 
+    /** Logger for the module definition. */
+    final Logger logger = LoggerFactory.getLogger(ModuleDef.class);
+
     /** Name of the module. */
     final String name;
 
@@ -37,27 +45,31 @@ public class ModuleDef {
 
     /**
      * Definitions for the members that appear in the dictionary of
-     * instances of the module named. Instances receive members by copy,
-     * by binding to the module instance (descriptors), or by reference
-     * (if immutable).
+     * instances of the module named. Instances receive members by copy, by
+     * binding to the module instance (descriptors), or by reference (if
+     * immutable).
      */
     private final MethodDef[] methods;
 
     /**
-     * Create a definition for the module, largely by introspection on
-     * the class and by forming {@code MethodHandle}s on discovered
+     * Create a definition for the module module defined in Java, discovered
+     * by introspection of the class provided. We build a description of the
+     * attributes identified by annotations. (See {@link Exposed}.)
+     * <p>
+     * A lookup object is essential to create descriptors on the discovered
      * attributes.
      *
      * @param name of the module (e.g. "sys" or "math")
      * @param lookup authorises access to the defining class.
      */
-    ModuleDef(String name, Lookup lookup) {
+    public ModuleDef(String name, Lookup lookup) {
         this.name = name;
         this.definingClass = lookup.lookupClass();
-        ModuleExposer exposer = Exposer.exposeModule(definingClass);
+        ModuleExposer exposer = new ModuleExposer(name);
+        exposer.scanJavaMethods(definingClass);
         this.methods = exposer.getMethodDefs(lookup);
-        // XXX ... and for fields.
         // XXX ... and for types defined in the module maybe? :o
+        logger.atInfo().setMessage("Module definition '{}'").addArgument(name).log();
     }
 
     /**
@@ -74,63 +86,61 @@ public class ModuleDef {
      * @param module to populate
      */
     void addMembers(JavaModule module) {
-        PyDict d = module.dict;
         for (MethodDef md : methods) {
             // Create function by binding to the module
-            PyJavaFunction func = PyJavaFunction.fromParser(
-                    md.argParser, md.handle, module, this.name);
-            d.put(md.argParser.name, func);
+            logger.atTrace().setMessage("Add {}.{}").addArgument(name)
+                    .addArgument(md.argParser.name).log();
+            PyJavaFunction func =
+                    PyJavaFunction.forModule(md.argParser, md.handle, module, this.name);
+            module.add(md.argParser.name, func);
         }
     }
 
     /**
-     * A {@code MethodDef} describes a built-in function or method as it
-     * is declared in a Java module. It holds an argument parser and a
-     * handle for calling the method.
+     * A {@code MethodDef} describes a built-in function or method as it is
+     * declared in a Java module. It holds an argument parser and a handle
+     * for calling the method.
      * <p>
      * Recall that a module definition may have multiple instances. The
-     * {@code MethodDef} represents the method between the definition of
-     * the module (exposure as a {@link ModuleDef}) and the creation of
-     * actual {@link JavaModule} instances.
+     * {@code MethodDef} represents the method between the definition of the
+     * module (exposure as a {@link ModuleDef}) and the creation of actual
+     * {@link JavaModule} instances.
      * <p>
      * When a method is declared in Java as an instance method of the
      * module, the {@code MethodDef} that describes it discounts the
      * {@code self} argument. The {@link PyJavaFunction} created from it
      * binds the module instance that is its target, so that it is is
-     * correct for a call to that {@code PyJavaFunction}. This is
-     * consistent with CPython.
+     * correct for a call to that {@code PyJavaFunction}. This is consistent
+     * with CPython.
      */
     // Compare CPython struct PyMethodDef
     static class MethodDef {
 
         /*
          * The object here is only superficially similar to the CPython
-         * PyMethodDef: it is not used as a member of descriptors or
-         * methods; extension writers do not declare instances of them.
-         * Instead, we reify the argument information from the
-         * declaration in Java, and associated annotations. In CPython,
-         * this knowledge is present at run-time in the structure of the
-         * code generated by Argument Clinic, incompletely in the flags
-         * of the PyMethodDef, and textually in the signature that
-         * begins the documentation string. We do it by holding an
-         * ArgParser.
+         * PyMethodDef: it is not used as a member of descriptors or methods;
+         * extension writers do not declare instances of them. Instead, we reify
+         * the argument information from the declaration in Java, and associated
+         * annotations. In CPython, this knowledge is present at run-time in the
+         * structure of the code generated by Argument Clinic, incompletely in
+         * the flags of the PyMethodDef, and textually in the signature that
+         * begins the documentation string. We do it by holding an ArgParser.
          */
 
         /**
-         * An argument parser constructed with this {@code MethodDef}
-         * from the description of the signature. Full information on
-         * the signature is available from this structure, and it is
-         * available to parse the arguments to a standard
-         * {@code (Object[], String[])} call. (In simple sub-classes it
-         * is only used to generate error messages once simple checks
-         * fail.)
+         * An argument parser constructed with this {@code MethodDef} from the
+         * description of the signature. Full information on the signature is
+         * available from this structure, and it is available to parse the
+         * arguments to a standard {@code (Object[], String[])} call. (In simple
+         * sub-classes it is only used to generate error messages once simple
+         * checks fail.)
          */
         final ArgParser argParser;
 
         /**
-         * A handle to the implementation of the function or method.
-         * This is generated by reflecting the same object that
-         * {@link #argParser} describes.
+         * A handle to the implementation of the function or method. This is
+         * generated by reflecting the same object that {@link #argParser}
+         * describes.
          */
         // CPython PyMethodDef: ml_meth
         final MethodHandle handle;
@@ -150,8 +160,7 @@ public class ModuleDef {
 
         @Override
         public String toString() {
-            return String.format("%s[%s]", getClass().getSimpleName(),
-                    argParser);
+            return String.format("%s[%s]", getClass().getSimpleName(), argParser);
         }
     }
 }

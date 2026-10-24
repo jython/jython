@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -20,14 +20,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.TreeSet;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.python.core.ModuleDef.MethodDef;
+import org.python.kernel.BaseType;
 import org.python.support.InterpreterError;
 import org.python.support.MethodKind;
-import org.python.types.Exposed;
+import org.python.support.ScopeKind;
 import org.python.types.Exposed.Default;
 import org.python.types.Exposed.DocString;
 import org.python.types.Exposed.Getter;
@@ -40,10 +41,13 @@ import org.python.types.Exposed.PythonMethod;
 import org.python.types.Exposed.PythonStaticMethod;
 
 /**
- * An object for tabulating the attributes of classes that define
- * Python types or modules.
+ * An object for tabulating the attributes of classes that define Python
+ * types or modules.
  */
 abstract class Exposer {
+
+    /** Logger for this exposer. */
+    protected final Logger logger = LoggerFactory.getLogger(Exposer.class);
 
     /**
      * The index of intermediate descriptions by name, in which we may
@@ -52,16 +56,15 @@ abstract class Exposer {
     final Map<String, Spec> specs;
 
     /**
-     * The table of intermediate descriptions for methods (instance,
-     * static and class). They will become {@link MethodDef}s, and
-     * eventually either descriptors in a built-in object type or
-     * methods bound to instances of a module type. Every entry here is
-     * also a value in {@link #specs}.
+     * The table of intermediate descriptions for methods (instance, static
+     * and class). They will eventually become either descriptors in a
+     * built-in object type or methods bound to instances of a module. Every
+     * entry here is also a value in {@link #specs}.
      */
     final Set<CallableSpec> methodSpecs;
 
     /** Construct the base with its table of entries. */
-    protected Exposer() {
+    Exposer() {
         this.specs = new HashMap<>();
         this.methodSpecs = new TreeSet<>();
     }
@@ -70,77 +73,33 @@ abstract class Exposer {
     abstract ScopeKind kind();
 
     /**
-     * On behalf of the given module defined in Java, build a
-     * description of the attributes discovered by introspection of the
-     * class provided.
-     * <p>
-     * Attributes are identified by annotations. (See {@link Exposed}.)
+     * Gather methods (including getters and setters of fields, if this is a
+     * type exposer) from the specified class. Definitions (a precursor of
+     * Python descriptors) accumulate in the exposer. A subsequent operation
+     * will return objects from them that can fill a module definition or
+     * type dictionary.
      *
-     * @param definingClass to introspect for members
-     * @return exposure result
-     * @throws InterpreterError on errors of definition
+     * @param methodClass to scan for definitions
      */
-    static ModuleExposer exposeModule(Class<?> definingClass) throws InterpreterError {
-        // Create an instance of Exposer to hold specs, type, etc.
-        ModuleExposer exposer = new ModuleExposer();
-        // Let the exposer control the logic
-        exposer.expose(definingClass);
-        return exposer;
-    }
+    void scanJavaMethods(Class<?> methodClass) {
 
-    /**
-     * On behalf of the given type defined in Java, build a description
-     * of the attributes discovered by introspection of the class (or
-     * classes) provided.
-     * <p>
-     * Special methods are identified by their reserved name, while
-     * other attributes are identified by annotations. (See
-     * {@link Exposed}.)
-     * <p>
-     * In those attributes that reference their defining Python type
-     * (descriptors), the {@code type} object will be referenced (as
-     * {@link Descriptor#objclass}). It is not otherwise accessed, since
-     * it is (necessarily) incomplete at this time.
-     *
-     * @param type to which these attributes apply
-     * @param definingClass to introspect for members
-     * @param methodClass additional class to introspect for members (or
-     *     {@code null})
-     * @return a type exposer able to deliver the attributes
-     * @throws InterpreterError on errors of definition
-     */
-    static TypeExposerImplementation exposeType(PyType type, Class<?> definingClass, Class<?> methodClass)
-            throws InterpreterError {
+        logger.atTrace().addArgument(methodClass).log("Finding methods in {}");
 
-        // Create an instance of Exposer to hold specs, type.
-        TypeExposerImplementation exposer = new TypeExposerImplementation(type);
+        // Iterate over methods looking for those to expose
+        for (Method m : methodClass.getDeclaredMethods()) {
+            /*
+             * Note: method annotations are not treated as alternatives, to catch
+             * exposure of methods by multiple routes, which is an error we detect
+             * later.
+             */
 
-        // Scan the defining class for definitions
-        exposer.expose(definingClass);
+            // Check for instance method
+            PythonMethod pm = m.getDeclaredAnnotation(PythonMethod.class);
+            if (pm != null) { addMethodSpec(m, pm); }
 
-        // Scan the supplementary class for definitions
-        if (methodClass != null) { exposer.expose(methodClass); }
-
-        // For each definition we found, add the attribute
-        return exposer;
-    }
-
-    /**
-     * Add to {@link #specs}, definitions found in the given class and
-     * annotated for exposure. (Note that the that the override
-     * {@link TypeExposerImplementation#scanJavaMethods(Class)} also adds a method if
-     * it has a the name of a special method.)
-     *
-     * @param defsClass to introspect for definitions
-     * @throws InterpreterError on duplicates or unsupported types
-     */
-    void scanJavaMethods(Class<?> defsClass) throws InterpreterError {
-        // Iterate over methods looking for the relevant annotations
-        for (Class<?> c : superClasses(defsClass)) {
-            for (Method m : c.getDeclaredMethods()) {
-                PythonMethod a = m.getDeclaredAnnotation(PythonMethod.class);
-                if (a != null) { addMethodSpec(m, a); }
-            }
+            // Check for static method
+            PythonStaticMethod psm = m.getDeclaredAnnotation(PythonStaticMethod.class);
+            if (psm != null) { addStaticMethodSpec(m, psm); }
         }
     }
 
@@ -155,152 +114,84 @@ abstract class Exposer {
      */
     static Collection<Class<?>> superClasses(Class<?> c) {
         LinkedList<Class<?>> classes = new LinkedList<>();
-        while (c != null && c != Object.class) {
-            classes.addFirst(c);
-            c = c.getSuperclass();
-        }
+        while (c != null && c != Object.class) { classes.addFirst(c); c = c.getSuperclass(); }
         return classes;
     }
 
     /**
-     * Process an annotation that identifies a method of a Python type
-     * or module defined in Java as one to be exposed to Python, into a
-     * specification for a method descriptor, and add it to the table of
-     * specifications by name.
+     * Process an annotation that identifies an instance method of a Python
+     * type or module defined in Java, into a specification for a method,
+     * and add it to the table of specifications by name.
      *
      * @param anno annotation encountered
      * @param meth method annotated
      * @throws InterpreterError on duplicates or unsupported types
      */
-    void addMethodSpec(Method meth, PythonMethod anno) throws InterpreterError {
-        // For clarity, name lambda expressions for the actions
-        BiConsumer<MethodSpec, Method> addMethod =
-                // Add method m to spec ms
-                (MethodSpec ms, Method m) -> {
-                    ms.add(m, anno.primary(), anno.positionalOnly(), MethodKind.INSTANCE);
-                };
-        Function<Spec, MethodSpec> cast =
-                // Test and cast a found Spec to MethodSpec
-                spec -> spec instanceof MethodSpec ? (MethodSpec)spec : null;
-        // Now use the generic create/update
-        addSpec(meth, anno.value(), cast, (String name) -> new MethodSpec(name, kind()),
-                ms -> methodSpecs.add(ms), addMethod);
+    private void addMethodSpec(Method meth, PythonMethod anno) throws InterpreterError {
+        // Define custom actions for a PythonMethod
+        SpecAdder<MethodSpec, Method> adder = new SpecAdder<>() {
+
+            @Override
+            boolean check(Spec spec) { return spec instanceof MethodSpec; }
+
+            @Override
+            MethodSpec makeSpec(String name) { return new MethodSpec(name, kind()); }
+
+            @Override
+            void addMember(Method m, MethodSpec s) {
+                s.add(m, anno.primary(), anno.positionalOnly(), MethodKind.INSTANCE);
+            }
+
+            @Override
+            void addSpec(MethodSpec s) { methodSpecs.add(s); }
+        };
+
+        adder.add(meth, anno.value());
     }
 
     /**
-     * Process an annotation that identifies a method of a Python type
-     * or module defined in Java as one to be exposed to Python, into a
-     * specification for a method descriptor, and add it to the table of
-     * specifications by name.
+     * Process an annotation that identifies a static method of a Python
+     * type or module defined in Java, into a specification for a method,
+     * and add it to the table of specifications by name.
      *
      * @param anno annotation encountered
      * @param meth method annotated
      * @throws InterpreterError on duplicates or unsupported types
      */
-    void addStaticMethodSpec(Method meth, PythonStaticMethod anno) throws InterpreterError {
-        // For clarity, name lambda expressions for the actions
-        BiConsumer<StaticMethodSpec, Method> addMethod =
-                // Add method m to spec ms
-                (StaticMethodSpec ms,
-                        Method m) -> { ms.add(m, true, anno.positionalOnly(), MethodKind.STATIC); };
-        Function<Spec, StaticMethodSpec> cast =
-                // Test and cast a found Spec to StaticMethodSpec
-                spec -> spec instanceof StaticMethodSpec ? (StaticMethodSpec)spec : null;
-        // Now use the generic create/update
-        addSpec(meth, anno.value(), cast, (String name) -> new StaticMethodSpec(name, kind()),
-                ms -> methodSpecs.add(ms), addMethod);
+    private void addStaticMethodSpec(Method meth, PythonStaticMethod anno) throws InterpreterError {
+        // Define custom actions for a PythonStaticMethod
+        SpecAdder<StaticMethodSpec, Method> adder = new SpecAdder<>() {
+
+            @Override
+            boolean check(Spec spec) { return spec instanceof StaticMethodSpec; }
+
+            @Override
+            StaticMethodSpec makeSpec(String name) { return new StaticMethodSpec(name, kind()); }
+
+            @Override
+            void addMember(Method m, StaticMethodSpec s) {
+                s.add(m, true, anno.positionalOnly(), MethodKind.STATIC);
+            }
+
+            @Override
+            void addSpec(StaticMethodSpec s) { methodSpecs.add(s); }
+        };
+
+        adder.add(meth, anno.value());
     }
 
     /**
-     * Create an exception with a message along the lines "'NAME',
-     * already exposed as SPEC, cannot be NEW_SPEC" where the
-     * place-holders are filled from the corresponding arguments (or
-     * their names or type names).
-     *
-     * @param name being defined
-     * @param member field or method annotated
-     * @param newSpec of the new entry apparently requested
-     * @param priorSpec of the inconsistent, existing entry
-     * @return the required error
-     */
-    static InterpreterError duplicateError(String name, Member member, Spec newSpec,
-            Spec priorSpec) {
-        String memberName = member.getName();
-        String memberString = memberName == name ? "" : " (called '" + memberName + "' in source)";
-        String priorSpecType = priorSpec.annoClassName();
-        String newSpecType = newSpec.annoClassName();
-        if (priorSpecType.equals(newSpecType)) { newSpecType = "redefined"; }
-        return new InterpreterError(ALREADY_EXPOSED, name, memberString, priorSpecType,
-                newSpecType);
-    }
-
-    private static final String ALREADY_EXPOSED = "'%s'%s, already exposed as %s, cannot be %s";
-
-    /**
-     * A helper that avoids repeating nearly the same code for adding
-     * each particular sub-class of {@link Spec} when a method is
-     * encountered. The implementation finds or creates a {@code Spec}
-     * by the given name or method name. It then adds this {@code Spec}
-     * to {@link #specs}. The caller provides a factory method, in case
-     * a new {@code Spec} is needed, a method for adding the Spec to a
-     * type-specific list, and a method for adding the method to the
-     * {@code Spec}.
-     *
-     * @param <MS> the type of {@link Spec} being added or added to.
-     * @param m the method being adding to the {@code MS}
-     * @param name specified in the annotation or {@code null}
-     * @param cast to the {@code MS} if possible or {@code null}
-     * @param makeSpec constructor for an {@code MS}
-     * @param addSpec function to add the {@code MS} to the proper list
-     * @param addMethod function to update the {@code MS} with a method
-     */
-    <MS extends BaseMethodSpec> void addSpec(Method m, String name, Function<Spec, MS> cast, //
-            Function<String, MS> makeSpec, //
-            Consumer<MS> addSpec, //
-            BiConsumer<MS, Method> addMethod) {
-
-        // The name is as annotated or the "natural" one
-        if (name == null || name.length() == 0)
-            name = m.getName();
-
-        // Find any existing definition
-        Spec spec = specs.get(name);
-        MS entry;
-        if (spec == null) {
-            // A new entry is needed
-            entry = makeSpec.apply(name);
-            specs.put(entry.name, entry);
-            addSpec.accept(entry);
-            addMethod.accept(entry, m);
-        } else if ((entry = cast.apply(spec)) != null) {
-            // Existing entry will be updated
-            addMethod.accept(entry, m);
-        } else {
-            /*
-             * Existing entry is not compatible, but make a loose entry on which
-             * to base the error message.
-             */
-            entry = makeSpec.apply(name);
-            addMethod.accept(entry, m);
-            throw duplicateError(name, m, entry, spec);
-        }
-    }
-
-    /**
-     * The base of classes that describe a named, built-in object,
-     * during the exposure process. Instances of {@code Exposer.Spec}
-     * are created, and added to a collection held by the exposer, as
-     * each definition is encountered in a defining class. The
-     * annotation and other factors determine the particular subclass of
-     * {@code Exposer.Spec} produced.
+     * The base of classes that describe a named, built-in object, during
+     * the exposure process. Instances of {@code Exposer.Spec} are created,
+     * and added to a collection held by the exposer, as each definition is
+     * encountered in a defining class. The annotation and other factors
+     * determine the particular subclass of {@code Exposer.Spec} produced.
      * <p>
-     * In cases where more than one Java definition contributes to a
-     * single exposed attribute, {@code Spec}s are updated as successive
-     * definitions are encountered.
-     * <p>
-     * When exposing attributes of a Python type, the actual object to
-     * be entered in a dictionary of a type or module is obtained by a
-     * call to {@link #asAttribute(PyType, Lookup)}.
+     * In cases where more than one Java definition contributes to a single
+     * exposed attribute, {@code Spec}s are updated as successive
+     * definitions are encountered. Subclasses of {@link Exposer} create the
+     * actual object to be entered in a dictionary of a type or module from
+     * these specifications.
      */
     abstract static class Spec implements Comparable<Spec> {
 
@@ -323,41 +214,42 @@ abstract class Exposer {
         }
 
         /**
-         * Create an attribute for the type being defined (suitable as an
-         * entry in its dictionary).
+         * Create an attribute for a type being defined (suitable as an entry in
+         * its dictionary). Note this is called only during type definition, not
+         * at module level.
          *
          * @param objclass defining type
          * @param lookup authorisation to access methods or fields
          * @return attribute to add
          * @throws InterpreterError on specification errors
          */
-        abstract Object asAttribute(PyType objclass, Lookup lookup) throws InterpreterError;
+        abstract Object asAttribute(BaseType objclass, Lookup lookup) throws InterpreterError;
 
         /** @return the documentation string (or {@code null}) */
         String getDoc() { return doc; }
 
         /**
-         * Name the built-in being defined from a Java perspective, mostly
-         * for use in messages regarding errors in definition.
+         * Name the built-in being defined from a Java perspective, mostly for
+         * use in messages regarding errors in definition.
          *
          * @return the Java name
          */
         abstract String getJavaName();
 
         /**
-         * The class of annotation that creates a specification of this
-         * type. This is primarily for creating for error messages that
-         * direct the author of an exposed class to annotations being used
-         * incompatibly. {@code WrapperSpec}s return {@code null} as special
-         * methods are not identified by an annotation.
+         * The class of annotation that creates a specification of this type.
+         * This is primarily for creating for error messages that direct the
+         * author of an exposed class to annotations being used incompatibly.
+         * {@code WrapperSpec}s return {@code null} as special methods are not
+         * identified by an annotation.
          *
          * @return type of thing exposed.
          */
         abstract Class<? extends Annotation> annoClass();
 
         /**
-         * Check for a &#64;{@link DocString} annotation, and set the
-         * document string (but only once)..
+         * Check for a &#64;{@link DocString} annotation, and set the document
+         * string (but only once)..
          *
          * @param method that may bear the annotation
          * @throws InterpreterError if {@link #doc} is already set
@@ -376,8 +268,8 @@ abstract class Exposer {
         }
 
         /**
-         * String version of the kind of specification this is, expressed as
-         * the the type of annotation that gave rise to it.
+         * String version of the kind of specification this is, expressed as the
+         * the type of annotation that gave rise to it.
          *
          * @return annotation type name
          */
@@ -385,10 +277,10 @@ abstract class Exposer {
             Class<? extends Annotation> ac = annoClass();
             if (ac == Annotation.class) {
                 // Special methods recognised by name, so no annotation
-                return "special method";
+                return "Special";
             } else if (ac == Getter.class) {
                 // Since could also be @Setter or @Deleter
-                return "get-set attribute";
+                return "Attribute";
             } else {
                 return ac.getSimpleName();
             }
@@ -398,9 +290,9 @@ abstract class Exposer {
         public int compareTo(Spec o) { return name.compareTo(o.name); }
 
         /**
-         * Check that a specification is complete and consistent before use.
-         * A specification is built incrementally, so certain problems are
-         * only detectable when it is supposed complete.
+         * Check that a specification is complete and consistent before use. A
+         * specification is built incrementally, so certain problems are only
+         * detectable when it is supposed complete.
          *
          * @throws InterpreterError describing any problem detected
          */
@@ -417,6 +309,12 @@ abstract class Exposer {
         /** Collects the methods declared (often just one). */
         final List<Method> methods;
 
+        /**
+         * Constructor of the generic method specification.
+         *
+         * @param name of method
+         * @param scopeKind is a module or a type
+         */
         BaseMethodSpec(String name, ScopeKind scopeKind) {
             super(name, scopeKind);
             this.methods = new ArrayList<>(1);
@@ -452,14 +350,13 @@ abstract class Exposer {
         }
 
         /**
-         * Insert a {@code MethodHandle h} into a list, such that every
-         * handle in the list, of which the first parameter type is
-         * assignable from the first parameter type of {@code h}, will
-         * appear after {@code h} in the list. If there are none such,
-         * {@code h} is added at the end. The resulting list is partially
-         * ordered, and has the property that, in a forward search for a
-         * handle applicable to a given class, the most specific match is
-         * found first.
+         * Insert a {@code MethodHandle h} into a list, such that every handle
+         * in the list, of which the first parameter type is assignable from the
+         * first parameter type of {@code h}, will appear after {@code h} in the
+         * list. If there are none such, {@code h} is added at the end. The
+         * resulting list is partially ordered, and has the property that, in a
+         * forward search for a handle applicable to a given class, the most
+         * specific match is found first.
          *
          * @param list to add h into
          * @param h to insert/add
@@ -486,9 +383,8 @@ abstract class Exposer {
         }
 
         /**
-         * Convenience function to compose error when creating a descriptor
-         * or method definition, when the un-reflecting to a method handle
-         * fails.
+         * Convenience function to compose error when creating a descriptor or
+         * method definition, when the un-reflecting to a method handle fails.
          *
          * @param m method we were working on
          * @param e what went wrong
@@ -501,8 +397,8 @@ abstract class Exposer {
         private static final String CANNOT_GET_HANDLE = "cannot get method handle for '%s' in '%s'";
 
         /**
-         * Convenience function to compose error when creating a descriptor
-         * or method definition and the arguments of the method handle are
+         * Convenience function to compose error when creating a descriptor or
+         * method definition and the arguments of the method handle are
          * unexpected number in type or number.
          *
          * @param type being exposed
@@ -522,10 +418,10 @@ abstract class Exposer {
      * Specification in which we assemble information about a method in
      * advance of creating a method descriptor or other callable.
      * <p>
-     * Objects described by this class are defined by a Java signature
-     * in which parameters may be annotated to modify their treatment by
-     * Python. An argument parser and a {@link MethodDef} will be
-     * created to specify that treatment.
+     * Objects described by this class are defined by a Java signature in
+     * which parameters may be annotated to modify their treatment by
+     * Python. An argument parser and a {@link MethodDef} will be created to
+     * specify that treatment.
      */
     static abstract class CallableSpec extends BaseMethodSpec {
 
@@ -538,28 +434,27 @@ abstract class Exposer {
 
         /**
          * The number of positional or keyword parameters, excluding the
-         * "collector" ({@code *args} and {@code **kwargs}) arguments. Its
-         * value is {@code Integer.MAX_VALUE} until the primary definition
-         * of the method has been encountered.
+         * "collector" ({@code *args} and {@code **kwargs}) arguments. Its value
+         * is {@code Integer.MAX_VALUE} until the primary definition of the
+         * method has been encountered.
          */
         int regargcount = Integer.MAX_VALUE;
 
         /**
-         * The number of positional-only arguments (after {@code self}).
-         * This must be specified in the method declaration marked as
-         * primary if more than one declaration of the same name is
-         * annotated {@link PythonMethod}. Its value is
-         * {@code Integer.MAX_VALUE} until the primary definition of the
-         * method has been encountered, after which it is somewhere between
-         * 0 and {@link #regargcount} inclusive.
+         * The number of positional-only arguments (after {@code self}). This
+         * must be specified in the method declaration marked as primary if more
+         * than one declaration of the same name is annotated
+         * {@link PythonMethod}. Its value is {@code Integer.MAX_VALUE} until
+         * the primary definition of the method has been encountered, after
+         * which it is somewhere between 0 and {@link #regargcount} inclusive.
          */
         int posonlyargcount = Integer.MAX_VALUE;
 
         /**
          * The number of keyword-only parameters. This is derived from the
-         * {@link KeywordOnly} annotation. If more than one declaration of
-         * the same name is annotated {@link PythonMethod}, it may only be
-         * specified in the method declaration marked as primary.
+         * {@link KeywordOnly} annotation. If more than one declaration of the
+         * same name is annotated {@link PythonMethod}, it may only be specified
+         * in the method declaration marked as primary.
          */
         int kwonlyargcount;
 
@@ -570,8 +465,7 @@ abstract class Exposer {
         Object[] defaults = null;
 
         /**
-         * Default values supplied on keyword-only parameters, or
-         * {@code null}.
+         * Default values supplied on keyword-only parameters, or {@code null}.
          */
         Map<Object, Object> kwdefaults = null;
 
@@ -582,8 +476,8 @@ abstract class Exposer {
         int varArgsIndex = -1;
 
         /**
-         * Position of the excess keywords collector in
-         * {@link #parameterNames} or {@code -1} if there isn't one.
+         * Position of the excess keywords collector in {@link #parameterNames}
+         * or {@code -1} if there isn't one.
          */
         int varKeywordsIndex = -1;
 
@@ -623,15 +517,15 @@ abstract class Exposer {
         private boolean hasVarKeywords() { return varKeywordsIndex >= 0; }
 
         /**
-         * Get the argument parser belonging to this {@link CallableSpec}.
-         * The many attributes established by
+         * Get the argument parser belonging to this {@link CallableSpec}. The
+         * many attributes established by
          * {@link #add(Method, boolean, boolean, MethodKind)}, and the
          * parameters of the primary call, determine the attributes of this
          * {@link CallableSpec}.
          * <p>
-         * After the processing the primary call, the method signature is
-         * known, and it is possible to create a parser. Before that, this
-         * method will return {@code null}.
+         * After the processing the primary call, the method signature is known,
+         * and it is possible to create a parser. Before that, this method will
+         * return {@code null}.
          *
          * @return the parser
          */
@@ -640,16 +534,16 @@ abstract class Exposer {
                     && parameterNames.length >= posonlyargcount) {
                 parser = new ArgParser(name, scopeKind, methodKind, parameterNames, regargcount,
                         posonlyargcount, kwonlyargcount, varArgsIndex >= 0, varKeywordsIndex >= 0);
-                parser.defaults(defaults).kwdefaults(kwdefaults);
+                parser.defaults(defaults).kwdefaults(kwdefaults).doc(doc);
             }
             return parser;
         }
 
         /**
-         * Produce a method definition from this specification that
-         * references a method handle on the (single) defining method and
-         * the parser created from this specification. This is used in the
-         * construction of a module defined in Java (a {@link ModuleDef}).
+         * Produce a method definition from this specification that references a
+         * method handle on the (single) defining method and the parser created
+         * from this specification. This is used in the construction of a module
+         * defined in Java (a {@link ModuleDef}).
          *
          * @param lookup authorisation to access methods
          * @return corresponding method definition
@@ -668,8 +562,8 @@ abstract class Exposer {
         }
 
         /**
-         * Add a method implementation. (A test that the signature is
-         * acceptable follows when we construct the {@link PyMethodDescr}.)
+         * Add a method implementation. (A test that the signature is acceptable
+         * follows when we construct the {@link PyMethodDescr}.)
          *
          * @param method to add to {@link #methods}
          * @param primary definition is the primary one
@@ -687,15 +581,15 @@ abstract class Exposer {
             int n = method.getParameterCount();
 
             /*
-             * Depending on method kind, when Java static, the parameter list
-             * may have to omit the first declared parameter.
+             * Depending on method kind, when Java static, the parameter list may
+             * have to omit the first declared parameter.
              */
             boolean skipFirst;
             if (methodKind == MethodKind.INSTANCE) {
                 /*
-                 * In the default INSTANCE case, we are implementing a Python
-                 * instance method. If the Java method is static, skip the first
-                 * parameter "self".
+                 * In the default INSTANCE case, we are implementing a Python instance
+                 * method. If the Java method is static, skip the first parameter
+                 * "self".
                  */
                 skipFirst = javaStatic;
 
@@ -705,9 +599,9 @@ abstract class Exposer {
 
             } else if (javaStatic) {
                 /*
-                 * If CLASS, The (static) Java signature begins with a {@link
-                 * PyType}, but if STATIC, the parameters from a Python perspective
-                 * are as in the Java definition.
+                 * If CLASS, The (static) Java signature begins with a {@link PyType},
+                 * but if STATIC, the parameters from a Python perspective are as in the
+                 * Java definition.
                  */
                 skipFirst = methodKind == MethodKind.CLASS;
 
@@ -721,17 +615,17 @@ abstract class Exposer {
 
             /*
              * If not declared static in Java, the effective signature in Python
-             * must have a leading "self" (or "module") parameter not declared
-             * in the Method object.
+             * must have a leading "self" (or "module") parameter not declared in
+             * the Method object.
              */
             if (skipFirst) { n -= 1; }
 
             if (methods.isEmpty()) {
                 /*
-                 * First method definition of this name. Allocate storage for
-                 * parameter names. We shall store the names only if this is also
-                 * the primary definition, (as well as the first), but will always
-                 * check the number of parameters against this size.
+                 * First method definition of this name. Allocate storage for parameter
+                 * names. We shall store the names only if this is also the primary
+                 * definition, (as well as the first), but will always check the number
+                 * of parameters against this size.
                  */
                 parameterNames = n == 0 ? NO_STRINGS : new String[n];
 
@@ -752,11 +646,10 @@ abstract class Exposer {
                 this.methodKind = methodKind;
 
                 /*
-                 * If annotated positionalOnly=false, the method has no
-                 * positional-only parameters. If not so annotated, then
-                 * positionalOnly=true, and all parameters (after any "self") are
-                 * positional-only, until a parameter annotated @PositionalOnly puts
-                 * an end to that.
+                 * If annotated positionalOnly=false, the method has no positional-only
+                 * parameters. If not so annotated, then positionalOnly=true, and all
+                 * parameters (after any "self") are positional-only, until a parameter
+                 * annotated @PositionalOnly puts an end to that.
                  */
                 if (!positionalOnly) { posonlyargcount = 0; }
 
@@ -804,12 +697,12 @@ abstract class Exposer {
 
         /**
          * Scan the parameters of the method being defined looking for
-         * annotations that determine the specification of the method as
-         * exposed to Python, and which are held temporarily by this
+         * annotations that determine the specification of the method as exposed
+         * to Python, and which are held temporarily by this
          * {@code MethodSpecification}.
          * <p>
-         * Although the annotations do not all work in isolation, their
-         * effect may be summarised:
+         * Although the annotations do not all work in isolation, their effect
+         * may be summarised:
          * <table>
          * <tr>
          * <th>Annotation</th>
@@ -819,8 +712,8 @@ abstract class Exposer {
          * <tr>
          * <td>&#064;{@link Name}</td>
          * <td>Renames the parameter where needed (e.g. we want to call it
-         * "new"). This, or the simple parameter name, appear in at the
-         * correct position in {@link #parameterNames}</td>
+         * "new"). This, or the simple parameter name, appear in at the correct
+         * position in {@link #parameterNames}</td>
          * </tr>
          *
          * <tr>
@@ -836,37 +729,35 @@ abstract class Exposer {
          *
          * <tr>
          * <td>&#064;{@link KeywordOnly}</td>
-         * <td>Determines {@link #kwonlyargcount} from a count of this and
-         * the regular (non-collector) arguments following.</td>
+         * <td>Determines {@link #kwonlyargcount} from a count of this and the
+         * regular (non-collector) arguments following.</td>
          * </tr>
          *
          * <tr>
          * <td>&#064;{@link PositionalCollector}</td>
-         * <td>Designates the collector of excess arguments given by
-         * position. (Must follow all regular arguments.) Sets
-         * {@link #haveVarargs}.</td>
+         * <td>Designates the collector of excess arguments given by position.
+         * (Must follow all regular arguments.) Sets {@link #haveVarargs}.</td>
          * </tr>
          *
          * <tr>
          * <td>&#064;{@link KeywordCollector}</td>
-         * <td>Designates the collector of excess arguments given by
-         * keyword. (Must follow all regular arguments and any positional
-         * collector.) Sets {@link #haveVarkwargs}.</td>
+         * <td>Designates the collector of excess arguments given by keyword.
+         * (Must follow all regular arguments and any positional collector.)
+         * Sets {@link #haveVarkwargs}.</td>
          * </tr>
          * </table>
          * <p>
-         * When implementing a Python instance method by means of a static
-         * Java method, the Java signature begins with a parameter
-         * representing the instance operated on. Also, when defining a
-         * Python class method the Java method must be static and the Java
-         * signature begins with a {@link PyType} parameter representing the
-         * type operated on.
+         * When implementing a Python instance method by means of a static Java
+         * method, the Java signature begins with a parameter representing the
+         * instance operated on. Also, when defining a Python class method the
+         * Java method must be static and the Java signature begins with a
+         * {@link PyType} parameter representing the type operated on.
          * <p>
          * In both these cases, the client code will ask to skip this first
          * parameter when building the description. This is because, at the
-         * point the parser is used, the corresponding first argument is
-         * being carried separately from the argument list. (think of the
-         * way {@code str.replace} is processed, or {@code int.from_bytes}.
+         * point the parser is used, the corresponding first argument is being
+         * carried separately from the argument list. (think of the way
+         * {@code str.replace} is processed, or {@code int.from_bytes}.
          * <p>
          * A Python static method, Python instance method defined by a Java
          * instance method, and a top-level function in a module, all have
@@ -879,11 +770,11 @@ abstract class Exposer {
          */
         private void processParameters(Method method, boolean skipFirst) {
             /*
-             * This should have the same logic as ArgParser.fromSignature,
-             * except that in the absence of a @PositionalOnly annotation, the
-             * default is as supplied by the method annotation (already
-             * processed). Rather than "/" and "*" markers in the parameter
-             * sequence, we find annotations on the parameters themselves.
+             * This should have the same logic as ArgParser.fromSignature, except
+             * that in the absence of a @PositionalOnly annotation, the default is
+             * as supplied by the method annotation (already processed). Rather than
+             * "/" and "*" markers in the parameter sequence, we find annotations on
+             * the parameters themselves.
              */
 
             // Collect the names of the parameters here
@@ -900,8 +791,7 @@ abstract class Exposer {
 
             /*
              * Scan parameters, looking out for Name, Default, PositionalOnly,
-             * KeywordOnly, PositionalCollector and KeywordCollector
-             * annotations.
+             * KeywordOnly, PositionalCollector and KeywordCollector annotations.
              */
             Parameter[] pp = method.getParameters();
 
@@ -932,8 +822,7 @@ abstract class Exposer {
 
                 /*
                  * We have eliminated the possibility of disallowed combinations of
-                 * annotations, so we can process the parameter types as
-                 * alternatives.
+                 * annotations, so we can process the parameter types as alternatives.
                  */
                 if (pos != null) {
                     // p is the (last) @PositionalOnly parameter
@@ -958,8 +847,8 @@ abstract class Exposer {
                  */
                 if (def != null) {
                     /*
-                     * We know p is not a *Collector parameter, but our actions depend
-                     * on whether it is positional or keyword-only.
+                     * We know p is not a *Collector parameter, but our actions depend on
+                     * whether it is positional or keyword-only.
                      */
                     if (i < kwOnlyIndex) {
                         // p is a positional parameter with a default
@@ -983,13 +872,12 @@ abstract class Exposer {
 
                 /*
                  * Parameters not having *Collector annotations are "regular". Keep
-                 * count of them, and check we have not yet defined either
-                 * collector.
+                 * count of them, and check we have not yet defined either collector.
                  */
                 if (kwColl == null) {
                     /*
-                     * The parameter is a regular one or a collector of excess
-                     * positional arguments.
+                     * The parameter is a regular one or a collector of excess positional
+                     * arguments.
                      */
                     if (hasVarKeywords())
                         // ... which comes after a keywords collector
@@ -1007,8 +895,8 @@ abstract class Exposer {
             }
 
             /*
-             * Some checks and assignments we can only do when we've seen all
-             * the parameters.
+             * Some checks and assignments we can only do when we've seen all the
+             * parameters.
              */
             regargcount = count;
             posonlyargcount = Math.min(posonlyargcount, count);
@@ -1061,7 +949,11 @@ abstract class Exposer {
          */
         private static Object eval(String s) {
             if (s == null || s.equals("None")) {
-                return Py.None;
+                return PyNone.INSTANCE;
+            } else if (s.equals("False") || s.equals("false")) {
+                return true;
+            } else if (s.equals("True") || s.equals("true")) {
+                return true;
             } else if (s.matches(REGEX_INT)) {
                 // Small integer if we can; big if we can't
                 BigInteger b = new BigInteger(s);
@@ -1071,9 +963,10 @@ abstract class Exposer {
                     return b;
                 }
             } else if (s.matches(REGEX_FLOAT)) {
-                return Float.valueOf(s);
+                return Double.valueOf(s);
             } else if (s.matches(REGEX_STRING)) {
-                return Float.valueOf(s);
+                // TODO Parse this properly as a str constant
+                return s.substring(1, s.length() - 1);
             } else {
                 // A somewhat lazy fall-back
                 return s;
@@ -1131,11 +1024,17 @@ abstract class Exposer {
 
     /**
      * Specification in which we assemble information about a Python
-     * instance method in advance of creating a method definition or
-     * method descriptor.
+     * instance method in advance of creating a method definition or method
+     * descriptor.
      */
     static class MethodSpec extends CallableSpec {
 
+        /**
+         * Constructor of the method specification.
+         *
+         * @param name of method
+         * @param scopeKind is a module or a type
+         */
         MethodSpec(String name, ScopeKind scopeKind) { super(name, scopeKind); }
 
         @Override
@@ -1144,21 +1043,20 @@ abstract class Exposer {
         /**
          * {@inheritDoc}
          * <p>
-         * In a type, the attribute must be represented by a descriptor for
-         * the Python method from this specification. This method create a
+         * In a type, the attribute must be represented by a descriptor for the
+         * Python method from this specification. This method creates a
          * {@code PyMethodDescr} from the specification.
          * <p>
-         * Note that a specification describes the methods as declared, and
-         * that there may be any number of them, even if there is only one
-         * implementation of the target type. The specification may
-         * therefore have collected multiple Java definitions of the same
-         * name.
-         *
-         * This method creates a descriptor that matches them to the
-         * accepted implementations of the owning class. The descriptor
-         * returned will contain one method handle for each accepted Java
-         * implementation of the owning Python class, chosen most closely to
-         * match the Java class of {@code self}.
+         * Note that a specification describes the methods as declared, and that
+         * there may be any number of them, even if there is only one
+         * implementation of the target type. The specification may therefore
+         * have collected multiple Java definitions of the same name.
+         * <p>
+         * This method creates a descriptor that matches them to the accepted
+         * implementations of the owning class. The descriptor returned will
+         * contain one method handle for each accepted Java implementation of
+         * the owning Python class, chosen most closely to match the Java class
+         * of {@code self}.
          *
          * @param objclass Python type that owns the descriptor
          * @param lookup authorisation to access members
@@ -1166,7 +1064,7 @@ abstract class Exposer {
          * @throws InterpreterError if the method type is not supported
          */
         @Override
-        PyMethodDescr asAttribute(PyType objclass, Lookup lookup) throws InterpreterError {
+        PyMethodDescr asAttribute(BaseType objclass, Lookup lookup) throws InterpreterError {
 
             ArgParser ap = new ArgParser(name, scopeKind, MethodKind.INSTANCE, parameterNames,
                     regargcount, posonlyargcount, kwonlyargcount, varArgsIndex >= 0,
@@ -1179,8 +1077,7 @@ abstract class Exposer {
             /*
              * There could be any number of candidates in the implementation. An
              * implementation method "self" could match multiple accepted
-             * implementations of the type (e.g. Number matching Long and
-             * Integer).
+             * implementations of the type (e.g. Number matching Long and Integer).
              */
             LinkedList<MethodHandle> candidates = new LinkedList<>();
             for (Method m : methods) {
@@ -1199,21 +1096,186 @@ abstract class Exposer {
     }
 
     /**
-     * Specification in which we assemble information about a Python
-     * static method in advance of creating a method definition
-     * {@link MethodDef} or method descriptor {@link PyMethodDescr}.
+     * Specification in which we assemble information about a Python static
+     * method in advance of creating a method definition {@link MethodDef}
+     * or method descriptor {@link PyMethodDescr}.
      */
     static class StaticMethodSpec extends CallableSpec {
 
+        /**
+         * Construct instance in which we assemble information about a Python
+         * static method.
+         *
+         * @param name of method
+         * @param scopeKind where defined
+         */
         StaticMethodSpec(String name, ScopeKind scopeKind) { super(name, scopeKind); }
 
+        /**
+         * {@inheritDoc}
+         * <p>
+         * In a type, the attribute representing a static Python method is a
+         * {@code PyStaticMethod} wrapping a {@code PyJavaFunction}. This method
+         * creates it from the specification.
+         * <p>
+         * Note that a specification describes the method as declared, and that
+         * there must be exactly one, even if there are multiple implementations
+         * of the type.
+         *
+         * @param objclass Python type that owns the descriptor
+         * @param lookup authorisation to access members
+         * @return descriptor for access to the method
+         * @throws InterpreterError if the method type is not supported
+         */
         @Override
-        PyJavaFunction asAttribute(PyType objclass, Lookup lookup) {
-            // TODO Auto-generated method stub
-            return null;
+        PyStaticMethod asAttribute(BaseType objclass, Lookup lookup) {
+            assert methodKind == MethodKind.STATIC;
+            ArgParser ap = getParser();
+
+            // There should be exactly one candidate implementation.
+            if (methods.size() != 1) {
+                throw new InterpreterError("static method %s has %d definitions in ", name,
+                        methods.size(), getJavaName());
+            }
+
+            Method m = methods.get(0);
+            try {
+                // Convert m to a handle (if accessible)
+                MethodHandle mh = lookup.unreflect(m);
+                assert mh.type().parameterCount() == regargcount;
+                PyJavaFunction javaFunction = PyJavaFunction.forStaticMethod(ap, mh);
+                return new PyStaticMethod(javaFunction);
+            } catch (IllegalAccessException e) {
+                throw cannotGetHandle(m, e);
+            }
         }
 
         @Override
         Class<? extends Annotation> annoClass() { return PythonStaticMethod.class; }
     }
+
+    /**
+     * Generic code to create a specification of an attribute or method to
+     * the tables of the exposer, expressed as an inner class, or to find an
+     * existing one and update it.
+     * <p>
+     * {@link SpecAdder#add(Member, String)} finds a {@code Spec} by the
+     * given name in {@link #specs}, or creates one by calling
+     * {@link SpecAdder#makeSpec(String) makeSpec} and adds it. If it found
+     * an existing specification, it checks the concrete type with
+     * {@link SpecAdder#check(Spec) check}. Then it updates it with the new
+     * member by calling {@link SpecAdder#addMember(Member, Spec) addMember}
+     * and adds it to the type-specific table through a call to
+     * {@link SpecAdder#addSpec(Spec) addSpec}.
+     * <p>
+     * {@link SpecAdder#add(Member, String) add} is provided, but the other
+     * four methods must be defined by the caller. We use an anonymous class
+     * at the call site to do this customisation.
+     *
+     * @param <S> type of specification that should be created
+     * @param <M> Java member type being described
+     */
+    abstract class SpecAdder<S extends Spec, M extends Member> {
+
+        /**
+         * Check a {@code Spec} found by lookup is of actual type {@code S}.
+         *
+         * @param spec to check
+         * @return {@code instanceof S}
+         */
+        abstract boolean check(Spec spec);
+
+        /**
+         * Create a new specification of type {@code S}.
+         *
+         * @param name of the attribute/method.
+         * @return a new S
+         */
+        abstract S makeSpec(String name);
+
+        /**
+         * Add a definition to an existing specification {@code S s} created or
+         * found by name. Generally, the implementation of this references
+         * attributes from the annotation encountered.
+         *
+         * @param m member annotated
+         * @param s specification to add
+         */
+        abstract void addMember(M m, S s);
+
+        /**
+         * Add a specification of actual type {@code S} to a specific matching
+         * collection.
+         *
+         * @param s new specification
+         */
+        abstract void addSpec(S s);
+
+        /**
+         * Process Java member of a Python type or module defined in Java, into
+         * a specification for an attribute or method, and add it to the tables
+         * of specifications by name. Optionally override the Java name, or
+         * leave {@code name} null or empty to accept the Java one.
+         *
+         * @param name to replace the Java one (or {@code null}/"")
+         * @param m member annotated
+         * @throws InterpreterError on duplicates or unsupported types
+         */
+        @SuppressWarnings("unchecked")
+        void add(M m, String name) {
+
+            // The name is as annotated or the "natural" one
+            if (name == null || name.length() == 0)
+                name = m.getName();
+
+            // Find/create and update a specification of 'name'
+            Spec spec;
+            S entry;
+            if ((spec = specs.get(name)) == null) {
+                // A new entry is needed
+                entry = makeSpec(name);
+                specs.put(entry.name, entry);
+                addSpec(entry);
+                addMember(m, entry);
+            } else if (check(spec)) {
+                // Existing entry will be updated (cast is safe)
+                addMember(m, (S)spec);
+            } else {
+                /*
+                 * Existing entry is not compatible, but make a loose entry on which to
+                 * base the error message.
+                 */
+                entry = makeSpec(name);
+                addMember(m, entry);
+                throw duplicateError(name, m, entry, spec);
+            }
+        }
+    }
+
+    // Plumbing ------------------------------------------------------
+
+    /**
+     * Create an exception with a message along the lines "'NAME', already
+     * exposed as SPEC, cannot be NEW_SPEC" where the place-holders are
+     * filled from the corresponding arguments (or their names or type
+     * names).
+     *
+     * @param name being defined
+     * @param member field or method annotated
+     * @param newSpec of the new entry apparently requested
+     * @param priorSpec of the inconsistent, existing entry
+     * @return the required error
+     */
+    static InterpreterError duplicateError(String name, Member member, Spec newSpec,
+            Spec priorSpec) {
+        String memberName = member.getName();
+        String memberString = memberName == name ? "" : " (called '" + memberName + "' in source)";
+        String priorSpecType = priorSpec.annoClassName();
+        String newSpecType = newSpec.annoClassName();
+        if (priorSpecType.equals(newSpecType)) { newSpecType = "redefined"; }
+        return new InterpreterError(ALREADY_EXPOSED, name, memberString, priorSpecType,
+                newSpecType);
+    }
+
+    private static final String ALREADY_EXPOSED = "'%s'%s, already exposed as %s, cannot be %s";
 }

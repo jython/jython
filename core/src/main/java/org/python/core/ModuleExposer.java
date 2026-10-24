@@ -1,29 +1,31 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.reflect.Method;
 
 import org.python.core.ModuleDef.MethodDef;
 import org.python.support.InterpreterError;
-import org.python.types.Exposed.PythonMethod;
-import org.python.types.Exposed.PythonStaticMethod;
+import org.python.support.ScopeKind;
 
 /**
  * A {@code ModuleExposer} provides access to the attributes of a module
  * defined in Java (a built-in or extension module). These are primarily
  * the {@link MethodDef}s derived from annotated methods in the defining
- * class. It is normally obtained by a call to
- * {@link Exposer#exposeModule(Class)}.
+ * class. {@link ModuleDef} uses an instance as it fills the module
+ * dictionary.
  */
 class ModuleExposer extends Exposer {
 
+    /** The name of the module (mainly for logging and debug). */
+    final String name;
+
     /**
-     * Construct the {@code ModuleExposer} instance for a particular
-     * module.
+     * Construct the {@code ModuleExposer} instance for a particular module.
+     *
+     * @param name of the module
      */
-    ModuleExposer() {}
+    ModuleExposer(String name) { this.name = name; }
 
     /**
      * Build the result from the defining class.
@@ -41,11 +43,11 @@ class ModuleExposer extends Exposer {
     ScopeKind kind() { return ScopeKind.MODULE; }
 
     /**
-     * From the methods discovered by introspection of the class, return
-     * an array of {@link MethodDef}s. This array will normally be part
-     * of a {@link ModuleDef} from which the dictionary of each instance
-     * of the module will be created.
-     *
+     * From the methods discovered by introspection of the class, return an
+     * array of {@link MethodDef}s. This array will normally be part of a
+     * {@link ModuleDef} from which the dictionary of each instance of the
+     * module will be created.
+     * <p>
      * A {@link MethodDef} relies on {@code MethodHandle}, so a lookup
      * object must be provided with the necessary access to the defining
      * class.
@@ -57,32 +59,7 @@ class ModuleExposer extends Exposer {
     MethodDef[] getMethodDefs(Lookup lookup) throws InterpreterError {
         MethodDef[] a = new MethodDef[methodSpecs.size()];
         int i = 0;
-        for (CallableSpec ms : methodSpecs) {
-            a[i++] = ms.getMethodDef(lookup);
-        }
+        for (CallableSpec ms : methodSpecs) { a[i++] = ms.getMethodDef(lookup); }
         return a;
-    }
-
-    /**
-     * For a Python module defined in Java, add to {@link specs}, the
-     * methods found in the given defining class and annotated for
-     * exposure.
-     *
-     * @param definingClass to introspect for definitions
-     * @throws InterpreterError on duplicates or unsupported types
-     */
-    @Override
-    void scanJavaMethods(Class<?> definingClass)
-            throws InterpreterError {
-
-        // Collect exposed functions (Java methods)
-        for (Method m : definingClass.getDeclaredMethods()) {
-            PythonMethod a =
-                    m.getDeclaredAnnotation(PythonMethod.class);
-            if (a != null) { addMethodSpec(m, a); }
-            PythonStaticMethod sm =
-                    m.getDeclaredAnnotation(PythonStaticMethod.class);
-            if (sm != null) { addStaticMethodSpec(m, sm); }
-        }
     }
 }

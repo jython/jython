@@ -1,6 +1,6 @@
 # PyUnicode.py: A generator for Java files that define the Python str
 
-# Copyright (c)2021 Jython Developers.
+# Copyright (c)2025 Jython Developers.
 # Licensed to PSF under a contributor agreement.
 
 # This generator writes PyUnicodeMethods.java and PyUnicodeBinops.java .
@@ -243,15 +243,13 @@ class PyUnicodeGenerator(ImplementationGenerator):
 
         # Emit the unary operations
         for op in self.UNARY_OPS:
-            e.emit_line(f'// {"-"*(60-len(op.name))} {op.name}')
-            e.emit_line()
+            self.emit_heading(e, op)
             for t in self.ACCEPTED_CLASSES:
                 self.special_unary(e, op, t)
 
         # Emit the binary operations op(T, Object)
         for op in self.BINARY_OPS:
-            e.emit_line(f'// {"-"*(60-len(op.name))} {op.name}')
-            e.emit_line()
+            self.emit_heading(e, op)
             for vt in self.ACCEPTED_CLASSES:
                 self.special_binary(e, op, vt, OBJECT_CLASS)
 
@@ -261,8 +259,7 @@ class PyUnicodeGenerator(ImplementationGenerator):
         # Emit the binary operations and comparisons
         for op in self.BINARY_OPS:
             if op.class_specific:
-                e.emit_line(f'// {"-"*(60-len(op.name))} {op.name}')
-                e.emit_line()
+                self.emit_heading(e, op)
                 for vt in self.ACCEPTED_CLASSES:
                     for wt in self.OPERAND_CLASSES:
                         self.special_binary(e, op, vt, wt)
@@ -287,6 +284,7 @@ class PyUnicodeGenerator(ImplementationGenerator):
         return clean
 
     def special_unary(self, e, op:UnaryOpInfo, t):
+        self.emit_unary_javadoc(e, op, 'self')
         e.emit('static ').emit(op.return_type.name).emit(' ')
         e.emit(op.name).emit('(').emit(t.name).emit(' self) {')
         with e.indentation():
@@ -299,6 +297,7 @@ class PyUnicodeGenerator(ImplementationGenerator):
         reflected = op.name.startswith('__r') and \
             op.name not in ("__rrshift__", "__round__", "__repr__")
         n1, n2 = 'vw' if not reflected else 'wv'
+        self.emit_binary_javadoc(e, op, n1, n2)
         e.emit('static ').emit(op.return_type.name).emit(' ')
         e.emit(op.name).emit('(')
         e.emit(t1.name).emit(' ').emit(n1).emit(', ')

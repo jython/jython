@@ -1,6 +1,6 @@
 # base.py: foundations for source-code generation from templates
 
-# Copyright (c)2021 Jython Developers.
+# Copyright (c)2025 Jython Developers.
 # Licensed to PSF under a contributor agreement.
 
 # Module: evo1.generate.base
@@ -81,8 +81,8 @@ class ImplementationGenerator:
         e.emit_line(" */")
 
     # Emit a rule (comment) above a block of implementations
-    def emit_heading(self, e, name:str):
-        e.emit_line(f'// {"-"*(60-len(name))} {name}')
+    def emit_heading(self, e, op:OpInfo):
+        e.emit_line(f'// {"-"*(60-len(op.name))} {op.name}')
         e.emit_line()
 
     # Emit methods selectable by a single type
@@ -92,6 +92,21 @@ class ImplementationGenerator:
     # Emit methods selectable by a pair of types (for call sites)
     def special_binops(self, e):
         pass
+
+    def emit_unary_javadoc(self, e, op:OpInfo, n:str='self'):
+        '''Emit Javadoc of a unary special method'''
+        e.emit_line(f'/** Unary special method {{@code {op.name}}}.')
+        e.emit_line(f'    @param {n} target')
+        e.emit_line(f'    @return {{@code self.{op.name}()}} */')
+        e.emit_line('')
+
+    def emit_binary_javadoc(self, e, op:OpInfo, n1:str, n2:str):
+        '''Emit Javadoc of a binary special method'''
+        e.emit_line(f'/** Binary special method {{@code {op.name}}}.')
+        e.emit_line(f'    @param {n1} left operand')
+        e.emit_line(f'    @param {n2} right operand')
+        e.emit_line(f'    @return {{@code {n1}.{op.name}({n2})}} */')
+        e.emit_line('')
 
     def emit_object_plumbing(self, e):
         pass
