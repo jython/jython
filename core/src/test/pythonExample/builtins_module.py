@@ -6,7 +6,6 @@
 
 # Access sample objects from the builtins module implicitly
 # Opcode is LOAD_NAME
-
 int_name = int.__name__
 max_name = max.__name__
 
@@ -15,6 +14,13 @@ max_name = max.__name__
 ai = abs(-42)
 af = abs(-41.9)
 
+# Access from within a nested scope
+
+def f(x):
+    # Opcode is LOAD_GLOBAL
+    return abs(x), min.__name__
+
+aj, min_name = f(-123_000_000_000)
 
 # Sometimes __builtins__ is not the builtins module. Find it with:
 bi = max.__self__
@@ -25,4 +31,4 @@ bi_max_name = bi.max.__name__
 
 
 # Not marshallable
-del bi
+del bi, f
