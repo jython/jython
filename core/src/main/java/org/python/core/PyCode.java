@@ -7,8 +7,11 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.stream.Stream;
 
-import org.python.core.Exposed.Getter;
-import org.python.core.Exposed.Member;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
+import org.python.types.Exposed.Getter;
+import org.python.types.Exposed.Member;
 
 /**
  * The Python {@code code} object. A {@code code} object describes
@@ -29,11 +32,11 @@ import org.python.core.Exposed.Member;
  * class can override them where meaningful.
  */
 // Compare CPython PyCodeObject in codeobject.c
-public abstract class PyCode implements CraftedPyObject {
+public abstract class PyCode implements WithClass {
 
     /** The Python type {@code code}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("code", MethodHandles.lookup()).flagNot(PyType.Flag.BASETYPE));
+            new TypeSpec("code", MethodHandles.lookup()).flagNot(TypeFlag.BASETYPE));
     /*
      * It is not easy to say, while there is only one concrete sub-class
      * to learn from, which attributes may safely be be in the base, and
@@ -41,18 +44,8 @@ public abstract class PyCode implements CraftedPyObject {
      * definition in CPython or Java byte code.
      */
 
-    /**
-     * Characteristics of a {@code PyCode} (as CPython co_flags). These
-     * are not all relevant to all code types.
-     */
-    // XXX Consider not having this, only flags.
-    enum Trait {
-        OPTIMIZED, NEWLOCALS, VARARGS, VARKEYWORDS, NESTED, GENERATOR, COROUTINE,
-        ITERABLE_COROUTINE, ASYNC_GENERATOR
-    }
-
     /** Characteristics of this {@code PyCode} (as CPython co_flags). */
-    final EnumSet<Trait> traits;
+    final EnumSet<CodeFlag> traits;
 
     /** Source file from which compiled. */
     @Member("co_filename")
@@ -527,38 +520,38 @@ public abstract class PyCode implements CraftedPyObject {
      * Convert a CPython-style {@link #flags} specifier to
      * {@link #traits}.
      */
-    private static EnumSet<Trait> traitsFrom(int flags) {
-        ArrayList<Trait> traits = new ArrayList<>();
+    private static EnumSet<CodeFlag> traitsFrom(int flags) {
+        ArrayList<CodeFlag> traits = new ArrayList<>();
         for (int m = 1; flags != 0; m <<= 1) {
             switch (m & flags) {
                 case 0:
                     break; // When bit not set in flag.
                 case CO_OPTIMIZED:
-                    traits.add(Trait.OPTIMIZED);
+                    traits.add(CodeFlag.OPTIMIZED);
                     break;
                 case CO_NEWLOCALS:
-                    traits.add(Trait.NEWLOCALS);
+                    traits.add(CodeFlag.NEWLOCALS);
                     break;
                 case CO_VARARGS:
-                    traits.add(Trait.VARARGS);
+                    traits.add(CodeFlag.VARARGS);
                     break;
                 case CO_VARKEYWORDS:
-                    traits.add(Trait.VARKEYWORDS);
+                    traits.add(CodeFlag.VARKEYWORDS);
                     break;
                 case CO_NESTED:
-                    traits.add(Trait.NESTED);
+                    traits.add(CodeFlag.NESTED);
                     break;
                 case CO_GENERATOR:
-                    traits.add(Trait.GENERATOR);
+                    traits.add(CodeFlag.GENERATOR);
                     break;
                 case CO_COROUTINE:
-                    traits.add(Trait.COROUTINE);
+                    traits.add(CodeFlag.COROUTINE);
                     break;
                 case CO_ITERABLE_COROUTINE:
-                    traits.add(Trait.ITERABLE_COROUTINE);
+                    traits.add(CodeFlag.ITERABLE_COROUTINE);
                     break;
                 case CO_ASYNC_GENERATOR:
-                    traits.add(Trait.ASYNC_GENERATOR);
+                    traits.add(CodeFlag.ASYNC_GENERATOR);
                     break;
                 default:
                     throw new IllegalArgumentException("Undefined bit set in 'flags' argument");
@@ -566,6 +559,6 @@ public abstract class PyCode implements CraftedPyObject {
             // Ensure the bit we just tested is clear
             flags &= ~m;
         }
-        return traits.isEmpty() ? EnumSet.noneOf(Trait.class) : EnumSet.copyOf(traits);
+        return traits.isEmpty() ? EnumSet.noneOf(CodeFlag.class) : EnumSet.copyOf(traits);
     }
 }

@@ -16,10 +16,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.python.core.PyObjectUtil.NoConversion;
-import org.python.core.stringlib.InternalFormat;
-import org.python.core.stringlib.InternalFormat.FormatError;
-import org.python.core.stringlib.InternalFormat.Spec;
-import org.python.core.stringlib.TextFormatter;;
+import org.python.internal.Formats;
+import org.python.internal.TextFormatter;
+import org.python.internal.Formats.FormatError;
+import org.python.internal.Formats.Spec;;
 
 /**
  * Tests of formatting of built-in types to string using their __format__ method (on which built-in method {@code format()} relies)..
@@ -267,7 +267,7 @@ class FormatTest extends UnitTestSupport {
     }
 
     private static TextFormatter newTextFormatter(String fmt) {
-        Spec spec = InternalFormat.fromText(fmt);
+        Spec spec = Formats.fromText(fmt);
         return new TextFormatter(spec) {
             @Override
             public TextFormatter format(Object o)

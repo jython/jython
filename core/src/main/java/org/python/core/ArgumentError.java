@@ -14,10 +14,10 @@ package org.python.core;
  * {@code ArgumentError} should be caught as soon as the necessary
  * context is available and converted to a Python exception.
  */
-class ArgumentError extends Exception {
+public class ArgumentError extends Exception {
     private static final long serialVersionUID = 1L;
 
-    enum Mode {
+    public enum Mode {
         NOARGS, NUMARGS, MINMAXARGS, SELF, NOKWARGS;
 
         /**
@@ -54,14 +54,14 @@ class ArgumentError extends Exception {
      *
      * @param mode qualifies the sub-type of the problem
      */
-    ArgumentError(Mode mode) { this(mode, 0, 0); }
+    public ArgumentError(Mode mode) { this(mode, 0, 0); }
 
     /**
      * The mode is {@link Mode#NUMARGS} or {@link Mode#NOARGS}.
      *
      * @param numArgs expected number of arguments
      */
-    ArgumentError(int numArgs) { this(numArgs, numArgs); }
+    public ArgumentError(int numArgs) { this(numArgs, numArgs); }
 
     /**
      * The mode is {@link Mode#MINMAXARGS}, {@link Mode#NUMARGS} or
@@ -70,7 +70,7 @@ class ArgumentError extends Exception {
      * @param minArgs minimum expected number of arguments
      * @param maxArgs maximum expected number of arguments
      */
-    ArgumentError(int minArgs, int maxArgs) {
+    public ArgumentError(int minArgs, int maxArgs) {
         this(Mode.choose(minArgs, maxArgs), minArgs, maxArgs);
     }
 

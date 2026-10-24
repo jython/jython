@@ -5,12 +5,12 @@ package org.python.core;
 import java.lang.invoke.MethodHandles;
 import java.util.Iterator;
 
-import org.python.core.Exposed.Default;
-import org.python.core.Exposed.DocString;
-import org.python.core.Exposed.KeywordOnly;
-import org.python.core.Exposed.Name;
-import org.python.core.Exposed.PositionalCollector;
-import org.python.core.Exposed.PythonStaticMethod;
+import org.python.types.Exposed.Default;
+import org.python.types.Exposed.DocString;
+import org.python.types.Exposed.KeywordOnly;
+import org.python.types.Exposed.Name;
+import org.python.types.Exposed.PositionalCollector;
+import org.python.types.Exposed.PythonStaticMethod;
 
 /**
  * The {@code builtins} module is definitely called "builtins".

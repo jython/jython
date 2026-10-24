@@ -11,18 +11,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
  * The Python {@code dict} object. The Java API is provided directly
  * by the base class implementing {@code Map}, while the Python API
  * has been implemented on top of the Java one.
  */
-public class PyDict extends AbstractMap<Object, Object> implements CraftedPyObject {
+public class PyDict extends AbstractMap<Object, Object> implements WithClass {
 
     /** The type of Python object this class implements. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("dict", MethodHandles.lookup()));
+            new TypeSpec("dict", MethodHandles.lookup()));
 
     /** The Python type of this instance. */
     protected final PyType type;

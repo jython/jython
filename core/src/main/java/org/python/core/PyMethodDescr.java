@@ -6,11 +6,12 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
 import java.util.List;
 
-import org.python.base.InterpreterError;
-import org.python.base.MethodKind;
 import org.python.core.ArgumentError.Mode;
-import org.python.core.PyType.Flag;
 import org.python.core.Slot.EmptyException;
+import org.python.support.InterpreterError;
+import org.python.support.MethodKind;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
 
 /**
  * Descriptor for a method defined in Java, that is to be called
@@ -29,9 +30,9 @@ import org.python.core.Slot.EmptyException;
 abstract class PyMethodDescr extends MethodDescriptor {
 
     static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("method_descriptor", MethodHandles.lookup()) //
-                    .flagNot(Flag.BASETYPE) //
-                    .flag(Flag.IS_METHOD_DESCR, Flag.IS_DESCR));
+            new TypeSpec("method_descriptor", MethodHandles.lookup()) //
+                    .flagNot(TypeFlag.BASETYPE) //
+                    .flag(TypeFlag.IS_METHOD_DESCR, TypeFlag.IS_DESCR));
 
     /*
      * We depart from CPython in reifying information from the Java

@@ -2,6 +2,8 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code SystemError} exception. */
 public class SystemError extends PyException {
     private static final long serialVersionUID = 1L;
@@ -9,7 +11,7 @@ public class SystemError extends PyException {
     /** The type object of Python {@code SystemError} exceptions. */
     @SuppressWarnings("hiding")
     public static final PyType TYPE = PyType.fromSpec(
-            new PyType.Spec("SystemError", MethodHandles.lookup()).base(PyException.TYPE));
+            new TypeSpec("SystemError", MethodHandles.lookup()).base(PyException.TYPE));
 
     /**
      * Constructor for sub-class use specifying {@link #type}.

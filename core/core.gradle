@@ -1,40 +1,164 @@
 /*
+ * core subproject (model interpreter runtime).
  * core.gradle
  *
- * Sub-project of Jython: interpreter core. We to generate and compile the
- * implementation of the core Python objects, exporting a minimal API.
+ * Sub-project of Jython: interpreter and runtime. This script generates
+ * and compiles the implementation of the core Python objects.
+ *
+ * We use the Java module system to control visibility.
  */
+
+import org.gradle.internal.jvm.JavaModuleDetector
+import org.gradle.api.internal.tasks.compile.CompilationSourceDirs
 
 plugins {
     id 'java-library'
+    id 'jvm-test-suite'
 }
+
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+
+    // https://stackoverflow.com/a/58845574 (Chriki) CC BY-SA 4.0
+    withSourcesJar()
+    withJavadocJar()
+}
+
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
 
 dependencies {
-    //implementation 'org.ow2.asm:asm:9.+'
-
-    // JUnit 5 dependencies
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.+'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.+'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.+'
+    // We generate byte code with ASM
+    implementation 'org.ow2.asm:asm:9.7'
+    implementation 'org.ow2.asm:asm-tree:9.7'
+    // We standardise on SLF4J for logging from the library
+    implementation 'org.slf4j:slf4j-api:2.0.13'
 }
 
 
-test {
-    useJUnitPlatform {  // JUnit5 as standard
-        includeEngines 'junit-jupiter'
+/* Configure the jvm-test-suite plug-in
+ *
+ * We follow the Gradle 8.8 notes on the JVM Test Suite Plugin.
+ * and the example of configuring integration tests.
+ */
+testing {
+    suites {
+        // The pre-defined test suite.
+        test {
+            useJUnitJupiter()
+            dependencies {
+                // Include a logging provider (JDK 1.4)
+                runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.13'
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        // Log according to current interests
+                        systemProperty(
+                            'java.util.logging.config.file',
+                            getProject().file('config/test.logging.properties') )
+                        testLogging.showStandardStreams = true
+                    }
+                }
+            }
+        }
+
+        /*
+         * A test suite for tests with many concurrent threads. Logging
+         * is minimised to prevent slowness, repetition, and accidental
+         * synchronisation.
+         */
+        concurrencyTest(JvmTestSuite) {
+            useJUnitJupiter()
+
+            dependencies {
+                implementation project()
+                implementation 'org.slf4j:slf4j-api:2.0.13'
+                // Include a logging provider (JDK 1.4)
+                runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.13'
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        // Log output is minimised with this config:
+                        systemProperty(
+                            'java.util.logging.config.file',
+                            getProject().file('config/concurrencyTest.logging.properties') )
+                        testLogging.showStandardStreams = true
+                    }
+                }
+            }
+        }
+
+        /*
+         * A test suite where each test runs in its own JVM.
+         */
+        kernelTest(JvmTestSuite) {
+            useJUnitJupiter()
+
+            dependencies {
+                implementation project()
+                implementation 'org.slf4j:slf4j-api:2.0.13'
+                // Include a logging provider (JDK 1.4)
+                runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.13'
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        // Important: fresh JVM with every kernel test
+                        forkEvery = 1
+                        // Log output will prove kernel is recreated
+                        systemProperty(
+                            'java.util.logging.config.file',
+                            getProject().file('config/kernelTest.logging.properties') )
+                        systemProperty(
+                            'org.python.runtime.BootstrapTest.times',
+                            'false')
+                        testLogging.showStandardStreams = true
+                    }
+                }
+            }
+        }
     }
 }
 
+test.dependsOn(kernelTest)
+
+
+tasks.named('check') { 
+    dependsOn(testing.suites.kernelTest)
+    dependsOn(testing.suites.concurrencyTest)
+}
+
+
+// Location of generated (Java) source
+
+def genSourcesDir = "$buildDir/generated/sources"
 
 // Sources and destinations when generating Java object implementations
 
-def genSourcesDir = "$buildDir/generated/sources"
-def genOutputDir = "$genSourcesDir/javaTemplate"
-def genJavaDir = "$genOutputDir/java/main"
-def genTestJavaDir = "$genOutputDir/java/test"
+def templateInputDir = getProject().file('src/main/javaTemplate')
+def templateOutputDir = "$genSourcesDir/javaTemplate"
+def templateJavaDir = "$templateOutputDir/java/main"
 
-def genInputDir = getProject().file('src/main/javaTemplate')
-def genTestInputDir = getProject().file('src/test/javaTemplate')
+def templateTestInputDir = getProject().file('src/test/javaTemplate')
+def templateTestJavaDir = "$templateOutputDir/java/test"
+
+// Sources and destinations when generating the parser
+
+
+def pegenOutputDir = "$genSourcesDir/pegen"
+def pegenJavaDir = "$pegenOutputDir/java/main"
 
 
 // Source and destinations of Python source test material
@@ -50,13 +174,14 @@ sourceSets {
 
     main {
         java {
-            srcDir genJavaDir
+            srcDir templateJavaDir
+            srcDir pegenJavaDir
         }
     }
 
     test {
         java {
-            srcDir genTestJavaDir
+            srcDir templateTestJavaDir
         }
         resources {
             srcDir testPythonExampleOutputDir
@@ -65,8 +190,7 @@ sourceSets {
 }
 
 
-
-// A task that runs Python with the tools library on the path
+// A class of task that runs Python with the tools library on the path
 
 class PythonExec extends Exec {
 
@@ -78,25 +202,26 @@ class PythonExec extends Exec {
 }
 
 
-// Generate Python object definitions
-
-task generateObjectDefinitions(type: PythonExec,
-        description: 'Generate object definitions from templates' ) {
-    args getProject().getRootProject().file(
-            'build-tools/python/tool/java_object_gen.py')
-    args '--verbose'
-    args genInputDir
-    args genJavaDir
-}
-compileJava.dependsOn(generateObjectDefinitions)
-
-
 // Report the version of Python available
 
 task pythonVersion(type: PythonExec) {
     args '-V'
 }
-generateObjectDefinitions.dependsOn(pythonVersion)
+
+
+
+// Generate Python object definitions
+
+task generateJavaTemplate(type: PythonExec,
+        description: 'Generate object definitions from templates',
+        dependsOn: pythonVersion) {
+    args getProject().getRootProject().file(
+                'build-tools/python/tool/java_object_gen.py')
+    args '--verbose'
+    args templateInputDir
+    args templateJavaDir
+}
+compileJava.dependsOn(generateJavaTemplate)
 
 
 // Copy and compile Python source examples to the build tree
@@ -118,11 +243,111 @@ task compileTestPythonExamples(type: PythonExec,
 processTestResources.dependsOn(compileTestPythonExamples)
 
 
+// Default javadoc (but it does not properly constrain visibility)
+javadoc {
+    title = "core Default Javadoc (not modular)"
+    options.addStringOption("-show-packages", "exported")
+    options.addStringOption("-show-module-contents", "api")
+    options.showFromProtected()
+}
+
+
+// Task to generate javadoc for the module API (that client apps use).
+// Using an Exec task because we failed to make a Javadoc task work.
+task moduleJavadoc(type:Exec,
+        description: 'Generate Javadoc for Client API (Exec task)',
+        dependsOn: compileJava) {
+
+    inputs.files(sourceSets.main.allJava)
+    executable = "javadoc"
+
+    def title = 'Jython core Client API'
+    args('-doctitle', title)
+    args('-windowtitle', title)
+
+    // These particular docs are characterised by:
+    args('--show-module-contents', 'api')
+    args('--show-packages', 'exported')
+    args('-d', "${buildDir}/docs/api")
+
+    // The module and source paths are specified here
+    args("@src/main/javadoc/modular.options")
+
+    //println "Exec javadoc $args"
+}
+
+
+
+// Task to generate javadoc for project maintainers
+// Using an Exec task because we failed to make a Javadoc task work.
+task internalJavadoc(type:Exec,
+        description: 'Generate project internal Javadoc',
+        dependsOn: compileJava) {
+
+    inputs.files(sourceSets.main.allJava)
+    executable = "javadoc"
+
+    def title = 'Jython core Project Internal Javadoc'
+    args('-doctitle', title)
+    args('-windowtitle', title)
+
+    // These particular docs are characterised by:
+    args('--show-module-contents', 'all')
+    args('--show-packages', 'all')
+    args('--show-members', 'package')
+    args('--show-types', 'package')
+    args('-d', "${buildDir}/docs/internalJavadoc")
+
+    // The module and source paths are specified here
+    args("@src/main/javadoc/modular.options")
+
+    //println "Exec javadoc $args"
+}
+
+
+
+
+// Task to generate javadoc for test code
+task testJavadoc(type:Javadoc,
+        description: 'Generate Javadoc for tests',
+        dependsOn: internalJavadoc) {
+
+    source(sourceSets.test.allJava, sourceSets.kernelTest.allJava,
+            sourceSets.concurrencyTest.allJava)
+    title = "Jython core Unit Tests"
+    destinationDir = file("${buildDir}/docs/testJavadoc")
+
+    // Ensure the test support (JUnit) is on the class path
+    def tccp = sourceSets.test.compileClasspath
+    //println "tccp.files = ${tccp.files}"
+
+    classpath.from(tccp)
+
+    /* We have used the class path not the module path because
+     * otherwise javadoc complains the JUnit API is not in the
+     * module graph (not in module-info.java) and fails badly.
+     * This way we get non-modular Javadoc for the tests :( and
+     * a warning about linked classes in the same package being
+     * modular, but it is only a warning.
+     */
+    //modularity.inferModulePath = false
+    //options.modulePath(new ArrayList(tccp.files))
+    //println "options.modulePath = ${options.modulePath}"
+
+    options.showFromPackage()
+
+    // Jython internal javadoc already at ${buildDir}/docs
+    // We want to click through to the objects under test
+    options.links.add("../internalJavadoc")
+}
+
+
 // Some adjustments to Javadoc to ensure complex tables readable
+// and to confirm the module path being used.
 
 tasks.withType(Javadoc) {
 
-    options.showFromPackage()
+    options.encoding = 'UTF-8'
 
     // addStringOption inserts one "-" for us :/
     // CSS adjustments (initially only for table style)
@@ -139,14 +364,30 @@ tasks.withType(Javadoc) {
         // so they come after the ones we want to enable.
         "param", "return", "throws",
         "since", "version", "serialData", "see")
-}
 
+    doFirst {
+        // A bit of reassurance: this was hard to get right
+        println "inferModulePath = ${modularity.inferModulePath.getOrNull()}"
+        println "module path = ${options.modulePath}"
+        //println "source path = ${source.files}"
+        FileCollection roots = layout.files(CompilationSourceDirs.inferSourceRoots(source))
+        println "roots.files = ${roots.files}"
+    }
+}
 
 // Particular things we ask of the compiler in this sub-project.
 // See also ~/build.gradle for tweaks applying to all projects.
-
 tasks.withType(JavaCompile) {
-    // retain parameter names (for use by exposer)
+
+    options.encoding = 'UTF-8'
+
+    // Use only public API
+    options.compilerArgs.addAll(['--release', '17'])
+    // Deprecation is noisy
+    options.deprecation = true
+    // Retain parameter names (for use by exposer)
+    // The IDE may have a compiler setting necessary for the exposer:
+    // "Store information about method parameters"
     options.compilerArgs.add('-parameters')
 }
 

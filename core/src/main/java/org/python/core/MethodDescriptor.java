@@ -3,6 +3,7 @@
 package org.python.core;
 
 import org.python.core.ArgumentError.Mode;
+import org.python.types.FastCall;
 
 /**
  * Abstract base class for the descriptor of a method defined in

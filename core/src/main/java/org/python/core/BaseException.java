@@ -4,13 +4,16 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
+
 /** The Python {@code BaseException} exception. */
-class BaseException extends RuntimeException implements CraftedPyObject {
+class BaseException extends RuntimeException implements WithClass {
     private static final long serialVersionUID = 1L;
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("BaseException", MethodHandles.lookup()));
+            new TypeSpec("BaseException", MethodHandles.lookup()));
     private final PyType type;
     final Object[] args;
 

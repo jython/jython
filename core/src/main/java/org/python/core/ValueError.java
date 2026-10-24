@@ -2,13 +2,15 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code ValueError} exception. */
 public class ValueError extends PyException {
     private static final long serialVersionUID = 1L;
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec(
-            new PyType.Spec("ValueError", MethodHandles.lookup())
+            new TypeSpec("ValueError", MethodHandles.lookup())
                     .base(PyException.TYPE));
 
     /**

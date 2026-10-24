@@ -14,14 +14,16 @@ import java.util.stream.StreamSupport;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySequence.Delegate;
 import org.python.core.PySlice.Indices;
-import org.python.core.stringlib.ByteArrayBuilder;
+import org.python.stringlib.ByteArrayBuilder;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /** The Python {@code bytes} object. */
-public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
+public class PyBytes extends AbstractList<Integer> implements WithClass {
 
     /** The type of Python object this class implements. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("bytes", MethodHandles.lookup()));
+            new TypeSpec("bytes", MethodHandles.lookup()));
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[] {};
     static final PyBytes EMPTY = new PyBytes(EMPTY_BYTE_ARRAY);
 

@@ -5,6 +5,9 @@ package org.python.core;
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+
 /**
  * A {@code PyFrame} is the context for the execution of code.
  * Different concrete sub-classes of {@code PyFrame} exist to
@@ -66,7 +69,7 @@ import java.util.Map;
  * function object during each call. {@code defaults} apply in the
  * position show, in order, while {@code kwdefaults} (in a map)
  * apply to keywords wherever the name matches. The names in the
- * frame are those in the {@link PyCode#varnames} field of the
+ * frame are those in the {@link PyCode#names} field of the
  * associated code object
  * <p>
  * The frame presents an abstraction of an array of named local
@@ -80,9 +83,9 @@ public abstract class PyFrame<C extends PyCode> {
 
     /** The Python type {@code frame}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("frame", MethodHandles.lookup())
+            new TypeSpec("frame", MethodHandles.lookup())
                     // Type admits no Python subclasses.
-                    .flagNot(PyType.Flag.BASETYPE));
+                    .flagNot(TypeFlag.BASETYPE));
 
     /** Frames form a stack by chaining through the back pointer. */
     PyFrame<? extends PyCode> back;
@@ -108,7 +111,7 @@ public abstract class PyFrame<C extends PyCode> {
     /**
      * Foundation constructor on which subclass constructors rely. This
      * provides a "loose" frame that is not yet part of any stack until
-     * explicitly pushed (with {@link ThreadState#push(PyFrame)}). In
+     * explicitly pushed onto the Python interpreter stack. In
      * particular, the {@link #back} pointer is {@code null} in the
      * newly-created frame.
      * <p>
@@ -149,9 +152,8 @@ public abstract class PyFrame<C extends PyCode> {
 
     /**
      * Provide {@link #locals} as a Java Map. This does not re-compute
-     * {@code locals} as a dictionary in the way of
-     * {@link #fastToLocals()}, but only dresses an existing value as a
-     * Java {@code Map} (if it is not {@code null}).
+     * {@code locals} as a dictionary , but only dresses an existing
+     * value as a Java {@code Map} (if it is not {@code null}).
      *
      * @return as a Java {@code Map}
      */

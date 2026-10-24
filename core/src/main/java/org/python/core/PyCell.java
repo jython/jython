@@ -3,14 +3,18 @@ package org.python.core;
 import java.lang.invoke.MethodHandles;
 import java.util.function.Supplier;
 
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
+
 /** Holder for objects appearing in the closure of a function. */
-public class PyCell implements Supplier<Object>, CraftedPyObject {
+public class PyCell implements Supplier<Object>, WithClass {
 
     /** The Python type {@code cell}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("cell", MethodHandles.lookup())
+            new TypeSpec("cell", MethodHandles.lookup())
                     // Type admits no Python subclasses.
-                    .flagNot(PyType.Flag.BASETYPE));
+                    .flagNot(TypeFlag.BASETYPE));
 
     /** The object currently held. */
     Object obj;

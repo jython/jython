@@ -15,24 +15,25 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.python.core.Exposed.Deleter;
-import org.python.core.Exposed.DocString;
-import org.python.core.Exposed.Getter;
-import org.python.core.Exposed.KeywordCollector;
-import org.python.core.Exposed.Member;
-import org.python.core.Exposed.PositionalCollector;
-import org.python.core.Exposed.PositionalOnly;
-import org.python.core.Exposed.PythonMethod;
-import org.python.core.Exposed.PythonStaticMethod;
-import org.python.core.Exposed.Setter;
 import org.python.core.Exposer.CallableSpec;
-import org.python.core.TypeExposer.GetSetSpec;
-import org.python.core.TypeExposer.MemberSpec;
+import org.python.core.TypeExposerImplementation.GetSetSpec;
+import org.python.core.TypeExposerImplementation.MemberSpec;
+import org.python.types.Exposed;
+import org.python.types.Exposed.Deleter;
+import org.python.types.Exposed.DocString;
+import org.python.types.Exposed.Getter;
+import org.python.types.Exposed.KeywordCollector;
+import org.python.types.Exposed.Member;
+import org.python.types.Exposed.PositionalCollector;
+import org.python.types.Exposed.PositionalOnly;
+import org.python.types.Exposed.PythonMethod;
+import org.python.types.Exposed.PythonStaticMethod;
+import org.python.types.Exposed.Setter;
 
 /**
  * Test that the annotations defined in {@link Exposed}, and
  * intended for exposing attributes of a type defined in Java, are
- * processed correctly by a {@link Exposer} to a {@link TypeExposer}
+ * processed correctly by a {@link Exposer} to a {@link TypeExposerImplementation}
  * containing appropriate attribute specifications. This tests a
  * large part of the exposure mechanism, without activating the
  * wider Python type system.
@@ -224,7 +225,7 @@ class TypeExposerTest {
     @BeforeAll
     static void createExposer() {
         // type=null in order not to wake the type system
-        TypeExposer exposer = Exposer.exposeType(null, Fake.class, null);
+        TypeExposerImplementation exposer = Exposer.exposeType(null, Fake.class, null);
 
         // Populate the dictionaries used in the tests.
         for (Exposer.Spec s : exposer.specs.values()) {

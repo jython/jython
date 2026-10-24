@@ -3,6 +3,7 @@
 package org.python.core;
 
 import org.python.core.Slot.EmptyException;
+import org.python.types.Exposed;
 
 /**
  * The base class of many built-in descriptors. Descriptors are a

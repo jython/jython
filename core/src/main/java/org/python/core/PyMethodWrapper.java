@@ -4,8 +4,10 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
-import org.python.core.Exposed.Member;
-import org.python.core.PyType.Flag;
+import org.python.types.FastCall;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.Exposed.Member;
 
 /**
  * The Python type {@code types.MethodWrapperType} (seen also as
@@ -25,7 +27,7 @@ import org.python.core.PyType.Flag;
 class PyMethodWrapper extends AbstractPyObject implements FastCall {
 
     static final PyType TYPE = PyType.fromSpec(
-            new PyType.Spec("method-wrapper", MethodHandles.lookup()).flagNot(Flag.BASETYPE));
+            new TypeSpec("method-wrapper", MethodHandles.lookup()).flagNot(TypeFlag.BASETYPE));
 
     // No subclasses so always this type
     @Override

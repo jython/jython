@@ -2,6 +2,8 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code KeyError} exception. */
 public class KeyError extends PyException {
     private static final long serialVersionUID = 1L;
@@ -9,7 +11,7 @@ public class KeyError extends PyException {
     /** The type object of Python {@code KeyError} exceptions. */
     @SuppressWarnings("hiding")
     public static final PyType TYPE = PyType
-            .fromSpec(new PyType.Spec("KeyError", MethodHandles.lookup()).base(LookupError.TYPE));
+            .fromSpec(new TypeSpec("KeyError", MethodHandles.lookup()).base(LookupError.TYPE));
 
     /** The problematic key */
     final Object key;

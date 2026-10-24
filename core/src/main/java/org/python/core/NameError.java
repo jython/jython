@@ -2,6 +2,8 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code NameError} exception. */
 public class NameError extends PyException {
     private static final long serialVersionUID = 1L;
@@ -9,7 +11,7 @@ public class NameError extends PyException {
     /** The type object of Python {@code NameError} exceptions. */
     @SuppressWarnings("hiding")
     public static final PyType TYPE = PyType
-            .fromSpec(new PyType.Spec("NameError", MethodHandles.lookup()).base(PyException.TYPE));
+            .fromSpec(new TypeSpec("NameError", MethodHandles.lookup()).base(PyException.TYPE));
 
     /**
      * Constructor for sub-class use specifying {@link #type}.

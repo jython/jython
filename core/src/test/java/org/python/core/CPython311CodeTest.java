@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.python.base.InterpreterError;
 import org.python.modules.marshal;
+import org.python.support.InterpreterError;
 
 /**
  * Tests that read code objects from prepared {@code .pyc} files and

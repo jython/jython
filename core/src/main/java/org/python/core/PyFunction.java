@@ -6,9 +6,11 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 
-import org.python.core.Exposed.FrozenArray;
-import org.python.core.Exposed.Member;
-import org.python.core.PyType.Flag;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
+import org.python.types.WithDict;
+import org.python.types.Exposed.FrozenArray;
+import org.python.types.Exposed.Member;
 
 /**
  * Python {@code function} object as created by a function
@@ -17,11 +19,11 @@ import org.python.core.PyType.Flag;
  * @param <C> implementing class of {@code code} object
  */
 public abstract class PyFunction<C extends PyCode> extends AbstractPyObject
-        implements DictPyObject {
+        implements WithDict {
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType
-            .fromSpec(new PyType.Spec("function", MethodHandles.lookup()).flagNot(Flag.BASETYPE));
+            .fromSpec(new TypeSpec("function", MethodHandles.lookup()).flagNot(TypeFlag.BASETYPE));
 
     /**
      * The interpreter that defines the import context. Not
@@ -66,10 +68,7 @@ public abstract class PyFunction<C extends PyCode> extends AbstractPyObject
     /** The {@code __kwdefaults__} or {@code null}. */
     protected PyDict kwdefaults;
 
-    /**
-     * The read-only {@code __closure__} attribute, or {@code null}. See
-     * {@link #setClosure(Collection) __closure__} access method
-     */
+    /** The read-only {@code __closure__} attribute, or {@code null}. */
     @FrozenArray
     protected PyCell[] closure;
 

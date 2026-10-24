@@ -2,7 +2,7 @@
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
 
 /**
  * An interpreter is responsible for certain variable aspects of the
@@ -49,11 +49,10 @@ class Interpreter {
 
     /**
      * Execute the code object and return the result. This is quite like
-     * {@link BuiltinsModule#exec(Object, Object, Object, Object)
-     * builtins.exec()}, except that it works without a surrounding
-     * {@link PyFrame}, from which it could infer {@code globals} and
-     * {@code locals}. It will create a frame, but it may be on an empty
-     * stack.
+     * {@link BuiltinsModule builtins.exec()}, except that it works
+     * without a surrounding {@link PyFrame}, from which it could infer
+     * {@code globals} and {@code locals}. It will create a frame, but
+     * it may be on an empty stack.
      *
      * @param code compiled code object
      * @param globals global context dictionary

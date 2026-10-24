@@ -2,6 +2,8 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+
 /** The Python {@code UnicodeError} exception. */
 class UnicodeError extends ValueError {
 
@@ -9,7 +11,7 @@ class UnicodeError extends ValueError {
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec(
-            new PyType.Spec("UnicodeError", MethodHandles.lookup()).base(PyException.TYPE));
+            new TypeSpec("UnicodeError", MethodHandles.lookup()).base(PyException.TYPE));
 
     /*
      * PyUnicodeError should have 5 exposed attributes, although they

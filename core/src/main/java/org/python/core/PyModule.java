@@ -4,12 +4,16 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
+import org.python.types.WithDict;
+
 /** The Python {@code module} object. */
-public class PyModule implements CraftedPyObject, DictPyObject {
+public class PyModule implements WithClass, WithDict {
 
     /** The type of Python object this class implements. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("module", MethodHandles.lookup()));
+            new TypeSpec("module", MethodHandles.lookup()));
 
     protected final PyType type;
 

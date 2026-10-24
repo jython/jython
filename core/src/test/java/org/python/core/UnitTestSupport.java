@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.function.Executable;
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
 
 /**
  * A base class for unit tests that defines some common convenience
@@ -262,9 +262,9 @@ public class UnitTestSupport {
      * @param expectedMessage expected message text
      * @return what was thrown
      */
-    static <T extends PyException> T assertRaises(Class<T> expected,
+    static <E extends PyException> E assertRaises(Class<E> expected,
             Executable action, String expectedMessage) {
-        T t = assertThrows(expected, action);
+        E t = assertThrows(expected, action);
         assertEquals(expectedMessage, t.getMessage());
         return t;
     }

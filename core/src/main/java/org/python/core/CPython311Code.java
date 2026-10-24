@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.python.core.stringlib.ByteArrayBuilder;
+import org.python.stringlib.ByteArrayBuilder;
 
 /**
  * Our equivalent to the Python code object ({@code PyCodeObject} in
@@ -261,7 +261,7 @@ public class CPython311Code extends PyCode {
     ArgParser buildParser() {
         int regargcount = argcount + kwonlyargcount;
         return new ArgParser(name, layout.localnames, regargcount, posonlyargcount, kwonlyargcount,
-                traits.contains(PyCode.Trait.VARARGS), traits.contains(PyCode.Trait.VARKEYWORDS));
+                traits.contains(CodeFlag.VARARGS), traits.contains(CodeFlag.VARKEYWORDS));
     }
 
     @Override

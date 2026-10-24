@@ -22,9 +22,6 @@ import java.util.Map;
 import org.python.core.Abstract;
 import org.python.core.CPython311Code;
 import org.python.core.EOFError;
-import org.python.core.Exposed.Default;
-import org.python.core.Exposed.Member;
-import org.python.core.Exposed.PythonStaticMethod;
 import org.python.core.OSError;
 import org.python.core.Py;
 import org.python.core.PyBaseObject;
@@ -40,14 +37,17 @@ import org.python.core.PyObjectUtil;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySequence;
 import org.python.core.PySequence.OfInt;
+import org.python.stringlib.ByteArrayBuilder;
+import org.python.stringlib.IntArrayBuilder;
+import org.python.types.Exposed.Default;
+import org.python.types.Exposed.Member;
+import org.python.types.Exposed.PythonStaticMethod;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
 import org.python.core.StopIteration;
 import org.python.core.TypeError;
 import org.python.core.ValueError;
-import org.python.core.stringlib.ByteArrayBuilder;
-import org.python.core.stringlib.IntArrayBuilder;
 
 /**
  * Write Python objects to files and read them back. This is primarily

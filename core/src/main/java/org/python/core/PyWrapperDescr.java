@@ -5,8 +5,9 @@ package org.python.core;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
-import org.python.core.PyType.Flag;
 import org.python.core.Slot.Signature;
+import org.python.types.TypeFlag;
+import org.python.types.TypeSpec;
 
 /**
  * A {@link Descriptor} for a particular definition <b>in Java</b>
@@ -45,7 +46,7 @@ import org.python.core.Slot.Signature;
 public abstract class PyWrapperDescr extends MethodDescriptor {
 
     static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("wrapper_descriptor", MethodHandles.lookup()).flagNot(Flag.BASETYPE));
+            new TypeSpec("wrapper_descriptor", MethodHandles.lookup()).flagNot(TypeFlag.BASETYPE));
 
     /**
      * The {@link Slot} ({@code enum}) describing the generic
