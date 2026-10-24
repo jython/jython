@@ -1,8 +1,9 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
@@ -11,33 +12,37 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
 import org.python.support.MethodKind;
+import org.python.support.ScopeKind;
 import org.python.types.Exposed;
-import org.python.types.TypeSpec;
 import org.python.types.Exposed.Default;
 import org.python.types.Exposed.PositionalOnly;
 import org.python.types.Exposed.PythonMethod;
+import org.python.types.Feature;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
- * Test that methods exposed by a Python <b>type</b> defined in
- * Java, using the scheme of annotations defined in {@link Exposed},
- * result in method descriptors with characteristics that correspond
- * to their definitions.
+ * Test that methods exposed by a Python <b>type</b> defined in Java,
+ * using the scheme of annotations defined in {@link Exposed}, result in
+ * method descriptors with characteristics that correspond to their
+ * definitions.
  * <p>
- * The first test in each case is to examine the fields in the
- * parser that attaches to the {@link ModuleDef.MethodDef}. Then we
- * call the function using the {@code __call__} special method, and
- * using our "fast call" signatures.
+ * The first test in each case is to examine the fields in the parser
+ * that attaches to the {@link PyMethodDescr}. Then we call the bound
+ * and unbound versions of the method using the {@code __call__} special
+ * method, and using our "fast call" signatures.
  * <p>
  * There is a nested test suite for each signature pattern.
  */
 @DisplayName("A method exposed by a type")
-class TypeExposerMethodTest {
+class TypeExposerMethodTest extends UnitTestSupport {
 
     /**
-     * Certain nested test classes implement these as standard. A base
-     * class here is just a way to describe the tests once that reappear
-     * in each nested case.
+     * Certain nested test classes implement these as standard. A base class
+     * here is just a way to describe the tests once that reappear in each
+     * nested case.
      */
     abstract static class Standard {
 
@@ -54,16 +59,16 @@ class TypeExposerMethodTest {
         Object[] exp;
 
         /**
-         * A parser attached to the method descriptor should have field
-         * values that correctly reflect the signature and annotations in
-         * the defining class.
+         * A parser attached to the method descriptor should have field values
+         * that correctly reflect the signature and annotations in the defining
+         * class.
          */
         abstract void has_expected_fields();
 
         /**
          * Call the function using the {@code __call__} special method with
-         * arguments correct for the method's specification. The method
-         * should obtain the correct result (and not throw).
+         * arguments correct for the method's specification. The method should
+         * obtain the correct result (and not throw).
          *
          * @throws Throwable unexpectedly
          */
@@ -71,9 +76,9 @@ class TypeExposerMethodTest {
 
         /**
          * Call the method using the {@code __call__} special method with
-         * arguments correct for the method's specification, and explicitly
-         * zero or more keywords. The method should obtain the correct
-         * result (and not throw).
+         * arguments correct for the method's specification, and explicitly zero
+         * or more keywords. The method should obtain the correct result (and
+         * not throw).
          *
          * @throws Throwable unexpectedly
          */
@@ -83,7 +88,7 @@ class TypeExposerMethodTest {
          * Call the method using the {@code __call__} special method and an
          * unexpected keyword: where none is expected, for a positional
          * argument, or simply an unacceptable name. The method should throw
-         * {@link TypeError}.
+         * {@link PyExc#TypeError TypeError}.
          *
          * @throws Throwable unexpectedly
          */
@@ -91,17 +96,17 @@ class TypeExposerMethodTest {
 
         /**
          * Call the function using the Java call interface with arguments
-         * correct for the function's specification. The function should
-         * obtain the correct result (and not throw).
+         * correct for the function's specification. The function should obtain
+         * the correct result (and not throw).
          *
          * @throws Throwable unexpectedly
          */
         abstract void supports_java_call() throws Throwable;
 
         /**
-         * Check that the fields of the parser match expectations for a
-         * method with no collector parameters and a certain number of
-         * positional-only parameters.
+         * Check that the fields of the parser match expectations for a method
+         * with no collector parameters and a certain number of positional-only
+         * parameters.
          *
          * @param kind static or instance
          * @param name of method
@@ -111,6 +116,7 @@ class TypeExposerMethodTest {
         void no_collector(MethodKind kind, String name, int count, int posonlycount) {
             assertEquals(name, ap.name);
             assertEquals(kind, ap.methodKind);
+            assertEquals(ScopeKind.TYPE, ap.scopeKind);
             assertEquals(count, ap.argnames.length);
             assertEquals(count, ap.argcount);
             assertEquals(posonlycount, ap.posonlyargcount);
@@ -121,9 +127,9 @@ class TypeExposerMethodTest {
         }
 
         /**
-         * Check that the fields of the parser match expectations for a
-         * static method with no collector parameters and a certain number
-         * of positional-only parameters.
+         * Check that the fields of the parser match expectations for a static
+         * method with no collector parameters and a certain number of
+         * positional-only parameters.
          *
          * @param name of method
          * @param count of parameters
@@ -134,9 +140,9 @@ class TypeExposerMethodTest {
         }
 
         /**
-         * Check that the fields of the parser match expectations for a
-         * instance method with no collector parameters and a certain number
-         * of positional-only parameters.
+         * Check that the fields of the parser match expectations for a instance
+         * method with no collector parameters and a certain number of
+         * positional-only parameters.
          *
          * @param name of method
          * @param count of parameters
@@ -151,10 +157,10 @@ class TypeExposerMethodTest {
          *
          * @param name of the method
          * @param o to use as the self argument
-         * @throws AttributeError if method not found
+         * @throws PyAttributeError if method not found
          * @throws Throwable other errors
          */
-        void setup(String name, Object o) throws AttributeError, Throwable {
+        void setup(String name, Object o) throws PyAttributeError, Throwable {
             descr = (PyMethodDescr)PyType.of(o).lookup(name);
             ap = descr.argParser;
             obj = o;
@@ -162,29 +168,30 @@ class TypeExposerMethodTest {
         }
 
         /**
-         * Check the result of a call against {@link #exp}. The reference
-         * result is the same throughout a given sub-class test.
+         * Check the result of a call against {@link #exp}. The reference result
+         * is the same throughout a given sub-class test.
          *
          * @param result of call
          */
-        void check_result(PyTuple result) { assertArrayEquals(exp, result.value); }
-
+        void check_result(PyTuple result) { assertArrayEquals(exp, result.toArray()); }
     }
 
     /**
-     * A Python type definition that exhibits a range of method
-     * signatures explored in the tests. Methods named {@code m*()} are
-     * instance methods to Python, declared to Java as either instance
+     * A Python type definition that exhibits a range of method signatures
+     * explored in the tests. All the methods {@code m*()} are instance
+     * methods to Python, but may be declared to Java as either instance
      * methods ({@code this} is {@code self}) or as static methods
      * ({@code self} is the first parameter).
      */
-    static class SimpleObject {
+    static class SimpleObject implements WithClass {
 
         static PyType TYPE = PyType.fromSpec(new TypeSpec("Simple", MethodHandles.lookup()));
 
+        @Override
+        public PyType getType() { return TYPE; }
+
         /**
-         * See {@link NoParams}: no parameters are allowed (after
-         * {@code self}).
+         * See {@link NoParams}: no parameters are allowed (after {@code self}).
          */
         @PythonMethod
         void m0() {}
@@ -199,9 +206,8 @@ class TypeExposerMethodTest {
         PyTuple m1(double a) { return Py.tuple(this, a); }
 
         /**
-         * See {@link PositionalByDefault}: the parameters are
-         * positional-only as a result of the default exposure. Use static
-         * style, arbitrarily.
+         * See {@link PositionalByDefault}: the parameters are positional-only
+         * as a result of the default exposure. Use static style, arbitrarily.
          *
          * @param self target
          * @param a positional arg
@@ -257,27 +263,24 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * A Python type definition that exhibits a range of method
-     * signatures explored in the tests, and has a an adopted
-     * implementation {@link ExampleObject2}. Methods named {@code m*()}
-     * are instance methods to Python, declared to Java as either
-     * instance methods ({@code this} is {@code self}) or as static
-     * methods ({@code self} is the first parameter).
+     * A Python type definition that exhibits a range of method signatures
+     * explored in the tests, and has an adopted representation
+     * {@link ExampleObject2}. Methods named {@code m*()} are instance
+     * methods to Python, declared to Java as either instance methods
+     * ({@code this} is {@code self}) or as static methods ({@code self} is
+     * the first parameter).
      */
-    static class ExampleObject {
+    static class ExampleObject implements WithClass {
 
-        static PyType TYPE = PyType.fromSpec( //
-                new TypeSpec("Example", MethodHandles.lookup()) //
-                        .adopt(ExampleObject2.class));
+        static PyType TYPE = PyType.fromSpec(new TypeSpec("Example", MethodHandles.lookup())
+                .adopt(ExampleObject2.class).add(Feature.IMMUTABLE));
 
         /**
-         * See {@link NoParams}: no parameters are allowed (after
-         * {@code self}).
+         * See {@link NoParams}: no parameters are allowed (after {@code self}).
          */
         @PythonMethod(primary = false)
         void m0() {}
 
-        @SuppressWarnings("unused")
         @PythonMethod
         static void m0(ExampleObject2 self) {}
 
@@ -294,8 +297,8 @@ class TypeExposerMethodTest {
         static PyTuple m1(ExampleObject2 self, double a) { return Py.tuple(self, a); }
 
         /**
-         * See {@link PositionalByDefault}: the parameters are
-         * positional-only as a result of the default exposure.
+         * See {@link PositionalByDefault}: the parameters are positional-only
+         * as a result of the default exposure.
          *
          * @param a positional arg
          * @param b positional arg
@@ -372,11 +375,13 @@ class TypeExposerMethodTest {
         static PyTuple m3p2(ExampleObject2 self, int a, String b, Object c) {
             return Py.tuple(self, a, b, c);
         }
+
+        @Override
+        public PyType getType() { return TYPE; }
     }
 
     /**
-     * Class cited as an "adopted implementation" of
-     * {@link ExampleObject}
+     * Class cited as an "adopted representation" of {@link ExampleObject}
      */
     static class ExampleObject2 {
         // Ensure canonical counterpart is initialised
@@ -390,7 +395,7 @@ class TypeExposerMethodTest {
     class NoParams extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Simple.m0
             setup("m0", new SimpleObject());
             // The method is declared void (which means return None)
@@ -436,11 +441,11 @@ class TypeExposerMethodTest {
             // We call type(obj).m0(obj, c=3)
             Object[] args = {obj, 3};
             String[] names = {"c"};
-            assertThrows(TypeError.class, () -> descr.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> descr.__call__(args, names));
 
             // We call obj.m0(c=3)
             Object[] args2 = Arrays.copyOfRange(args, 1, args.length);
-            assertThrows(TypeError.class, () -> func.__call__(args2, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args2, names));
         }
 
         @Override
@@ -457,8 +462,7 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link NoParams} with {@link ExampleObject} as the
-     * implementation.
+     * {@link NoParams} with {@link ExampleObject} as the representation.
      */
     @Nested
     @DisplayName("with no parameters" + " (canonical)")
@@ -466,15 +470,14 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m0
             setup("m0", new ExampleObject());
         }
     }
 
     /**
-     * {@link NoParams} with {@link ExampleObject2} as the
-     * implementation.
+     * {@link NoParams} with {@link ExampleObject2} as the representation.
      */
     @Nested
     @DisplayName("with no parameters" + " (adopted)")
@@ -482,22 +485,22 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m0
             setup("m0", new ExampleObject2());
         }
     }
 
     /**
-     * {@link SimpleObject#m1(double)} accepts 1 argument that
-     * <b>must</b> be given by position.
+     * {@link SimpleObject#m1(double)} accepts 1 argument that <b>must</b>
+     * be given by position.
      */
     @Nested
     @DisplayName("with a single positional-only parameter by default")
     class OnePos extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Simple.m1
             setup("m1", new SimpleObject());
             exp = new Object[] {obj, 42.0};
@@ -542,11 +545,11 @@ class TypeExposerMethodTest {
             // We call type(obj).m1(obj, a=42.0)
             Object[] args = {obj, 42.0};
             String[] names = {"a"};
-            assertThrows(TypeError.class, () -> descr.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> descr.__call__(args, names));
 
             // We call obj.m1(a=42.0)
             Object[] args2 = Arrays.copyOfRange(args, 1, args.length);
-            assertThrows(TypeError.class, () -> func.__call__(args2, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args2, names));
         }
 
         @Override
@@ -563,7 +566,7 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link OnePos} with {@link ExampleObject} as the implementation.
+     * {@link OnePos} with {@link ExampleObject} as the representation.
      */
     @Nested
     @DisplayName("with a single positional-only parameter by default" + " (canonical)")
@@ -571,7 +574,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m1
             setup("m1", new ExampleObject());
             exp = new Object[] {obj, 42.0};
@@ -579,7 +582,7 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link OnePos} with {@link ExampleObject2} as the implementation.
+     * {@link OnePos} with {@link ExampleObject2} as the representation.
      */
     @Nested
     @DisplayName("with a single positional-only parameter by default" + " (adopted)")
@@ -587,7 +590,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m1
             setup("m1", new ExampleObject2());
             exp = new Object[] {obj, 42.0};
@@ -595,15 +598,15 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link SimpleObject#m3(SimpleObject, int, String, Object)}
-     * accepts 3 arguments that <b>must</b> be given by position.
+     * {@link SimpleObject#m3(SimpleObject, int, String, Object)} accepts 3
+     * arguments that <b>must</b> be given by position.
      */
     @Nested
     @DisplayName("with positional-only parameters by default")
     class PositionalByDefault extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Simple.m3
             setup("m3", new SimpleObject());
             exp = new Object[] {obj, 1, "2", 3};
@@ -648,11 +651,11 @@ class TypeExposerMethodTest {
             // We call type(obj).m3(obj, 1, '2', c=3)
             Object[] args = {obj, 1, "2", 3};
             String[] names = {"c"};
-            assertThrows(TypeError.class, () -> descr.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> descr.__call__(args, names));
 
             // We call obj.m3(1, '2', c=3)
             Object[] args2 = Arrays.copyOfRange(args, 1, args.length);
-            assertThrows(TypeError.class, () -> func.__call__(args2, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args2, names));
         }
 
         @Override
@@ -670,7 +673,7 @@ class TypeExposerMethodTest {
 
     /**
      * {@link PositionalByDefault} with {@link ExampleObject} as the
-     * implementation.
+     * representation.
      */
     @Nested
     @DisplayName("with positional-only parameters by default" + " (canonical)")
@@ -678,7 +681,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m3
             setup("m3", new ExampleObject());
             exp = new Object[] {obj, 1, "2", 3};
@@ -687,7 +690,7 @@ class TypeExposerMethodTest {
 
     /**
      * {@link PositionalByDefault} with {@link ExampleObject2} as the
-     * implementation.
+     * representation.
      */
     @Nested
     @DisplayName("with positional-only parameters by default" + " (adopted)")
@@ -695,7 +698,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m3
             setup("m3", new ExampleObject2());
             exp = new Object[] {obj, 1, "2", 3};
@@ -703,16 +706,16 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link SimpleObject#m3pd(SimpleObject, int, String, Object)}
-     * accepts 3 arguments that <b>must</b> be given by position but two
-     * have defaults.
+     * {@link SimpleObject#m3pd(SimpleObject, int, String, Object)} accepts
+     * 3 arguments that <b>must</b> be given by position but two have
+     * defaults.
      */
     @Nested
     @DisplayName("with positional-only parameters and default values")
     class PositionalWithDefaults extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Simple.m3pd
             setup("m3pd", new SimpleObject());
             exp = new Object[] {obj, 1, "2", 3};
@@ -757,11 +760,11 @@ class TypeExposerMethodTest {
             // We call type(obj).m3pd(obj, 1, c=3)
             Object[] args = {obj, 1, 3};
             String[] names = {"c"};
-            assertThrows(TypeError.class, () -> descr.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> descr.__call__(args, names));
 
             // We call obj.m3pd(1, c=3)
             Object[] args2 = Arrays.copyOfRange(args, 1, args.length);
-            assertThrows(TypeError.class, () -> func.__call__(args2, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args2, names));
         }
 
         @Override
@@ -779,7 +782,7 @@ class TypeExposerMethodTest {
 
     /**
      * {@link PositionalWithDefaults} with {@link ExampleObject} as the
-     * implementation.
+     * representation.
      */
     @Nested
     @DisplayName("with positional-only parameters and default values" + " (canonical)")
@@ -787,7 +790,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m3pd
             setup("m3pd", new ExampleObject());
             exp = new Object[] {obj, 1, "2", 3};
@@ -796,7 +799,7 @@ class TypeExposerMethodTest {
 
     /**
      * {@link PositionalWithDefaults} with {@link ExampleObject2} as the
-     * implementation.
+     * representation.
      */
     @Nested
     @DisplayName("with positional-only parameters and default values" + " (adopted)")
@@ -804,7 +807,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m3pd
             setup("m3pd", new ExampleObject2());
             exp = new Object[] {obj, 1, "2", 3};
@@ -812,15 +815,15 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link SimpleObject#m3pk(int, String, Object)} accepts 3
-     * arguments that may be given by position or keyword.
+     * {@link SimpleObject#m3pk(int, String, Object)} accepts 3 arguments
+     * that may be given by position or keyword.
      */
     @Nested
     @DisplayName("with positional-or-keyword parameters")
     class PositionalOrKeywordParams extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Simple.m3pk
             setup("m3pk", new SimpleObject());
             exp = new Object[] {obj, 1, "2", 3};
@@ -866,11 +869,11 @@ class TypeExposerMethodTest {
             // We call type(obj).m3pk(obj, 1, c=3, b='2', x=4)
             Object[] args = {obj, 1, 3, "2", 4};
             String[] names = {"c", "b", /* unknown */"x"};
-            assertThrows(TypeError.class, () -> descr.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> descr.__call__(args, names));
 
             // We call obj.m3pk(1, c=3, b='2', x=4)
             Object[] args2 = Arrays.copyOfRange(args, 1, args.length);
-            assertThrows(TypeError.class, () -> func.__call__(args2, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args2, names));
         }
 
         @Override
@@ -887,8 +890,8 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link PositionalOrKeywordParams} with {@link ExampleObject} as
-     * the implementation.
+     * {@link PositionalOrKeywordParams} with {@link ExampleObject} as the
+     * representation.
      */
     @Nested
     @DisplayName("with positional-or-keyword parameters" + " (canonical)")
@@ -896,7 +899,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m3pk
             setup("m3pk", new ExampleObject());
             exp = new Object[] {obj, 1, "2", 3};
@@ -904,8 +907,8 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link PositionalOrKeywordParams} with {@link ExampleObject2} as
-     * the implementation.
+     * {@link PositionalOrKeywordParams} with {@link ExampleObject2} as the
+     * representation.
      */
     @Nested
     @DisplayName("with positional-or-keyword parameters" + " (adopted)")
@@ -913,7 +916,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m3pk
             setup("m3pk", new ExampleObject2());
             exp = new Object[] {obj, 1, "2", 3};
@@ -921,16 +924,16 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link SimpleObject#m3p2(int, String, Object)} accepts 3
-     * arguments, two of which may be given by position only, and the
-     * last by either position or keyword.
+     * {@link SimpleObject#m3p2(int, String, Object)} accepts 3 arguments,
+     * two of which may be given by position only, and the last by either
+     * position or keyword.
      */
     @Nested
     @DisplayName("with two positional-only parameters")
     class SomePositionalOnlyParams extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Simple.m3p2
             setup("m3p2", new SimpleObject());
             exp = new Object[] {obj, 1, "2", 3};
@@ -972,11 +975,11 @@ class TypeExposerMethodTest {
             // We call type(obj).m3p2(obj, 1, c=3, b='2')
             Object[] args = {obj, 1, 3, "2"};
             String[] names = {"c", /* positional */"b"};
-            assertThrows(TypeError.class, () -> descr.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> descr.__call__(args, names));
 
             // We call obj.m3p2(1, c=3, b='2')
             Object[] args2 = Arrays.copyOfRange(args, 1, args.length);
-            assertThrows(TypeError.class, () -> func.__call__(args2, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args2, names));
         }
 
         @Override
@@ -993,8 +996,8 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link PositionalOrKeywordParams} with {@link ExampleObject} as
-     * the implementation.
+     * {@link PositionalOrKeywordParams} with {@link ExampleObject} as the
+     * representation.
      */
     @Nested
     @DisplayName("with two positional-only parameters" + " (canonical)")
@@ -1002,7 +1005,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m3p2
             setup("m3p2", new ExampleObject());
             exp = new Object[] {obj, 1, "2", 3};
@@ -1010,8 +1013,8 @@ class TypeExposerMethodTest {
     }
 
     /**
-     * {@link PositionalOrKeywordParams} with {@link ExampleObject2} as
-     * the implementation.
+     * {@link PositionalOrKeywordParams} with {@link ExampleObject2} as the
+     * representation.
      */
     @Nested
     @DisplayName("with two positional-only parameters" + " (adopted)")
@@ -1019,7 +1022,7 @@ class TypeExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             // descr = Example.m3p2
             setup("m3p2", new ExampleObject2());
             exp = new Object[] {obj, 1, "2", 3};

@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.stringlib;
 
@@ -11,12 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
 import org.python.core.PyType;
 import org.python.internal.Formats;
-import org.python.internal.Formats.Spec;
-import org.python.stringlib.FieldNameIterator;
-import org.python.stringlib.MarkupIterator;
+import org.python.internal.Formats.FormatSpec;
 
 /**
  * Tests of {@code stringlib} support for formatting. These facilities
@@ -26,37 +23,37 @@ import org.python.stringlib.MarkupIterator;
 class FormatParsingTest {
 
     /**
-     * Test constructing a specification {@link Spec} from a format
-     * string. Note that a parsed specification is not a Python type so
-     * it reports errors usiung Java-only exceptions that clients may
-     * convert to {@code ValueError}.
+     * Test constructing a specification {@link FormatSpec} from a format
+     * string. Note that a parsed specification is not a Python type so it
+     * reports errors usiung Java-only exceptions that clients may convert
+     * to {@code ValueError}.
      */
     @Nested
-    @DisplayName("An InternalFormat.Spec correctly")
+    @DisplayName("An InternalFormat.FormatSpec correctly")
     class InternalFormatSpecTest {
 
         @Test
         @DisplayName("interprets ''")
         public void fromEmpty() {
-            Formats.Spec spec = Formats.fromText("");
-            assertEquals(Spec.NONE, spec.type);
+            Formats.FormatSpec spec = Formats.fromText("");
+            assertEquals(FormatSpec.NONE, spec.type);
         }
 
         @Test
         @DisplayName("interprets 'x'")
         public void fromPlain() {
-            Formats.Spec spec = Formats.fromText("x");
-            assertFalse(Spec.specified(spec.align));
-            assertFalse(Spec.specified(spec.fill));
-            assertFalse(Spec.specified(spec.width));
-            assertFalse(Spec.specified(spec.precision));
+            FormatSpec spec = Formats.fromText("x");
+            assertFalse(FormatSpec.specified(spec.align));
+            assertFalse(FormatSpec.specified(spec.fill));
+            assertFalse(FormatSpec.specified(spec.width));
+            assertFalse(FormatSpec.specified(spec.precision));
             assertEquals('x', spec.type);
         }
 
         @Test
         @DisplayName("interprets '<x'")
         public void fromPLeftAlign() {
-            Formats.Spec spec = Formats.fromText("<x");
+            FormatSpec spec = Formats.fromText("<x");
             assertEquals('<', spec.align);
             assertEquals('x', spec.type);
         }
@@ -64,7 +61,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '~<x'")
         public void fromFilled() {
-            Formats.Spec spec = Formats.fromText("~<x");
+            FormatSpec spec = Formats.fromText("~<x");
             assertEquals('~', spec.fill);
             assertEquals('<', spec.align);
             assertEquals('x', spec.type);
@@ -73,7 +70,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '+x'")
         public void fromMandatorySign() {
-            Formats.Spec spec = Formats.fromText("+x");
+            FormatSpec spec = Formats.fromText("+x");
             assertEquals('+', spec.sign);
             assertEquals('x', spec.type);
         }
@@ -81,7 +78,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '#x'")
         public void fromAlternate() {
-            Formats.Spec spec = Formats.fromText("#x");
+            FormatSpec spec = Formats.fromText("#x");
             assertEquals(true, spec.alternate);
 
         }
@@ -89,7 +86,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '0x'")
         public void fromLeadingZero() {
-            Formats.Spec spec = Formats.fromText("0x");
+            FormatSpec spec = Formats.fromText("0x");
             assertEquals('=', spec.align);
             assertEquals('0', spec.fill);
         }
@@ -97,7 +94,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '123x'")
         public void fromWidth() {
-            Formats.Spec spec = Formats.fromText("123x");
+            FormatSpec spec = Formats.fromText("123x");
             assertEquals(123, spec.width);
 
         }
@@ -105,8 +102,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("interprets '123.456x'")
         public void fromWidthPrecision() {
-            Formats.Spec spec =
-                    Formats.fromText("123.456x");
+            FormatSpec spec = Formats.fromText("123.456x");
             assertEquals(123, spec.width);
             assertEquals(456, spec.precision);
         }
@@ -121,13 +117,11 @@ class FormatParsingTest {
         @Test
         @DisplayName("rejects '123xx'")
         public void rejectTrailing() {
-            assertParseError(IllegalArgumentException.class, "123xx",
-                    "Invalid format specifier");
+            assertParseError(IllegalArgumentException.class, "123xx", "Invalid format specifier");
         }
 
         /**
-         * Parse a specification expected to be erroneous and check the
-         * message.
+         * Parse a specification expected to be erroneous and check the message.
          *
          * @param <E> type of exception
          * @param expected type of exception
@@ -135,23 +129,20 @@ class FormatParsingTest {
          * @param expectedMessage expected message text
          * @return what was thrown
          */
-        private <T extends Throwable> T assertParseError(
-                Class<T> expected, String spec,
+        private <T extends Throwable> T assertParseError(Class<T> expected, String spec,
                 String expectedMessage) {
-            T t = assertThrows(expected,
-                    () -> Formats.fromText(spec));
+            T t = assertThrows(expected, () -> Formats.fromText(spec));
             assertEquals(expectedMessage, t.getMessage());
             return t;
         }
     }
 
     /**
-     * Test that the correct "chunks" are parsed from a format string,
-     * and presented as a {@link MarkupIterator}
-     * ({@code formatteriterator} in Python). We make this test using
-     * the Java API here, because it is statically-typed, and Python
-     * iteration need not be working. In Python it produces
-     * {@code tuple}s.
+     * Test that the correct "chunks" are parsed from a format string, and
+     * presented as a {@link MarkupIterator} ({@code formatteriterator} in
+     * Python). We make this test using the Java API here, because it is
+     * statically-typed, and Python iteration need not be working. In Python
+     * it produces {@code tuple}s.
      */
     @Nested
     @DisplayName("A stringlib.MarkupIterator")
@@ -176,11 +167,9 @@ class FormatParsingTest {
         @Test
         @DisplayName("parses 'First, thou shalt count to {0}'")
         void parsesTerminalIndex() {
-            MarkupIterator it = new MarkupIterator(
-                    "First, thou shalt count to {0}");
+            MarkupIterator it = new MarkupIterator("First, thou shalt count to {0}");
             MarkupIterator.Chunk chunk = it.nextChunk();
-            assertEquals("First, thou shalt count to ",
-                    chunk.literalText);
+            assertEquals("First, thou shalt count to ", chunk.literalText);
             assertEquals("0", chunk.fieldName);
             assertNull(it.nextChunk());
         }
@@ -188,8 +177,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("parses 'Weight in tons {0.weight!r:s}'")
         void parsesTerminalAttribute() {
-            MarkupIterator it =
-                    new MarkupIterator("Weight in tons {0.weight!r:s}");
+            MarkupIterator it = new MarkupIterator("Weight in tons {0.weight!r:s}");
             MarkupIterator.Chunk chunk = it.nextChunk();
             assertEquals("Weight in tons ", chunk.literalText);
             assertEquals("0.weight", chunk.fieldName);
@@ -200,8 +188,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("parses '{{' and '}}'")
         void parsesEscapedBraces() {
-            MarkupIterator.Chunk chunk =
-                    (new MarkupIterator("{{")).nextChunk();
+            MarkupIterator.Chunk chunk = (new MarkupIterator("{{")).nextChunk();
             assertEquals("{", chunk.literalText);
 
             chunk = (new MarkupIterator("}}")).nextChunk();
@@ -214,8 +201,7 @@ class FormatParsingTest {
         @Test
         @DisplayName("parses '{0:.{1}}'")
         void parsesNestedReference() {
-            MarkupIterator.Chunk chunk =
-                    (new MarkupIterator("{0:.{1}}")).nextChunk();
+            MarkupIterator.Chunk chunk = (new MarkupIterator("{0:.{1}}")).nextChunk();
             assertEquals("0", chunk.fieldName);
             assertEquals(".{1}", chunk.formatSpec);
             assertTrue(chunk.formatSpecNeedsExpanding);
@@ -224,38 +210,33 @@ class FormatParsingTest {
         @Test
         @DisplayName("rejects conversions '{!}' and '{!rrrr}'")
         void rejectsBadConversion() {
-            assertMarkupError("{!}",
-                    "end of format while looking for conversion specifier");
-            assertMarkupError("{!rrrr}",
-                    "expected ':' after conversion specifier");
+            assertMarkupError("{!}", "end of format while looking for conversion specifier");
+            assertMarkupError("{!rrrr}", "expected ':' after conversion specifier");
         }
 
         @Test
         @DisplayName("rejects unbalanced '{' and '}'")
         void rejectsUnbalencedBraces() {
-            assertMarkupError("{",
-                    "Single '{' encountered in format string");
-            assertMarkupError("}",
-                    "Single '}' encountered in format string");
+            assertMarkupError("{", "Single '{' encountered in format string");
+            assertMarkupError("}", "Single '}' encountered in format string");
         }
 
         private void assertMarkupError(String markup, String expected) {
             MarkupIterator it = new MarkupIterator(markup);
-            Exception e = assertThrows(IllegalArgumentException.class,
-                    () -> it.nextChunk());
+            Exception e = assertThrows(IllegalArgumentException.class, () -> it.nextChunk());
             assertEquals(expected, e.getMessage());
         }
     }
 
     /**
-     * Test that field names as they might appear in format statements
-     * are correctly broken up by a {@link FieldNameIterator}
+     * Test that field names as they might appear in format statements are
+     * correctly broken up by a {@link FieldNameIterator}
      * ({@code fieldnameiterator} in Python).
      *
      * We make this test using the Java API here, because it is
-     * statically-typed, and Python iteration need not be working. In
-     * Python it produces a {@code tuple} containing a first element and
-     * iterator of succeeding elements, each described by a tuple.
+     * statically-typed, and Python iteration need not be working. In Python
+     * it produces a {@code tuple} containing a first element and iterator
+     * of succeeding elements, each described by a tuple.
      */
     @Nested
     @DisplayName("A stringlib.FieldNameIterator")

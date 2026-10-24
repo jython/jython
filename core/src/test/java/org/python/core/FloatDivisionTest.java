@@ -1,7 +1,8 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.function.DoubleBinaryOperator;
@@ -11,17 +12,18 @@ import org.junit.jupiter.api.Test;
 
 /**
  * These are unit tests of the methods that underlie floating point
- * division and modulus: {@code x//y} and {@code x%y}. The Java and
- * Python have differing semantics for integer division and remainder,
- * so it is not just a case of wrapping up the Java implementation, but
- * of carefully adjusting the arguments and result according to quadrant
- * in which {@code (x,y)} lies.
+ * division and modulus: {@code x//y} and {@code x%y}. Java and Python
+ * have different semantics for integer division and remainder, so it is
+ * not just a case of wrapping up the Java implementation, but of
+ * carefully adjusting the arguments and result according to quadrant in
+ * which {@code (x,y)} lies.
  * <p>
  * See also {@link IntegerDivisionTest}.
  */
 class FloatDivisionTest extends UnitTestSupport {
 
     /** Test successful division. */
+    @SuppressWarnings("static-method")
     @Test
     void testDivide() {
         for (Example example : FLOORDIV) {
@@ -34,17 +36,20 @@ class FloatDivisionTest extends UnitTestSupport {
         }
     }
 
-    /** Test raising {@link ZeroDivisionError} from division. */
+    /**
+     * Test raising {@link PyExc#ZeroDivisionError ZeroDivisionError} from
+     * division.
+     */
+    @SuppressWarnings("static-method")
     @Test
     void testDivideByZero() {
         // Wrap the method under test as operator
         DoubleBinaryOperator func = PyFloat::floordiv;
-        for (Example example : FLOORDIV) {
-            if (example.expectThrow) { example.testThrows(func); }
-        }
+        for (Example example : FLOORDIV) { if (example.expectThrow) { example.testThrows(func); } }
     }
 
     /** Test remainder on division. */
+    @SuppressWarnings("static-method")
     @Test
     void testModulo() {
         for (Example example : MODULO) {
@@ -57,56 +62,57 @@ class FloatDivisionTest extends UnitTestSupport {
         }
     }
 
-    /** Test raising {@link ZeroDivisionError} from remainder. */
+    /**
+     * Test raising {@link PyExc#ZeroDivisionError ZeroDivisionError} from
+     * remainder.
+     */
+    @SuppressWarnings("static-method")
     @Test
     void testModuloByZero() {
         // Wrap the method under test as operator
         DoubleBinaryOperator func = PyFloat::mod;
-        for (Example example : MODULO) {
-            if (example.expectThrow) { example.testThrows(func); }
-        }
+        for (Example example : MODULO) { if (example.expectThrow) { example.testThrows(func); } }
     }
 
     /** Test division and modulus combined "div" part. */
+    @SuppressWarnings("static-method")
     @Test
     void testDivMod0() {
         for (Example example : FLOORDIV) {
             if (!example.expectThrow) {
                 double x = example.x;
                 double y = example.y;
-                double r = PyFloat
-                        .doubleValue(PyFloat.divmod(x, y).get(0));
+                double r = PyFloat.doubleValue(PyFloat.divmod(x, y).get(0));
                 example.test(r);
             }
         }
     }
 
     /** Test division and modulus combined "mod" part. */
+    @SuppressWarnings("static-method")
     @Test
     void testDivMod1() {
         for (Example example : MODULO) {
             if (!example.expectThrow) {
                 double x = example.x;
                 double y = example.y;
-                double r = PyFloat
-                        .doubleValue(PyFloat.divmod(x, y).get(1));
+                double r = PyFloat.doubleValue(PyFloat.divmod(x, y).get(1));
                 example.test(r);
             }
         }
     }
 
     /**
-     * Test raising {@link ZeroDivisionError} from division and modulus
-     * combined.
+     * Test raising {@link PyExc#ZeroDivisionError ZeroDivisionError} from
+     * division and modulus combined.
      */
+    @SuppressWarnings("static-method")
     @Test
     void testDivModByZero() {
         // Wrap the method under test as operator
-        DoubleBinaryOperator func = (double x, double y) -> PyFloat
-                .doubleValue(PyFloat.divmod(x, y).get(0));
-        for (Example example : FLOORDIV) {
-            if (example.expectThrow) { example.testThrows(func); }
-        }
+        DoubleBinaryOperator func =
+                (double x, double y) -> PyFloat.doubleValue(PyFloat.divmod(x, y).get(0));
+        for (Example example : FLOORDIV) { if (example.expectThrow) { example.testThrows(func); } }
     }
 
     /**
@@ -121,8 +127,7 @@ class FloatDivisionTest extends UnitTestSupport {
         final boolean expectThrow;
         final double tolerance;
 
-        private Example(double x, double y, double expected,
-                boolean expectThrow) {
+        private Example(double x, double y, double expected, boolean expectThrow) {
             this.x = x;
             this.y = y;
             this.expected = expected;
@@ -141,12 +146,11 @@ class FloatDivisionTest extends UnitTestSupport {
          * @param y divisor
          * @param expected result
          */
-        Example(double x, double y, double expected) {
-            this(x, y, expected, false);
-        }
+        Example(double x, double y, double expected) { this(x, y, expected, false); }
 
         /**
-         * A case where a {@link ZeroDivisionError} should be thrown.
+         * A case where a {@link PyExc#ZeroDivisionError ZeroDivisionError}
+         * should be thrown.
          *
          * @param x dividend
          * @param y divisor
@@ -154,8 +158,8 @@ class FloatDivisionTest extends UnitTestSupport {
         Example(double x, double y) { this(x, y, 0.0, true); }
 
         /**
-         * Test the given result against the expected answer in all
-         * relevant detail.
+         * Test the given result against the expected answer in all relevant
+         * detail.
          *
          * @param result of the invocation
          */
@@ -166,8 +170,7 @@ class FloatDivisionTest extends UnitTestSupport {
                 assertTrue(Double.isNaN(result), msg);
             } else {
                 // Signs should match (even if zero or infinite)
-                assertEquals(Math.copySign(1, expected),
-                        Math.copySign(1, result), msg);
+                assertEquals(Math.copySign(1, expected), Math.copySign(1, result), msg);
                 if (Double.isInfinite(expected)) {
                     // Expecting infinity.
                     assertTrue(Double.isInfinite(result), msg);
@@ -179,21 +182,19 @@ class FloatDivisionTest extends UnitTestSupport {
         }
 
         /**
-         * Test that a {@link ZeroDivisionError} is be thrown.
+         * Test that a {@link PyExc#ZeroDivisionError ZeroDivisionError} is be
+         * thrown.
          *
          * @param result of the invocation
          */
         void testThrows(DoubleBinaryOperator func) {
-            Supplier<String> xy = () -> this.toString();
-            assertThrows(ZeroDivisionError.class,
-                    () -> func.applyAsDouble(x, y), xy);
+            assertRaises(PyExc.ZeroDivisionError, () -> func.applyAsDouble(x, y));
         }
 
         @Override
         public String toString() {
-            return String.format(
-                    "Example [x=% .4g, y=% .4g, expected=% .4g]", x, y,
-                    expected);
+            String exp = expectThrow ? "throw" : String.format("% .4g", expected);
+            return String.format("[x=% .4g, y=% .4g, expected=%s]", x, y, exp);
         }
     }
 

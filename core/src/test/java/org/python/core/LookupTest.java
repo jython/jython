@@ -1,3 +1,5 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,18 +17,18 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test actions that depend on looking up keys in dictionaries,
- * including those embedded in {@code type} objects (which have
- * special characteristics). A particular concern is to verify the
- * interchangeability of acceptable implementations of Python types
- * when used as key. For example, data entered with a key that is an
- * INteger, should be retrievable by one that is a BigInteger with
- * the same value.
+ * including those embedded in {@code type} objects (which have special
+ * characteristics). A particular concern is to verify the
+ * interchangeability of acceptable implementations of Python types when
+ * used as key. For example, data entered with a key that is an INteger,
+ * should be retrievable by one that is a BigInteger with the same
+ * value.
  */
 class LookupTest extends UnitTestSupport {
 
     /**
-     * A {@code KeyTuple} holds a single Python value, realised in each
-     * of the accepted implementations of some Python type.
+     * A {@code KeyTuple} holds a single Python value, realised in each of
+     * the accepted implementations of some Python type.
      */
     private abstract static class KeyTuple {
 
@@ -42,16 +44,18 @@ class LookupTest extends UnitTestSupport {
 
     /**
      * A {@code StrKeyTuple} holds a single Python {@code str} value,
-     * realised in each of the accepted implementations {@code String}
-     * and {@link PyUnicode}.
+     * realised in each of the accepted implementations {@code String} and
+     * {@link PyUnicode}.
      */
     private static class StrKeyTuple extends KeyTuple {
 
-        final String s;
+        final String s, t;
 
         StrKeyTuple(String s) {
             super(newPyUnicode(s));
             this.s = s;
+            this.t = new String(s);  // equal but distinct objects
+            assert this.t != this.s;
         }
     }
 
@@ -102,11 +106,12 @@ class LookupTest extends UnitTestSupport {
          * Verify that {@code str.__hash__} produces the same value as Java
          * {@code hashCode()} in each accepted implementation.
          *
-         * @throws TypeError if {@code v} is an unhashable type
+         * @throws PyBaseException (TypeError) if {@code v} is an unhashable
+         *     type
          * @throws Throwable on errors within {@code __hash__}
          */
         @Test
-        void where_str() throws TypeError, Throwable {
+        void where_str() throws PyBaseException, Throwable {
             assertEqualHashes(strKeyTuples, k -> k.s, k -> k.py);
         }
 
@@ -114,32 +119,33 @@ class LookupTest extends UnitTestSupport {
          * Verify that {@code int.__hash__} produces the same value as Java
          * {@code hashCode()} in each accepted implementation.
          *
-         * @throws TypeError if {@code v} is an unhashable type
+         * @throws PyBaseException (TypeError) if {@code v} is an unhashable
+         *     type
          * @throws Throwable on errors within {@code __hash__}
          */
         @Test
-        void where_int() throws TypeError, Throwable {
+        void where_int() throws PyBaseException, Throwable {
             assertEqualHashes(intKeyTuples, k -> k.i, k -> k.b, k -> k.py);
         }
     }
 
     /**
-     * Iterate a list of key tuples, which are tuples of Python values,
-     * and assert that each member of the tuple has a hash that is equal
-     * to the Java {@code hashCode} of the first. {@code keyImpl}
-     * specifies which implementations by a sequence of functions that
-     * may be given as an argument like {@code k -> k.py}
+     * Iterate a list of key tuples, which are tuples of Python values, and
+     * assert that each member of the tuple has a hash that is equal to the
+     * Java {@code hashCode} of the first. {@code keyImpl} specifies which
+     * implementations by a sequence of functions that may be given as an
+     * argument like {@code k -> k.py}
      *
-     * @param <KT> one of the {@code *KeyTuple} classes containing
-     *     different realisations of the same value
+     * @param <KT> one of the {@code *KeyTuple} classes containing different
+     *     realisations of the same value
      * @param keyTuples keys to validate
      * @param keyImpl specifies which implementation to test
-     * @throws TypeError if we find an unhashable type
+     * @throws PyBaseException (TypeError) if we find an unhashable type
      * @throws Throwable on errors within {@code __hash__}
      */
     @SafeVarargs
     private static <KT> void assertEqualHashes(List<KT> keyTuples, Function<KT, Object>... keyImpl)
-            throws TypeError, Throwable {
+            throws PyBaseException, Throwable {
 
         for (KT keyTuple : keyTuples) {
             // Get the Java hash of the first key type
@@ -161,8 +167,8 @@ class LookupTest extends UnitTestSupport {
     class DictKeysMatch {
 
         /**
-         * Test that for a {@code dict} (a {@link PyDict}) {@code str} keys
-         * that are equal act as equal keys. Here we put data in with a
+         * Test that for a {@code dict} (a {@link PyDict}) {@code str} keys that
+         * are equal act as equal keys. Here we put data in with a
          * {@code String} key.
          */
         @Test
@@ -175,12 +181,13 @@ class LookupTest extends UnitTestSupport {
 
             // Retrieve the same value by the various keys
             assertSequentialInts(dict, strKeyTuples, k -> k.s);
+            assertSequentialInts(dict, strKeyTuples, k -> k.t);
             assertSequentialInts(dict, strKeyTuples, k -> k.py);
         }
 
         /**
-         * Test that for a {@code dict} (a {@link PyDict}) {@code str} keys
-         * that are equal act as equal keys. Here we put data in with a
+         * Test that for a {@code dict} (a {@link PyDict}) {@code str} keys that
+         * are equal act as equal keys. Here we put data in with a
          * {@code PyUnicode} key.
          */
         @Test
@@ -197,8 +204,8 @@ class LookupTest extends UnitTestSupport {
         }
 
         /**
-         * Test that for a {@code dict} (a {@link PyDict}) {@code int} keys
-         * that are equal act as equal keys. Here we put data in with an
+         * Test that for a {@code dict} (a {@link PyDict}) {@code int} keys that
+         * are equal act as equal keys. Here we put data in with an
          * {@code Integer} key.
          */
         @Test
@@ -216,8 +223,8 @@ class LookupTest extends UnitTestSupport {
         }
 
         /**
-         * Test that for a {@code dict} (a {@link PyDict}) {@code int} keys
-         * that are equal act as equal keys. Here we put data in with a
+         * Test that for a {@code dict} (a {@link PyDict}) {@code int} keys that
+         * are equal act as equal keys. Here we put data in with a
          * {@code BigInteger} key.
          */
         @Test
@@ -235,8 +242,8 @@ class LookupTest extends UnitTestSupport {
         }
 
         /**
-         * Test that for a {@code dict} (a {@link PyDict}) {@code int} keys
-         * that are equal act as equal keys. Here we put data in with a
+         * Test that for a {@code dict} (a {@link PyDict}) {@code int} keys that
+         * are equal act as equal keys. Here we put data in with a
          * {@code PyLong} key.
          */
         @Test
@@ -254,9 +261,9 @@ class LookupTest extends UnitTestSupport {
         }
 
         /**
-         * Test that for a {@code dict} (a {@link PyDict}) {@code int} keys
-         * that are equal to {@code bool} values act as equal keys. Here we
-         * put data in with a {@code Boolean} key.
+         * Test that for a {@code dict} (a {@link PyDict}) {@code int} keys that
+         * are equal to {@code bool} values act as equal keys. Here we put data
+         * in with a {@code Boolean} key.
          */
         @Test
         void when_int_key_is_Boolean() {
@@ -278,14 +285,14 @@ class LookupTest extends UnitTestSupport {
         }
 
         /**
-         * Insert data into a {@link PyDict} in the Python {@code int}
-         * sequence {@code 100, 101, 102, ...}. We use a specified
-         * acceptable implementation of a the key type under test.
-         * {@code keyImpl} specifies which implementation by a function that
-         * may be given as an argument like {@code k -> k.py}
+         * Insert data into a {@link PyDict} in the Python {@code int} sequence
+         * {@code 100, 101, 102, ...}. We use a specified acceptable
+         * implementation of a the key type under test. {@code keyImpl}
+         * specifies which implementation by a function that may be given as an
+         * argument like {@code k -> k.py}
          *
-         * @param <KT> one of the {@code *KeyTuple} classes containing
-         *     different realisations of the same value
+         * @param <KT> one of the {@code *KeyTuple} classes containing different
+         *     realisations of the same value
          * @param dict to insert to
          * @param keyTuples keys to insert with
          * @param keyImpl specifies which implementation to use
@@ -303,16 +310,16 @@ class LookupTest extends UnitTestSupport {
         }
 
         /**
-         * Retrieve data from a {@link PyDict}, asserting that it consists
-         * of a Python {@code int} sequence {@code 100, 101, 102, ...} . We
-         * use keys of the same value (from the same list of key tuples) as
-         * was used to make each entry, but in a specified acceptable
-         * implementation of a the key type under test. {@code keyImpl}
-         * specifies which implementation by a function that may be given as
-         * an argument like {@code k -> k.py}
+         * Retrieve data from a {@link PyDict}, asserting that it consists of a
+         * Python {@code int} sequence {@code 100, 101, 102, ...} . We use keys
+         * of the same value (from the same list of key tuples) as was used to
+         * make each entry, but in a specified acceptable implementation of a
+         * the key type under test. {@code keyImpl} specifies which
+         * implementation by a function that may be given as an argument like
+         * {@code k -> k.py}
          *
-         * @param <KT> one of the {@code *KeyTuple} classes containing
-         *     different realisations of the same value
+         * @param <KT> one of the {@code *KeyTuple} classes containing different
+         *     realisations of the same value
          * @param dict to retrieve from
          * @param keyTuples keys to retrieve with
          * @param keyImpl specifies which implementation to test
@@ -344,42 +351,36 @@ class LookupTest extends UnitTestSupport {
 
         /**
          * Test that {@link PyType#lookup(String)} and
-         * {@link PyType#lookup(String)} retrieve some well-known
-         * attributes.
+         * {@link PyType#lookup(String)} retrieve some well-known attributes.
          */
         @Test
         void type_lookup() {
-            checkTypeLookup(PyBaseObject.TYPE, "__getattribute__");
+            checkTypeLookup(PyObject.TYPE, "__getattribute__");
             checkTypeLookup(PyLong.TYPE, "__neg__");
             checkTypeLookup(PyUnicode.TYPE, "__add__");
             checkTypeLookup(PyTuple.TYPE, "__repr__");
         }
 
         /**
-         * Check {@code PyType.lookup} succeeds for {@code String} and
-         * {@link PyUnicode}.
+         * Check {@code PyType.lookup} succeeds for {@code String}.
          *
          * @param type to address
          * @param name to look up
          */
         private void checkTypeLookup(PyType type, String name) {
-            Object u, s;
             // Lookup signals no match with null
-            assertNotNull(s = type.lookup(name));
-            assertNotNull(u = type.lookup(newPyUnicode(name)));
-            assertEquals(s, u);
+            assertNotNull(type.lookup(name));
         }
 
         /**
          * Test that {@link PyType#lookup(String)} and
-         * {@link PyType#lookup(String)} retrieve some well-known
-         * attributes.
+         * {@link PyType#lookup(String)} retrieve some well-known attributes.
          *
          * @throws Throwable on failure
          */
         @Test
         void abstract_lookupAttr() throws Throwable {
-            checkLookupAttr(PyBaseObject.TYPE, "__getattribute__");
+            checkLookupAttr(PyObject.TYPE, "__getattribute__");
             checkLookupAttr(PyLong.TYPE, "__neg__");
             checkLookupAttr(PyUnicode.TYPE, "__add__");
             checkLookupAttr(PyTuple.TYPE, "__repr__");
@@ -403,14 +404,13 @@ class LookupTest extends UnitTestSupport {
 
         /**
          * Test that {@link PyType#lookup(String)} and
-         * {@link PyType#lookup(String)} retrieve some well-known
-         * attributes.
+         * {@link PyType#lookup(String)} retrieve some well-known attributes.
          *
          * @throws Throwable on failure
          */
         @Test
         void abstract_getAttr() throws Throwable {
-            checkGetAttr(PyBaseObject.TYPE, "__getattribute__");
+            checkGetAttr(PyObject.TYPE, "__getattribute__");
             checkGetAttr(PyLong.TYPE, "__neg__");
             checkGetAttr(PyUnicode.TYPE, "__add__");
             checkGetAttr(PyTuple.TYPE, "__repr__");

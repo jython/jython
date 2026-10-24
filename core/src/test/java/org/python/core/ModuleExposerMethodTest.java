@@ -1,10 +1,9 @@
-// Copyright (c)2023 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.invoke.MethodHandles;
 
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
 import org.python.support.MethodKind;
 import org.python.types.Exposed;
 import org.python.types.Exposed.PositionalOnly;
@@ -21,23 +21,23 @@ import org.python.types.Exposed.PythonStaticMethod;
 /**
  * Test that functions exposed by a Python <b>module</b> defined in
  * Java, using the scheme of annotations defined in {@link Exposed},
- * result in {@link PyJavaFunction} objects with characteristics
- * that correspond to the definition.
+ * result in {@link PyJavaFunction} objects with characteristics that
+ * correspond to the definition.
  * <p>
- * The first test in each case is to examine the fields in the
- * parser that attaches to the {@link ModuleDef.MethodDef}. Then we
- * call the function using the {@code __call__} special method, and
- * using our "Java call" signatures.
+ * The first test in each case is to examine the fields in the parser
+ * that attaches to the {@link ModuleDef.MethodDef}. Then we call the
+ * function using the {@code __call__} special method, and using our
+ * "Java call" signatures.
  * <p>
  * There is a nested test suite for each signature pattern.
  */
 @DisplayName("A method exposed by a module")
-class ModuleExposerMethodTest {
+class ModuleExposerMethodTest extends UnitTestSupport {
 
     /**
-     * Nested test classes implement these as standard. A base class
-     * here is just a way to describe the tests once that we repeat in
-     * each nested case.
+     * Nested test classes implement these as standard. A base class here is
+     * just a way to describe the tests once that we repeat in each nested
+     * case.
      */
     abstract static class Standard {
 
@@ -58,10 +58,21 @@ class ModuleExposerMethodTest {
 
         /**
          * A parser attached to the function object should have field values
-         * that correctly reflect the signature and annotations in the
-         * defining class.
+         * that correctly reflect the signature and annotations in the defining
+         * class.
          */
         abstract void has_expected_fields();
+
+        /**
+         * The module dictionary entry has the expected content.
+         */
+        @Test
+        void has_expected_dict_entry() {
+            PyJavaFunction f = (PyJavaFunction)module.getDict().get(ap.name);
+            assertEquals(ap.name, f.__name__());
+            assertEquals(f.self, module);
+            assertEquals(module, func.self);
+        }
 
         /**
          * Call the function using the {@code __call__} special method with
@@ -74,19 +85,19 @@ class ModuleExposerMethodTest {
 
         /**
          * Call the function using the {@code __call__} special method with
-         * arguments correct for the function's specification, and
-         * explicitly zero or more keywords. The function should obtain the
-         * correct result (and not throw).
+         * arguments correct for the function's specification, and explicitly
+         * zero or more keywords. The function should obtain the correct result
+         * (and not throw).
          *
          * @throws Throwable unexpectedly
          */
         abstract void supports_keywords() throws Throwable;
 
         /**
-         * Call the function using the {@code __call__} special method and
-         * an unexpected keyword: where none is expected, for a positional
-         * argument, or simply an unacceptable name. The function should
-         * throw {@link TypeError}.
+         * Call the function using the {@code __call__} special method and an
+         * unexpected keyword: where none is expected, for a positional
+         * argument, or simply an unacceptable name. The function should throw
+         * {@link PyExc#TypeError TypeError}.
          *
          * @throws Throwable unexpectedly
          */
@@ -94,17 +105,17 @@ class ModuleExposerMethodTest {
 
         /**
          * Call the function using the Java call interface with arguments
-         * correct for the function's specification. The function should
-         * obtain the correct result (and not throw).
+         * correct for the function's specification. The function should obtain
+         * the correct result (and not throw).
          *
          * @throws Throwable unexpectedly
          */
         abstract void supports_java_call() throws Throwable;
 
         /**
-         * Check that the fields of the parser match expectations for a
-         * method with no collector parameters and a certain number of
-         * positional-only parameters.
+         * Check that the fields of the parser match expectations for a method
+         * with no collector parameters and a certain number of positional-only
+         * parameters.
          *
          * @param kind static or instance
          * @param name of method
@@ -124,9 +135,9 @@ class ModuleExposerMethodTest {
         }
 
         /**
-         * Check that the fields of the parser match expectations for a
-         * static method with no collector parameters and a certain number
-         * of positional-only parameters.
+         * Check that the fields of the parser match expectations for a static
+         * method with no collector parameters and a certain number of
+         * positional-only parameters.
          *
          * @param name of method
          * @param count of parameters
@@ -137,9 +148,9 @@ class ModuleExposerMethodTest {
         }
 
         /**
-         * Check that the fields of the parser match expectations for a
-         * instance method with no collector parameters and a certain number
-         * of positional-only parameters.
+         * Check that the fields of the parser match expectations for a instance
+         * method with no collector parameters and a certain number of
+         * positional-only parameters.
          *
          * @param name of method
          * @param count of parameters
@@ -155,12 +166,12 @@ class ModuleExposerMethodTest {
          *
          * @param result of call
          */
-        void check_result(PyTuple result) { assertArrayEquals(exp, result.value); }
+        void check_result(PyTuple result) { assertArrayEquals(exp, result.toArray()); }
     }
 
     /**
-     * A Python module definition that exhibits a range of method
-     * signatures explored in the tests.
+     * A Python module definition that exhibits a range of method signatures
+     * explored in the tests.
      */
     static class ExampleModule extends JavaModule {
 
@@ -191,8 +202,8 @@ class ModuleExposerMethodTest {
         static PyTuple f1(double a) { return Py.tuple(a); }
 
         /**
-         * See {@link OneParam}: the parameter is positional-only as a
-         * result of the default exposure.
+         * See {@link OneParam}: the parameter is positional-only as a result of
+         * the default exposure.
          *
          * @param a positional arg
          * @return the arg (tuple)
@@ -279,7 +290,7 @@ class ModuleExposerMethodTest {
     class NoParams extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.m0
             func = (PyJavaFunction)Abstract.getAttr(module, "m0");
             ap = func.argParser;
@@ -320,7 +331,7 @@ class ModuleExposerMethodTest {
             Object[] args = {3};
             String[] names = {"c"}; // Nothing expected
 
-            assertThrows(TypeError.class, () -> func.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args, names));
         }
 
         @Override
@@ -340,7 +351,7 @@ class ModuleExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.f0
             func = (PyJavaFunction)Abstract.getAttr(module, "f0");
             ap = func.argParser;
@@ -360,7 +371,7 @@ class ModuleExposerMethodTest {
     class OneParam extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.m1
             func = (PyJavaFunction)Abstract.getAttr(module, "m1");
             ap = func.argParser;
@@ -399,7 +410,7 @@ class ModuleExposerMethodTest {
             Object[] args = {42.0, 5};
             String[] names = {"a"};
 
-            assertThrows(TypeError.class, () -> func.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args, names));
         }
 
         @Override
@@ -421,7 +432,7 @@ class ModuleExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.f1
             func = (PyJavaFunction)Abstract.getAttr(module, "f1");
             ap = func.argParser;
@@ -442,7 +453,7 @@ class ModuleExposerMethodTest {
     class DefaultPositionalParams extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.m3
             func = (PyJavaFunction)Abstract.getAttr(module, "m3");
             ap = func.argParser;
@@ -481,7 +492,7 @@ class ModuleExposerMethodTest {
             Object[] args = {1, "2", 3};
             String[] names = {"c"};
 
-            assertThrows(TypeError.class, () -> func.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args, names));
         }
 
         @Override
@@ -503,7 +514,7 @@ class ModuleExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.f3
             func = (PyJavaFunction)Abstract.getAttr(module, "f3");
             ap = func.argParser;
@@ -516,15 +527,15 @@ class ModuleExposerMethodTest {
     }
 
     /**
-     * {@link ExampleModule#m3pk(int, String, Object)} accepts 3
-     * arguments that may be given by position or keyword.
+     * {@link ExampleModule#m3pk(int, String, Object)} accepts 3 arguments
+     * that may be given by position or keyword.
      */
     @Nested
     @DisplayName("with positional-or-keyword parameters")
     class PositionalOrKeywordParams extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.m3pk
             func = (PyJavaFunction)Abstract.getAttr(module, "m3pk");
             ap = func.argParser;
@@ -563,7 +574,7 @@ class ModuleExposerMethodTest {
             // We call func(1, c=3, b='2', x=4)
             Object[] args = {1, 3, "2", 4};
             String[] names = {"c", "b", /* unknown */"x"};
-            assertThrows(TypeError.class, () -> func.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args, names));
         }
 
         @Override
@@ -575,8 +586,8 @@ class ModuleExposerMethodTest {
     }
 
     /**
-     * {@link ExampleModule#f3pk(int, String, Object)} accepts 3
-     * arguments that may be given by position or keyword.
+     * {@link ExampleModule#f3pk(int, String, Object)} accepts 3 arguments
+     * that may be given by position or keyword.
      */
     @Nested
     @DisplayName("static, with positional-or-keyword parameters")
@@ -584,7 +595,7 @@ class ModuleExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.f3pk
             func = (PyJavaFunction)Abstract.getAttr(module, "f3pk");
             ap = func.argParser;
@@ -598,16 +609,16 @@ class ModuleExposerMethodTest {
     }
 
     /**
-     * {@link ExampleModule#m3p2(int, String, Object)} accepts 3
-     * arguments, two of which may be given by position only, and the
-     * last by either position or keyword.
+     * {@link ExampleModule#m3p2(int, String, Object)} accepts 3 arguments,
+     * two of which may be given by position only, and the last by either
+     * position or keyword.
      */
     @Nested
     @DisplayName("with two positional-only parameters")
     class SomePositionalOnlyParams extends Standard {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.m3p2
             func = (PyJavaFunction)Abstract.getAttr(module, "m3p2");
             ap = func.argParser;
@@ -649,7 +660,7 @@ class ModuleExposerMethodTest {
             // We call func(1, c=3, b='2')
             Object[] args = {1, 3, "2"};
             String[] names = {"c", /* positional */"b"};
-            assertThrows(TypeError.class, () -> func.__call__(args, names));
+            assertRaises(PyExc.TypeError, () -> func.__call__(args, names));
         }
 
         @Override
@@ -662,9 +673,9 @@ class ModuleExposerMethodTest {
     }
 
     /**
-     * {@link ExampleModule#f3p2(int, String, Object)} accepts 3
-     * arguments, two of which may be given by position only, and the
-     * last by either position or keyword.
+     * {@link ExampleModule#f3p2(int, String, Object)} accepts 3 arguments,
+     * two of which may be given by position only, and the last by either
+     * position or keyword.
      */
     @Nested
     @DisplayName("static, with two positional-only parameters")
@@ -672,7 +683,7 @@ class ModuleExposerMethodTest {
 
         @Override
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws Throwable {
             // func = module.f3p2
             func = (PyJavaFunction)Abstract.getAttr(module, "f3p2");
             ap = func.argParser;

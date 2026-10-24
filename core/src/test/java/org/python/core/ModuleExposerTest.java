@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -19,6 +19,7 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
 import org.python.core.ModuleDef.MethodDef;
 import org.python.types.Exposed;
 import org.python.types.Exposed.PositionalOnly;
@@ -40,9 +41,9 @@ class ModuleExposerTest extends UnitTestSupport {
 
     /**
      * This class is not actually a Python module definition, but is
-     * annotated as if it were. We will test whether the
-     * {@link MethodDef}s are created as expected. We'll also act on it
-     * to produce a dictionary as if it were a real module.
+     * annotated as if it were. We will test whether the {@link MethodDef}s
+     * are created as expected. We'll also act on it to produce a dictionary
+     * as if it were a real module.
      */
     static class FakeModule {
 
@@ -58,51 +59,39 @@ class ModuleExposerTest extends UnitTestSupport {
 
         // Signature: (a)
         @PythonStaticMethod
-        static PyTuple f1(double a) {return Py.tuple(a);}
+        static PyTuple f1(double a) { return Py.tuple(a); }
 
         // Signature: ($module, a, /)
         @PythonMethod
         @SuppressWarnings("static-method")
-        PyTuple m1(double a) {return Py.tuple(a);}
+        PyTuple m1(double a) { return Py.tuple(a); }
 
         // Signature: (a, b, c, /)
         @PythonStaticMethod
-        static PyTuple f3(int a, String b, Object c) {
-            return Py.tuple(a, b, c);
-        }
+        static PyTuple f3(int a, String b, Object c) { return Py.tuple(a, b, c); }
 
         // Signature: ($module, a, b, c, /)
         @PythonMethod
         @SuppressWarnings("static-method")
-        PyTuple m3(int a, String b, Object c) {
-            return Py.tuple(a, b, c);
-        }
+        PyTuple m3(int a, String b, Object c) { return Py.tuple(a, b, c); }
 
         // Signature: (/, a, b, c)
         @PythonStaticMethod(positionalOnly = false)
-        static PyTuple f3pk(int a, String b, Object c) {
-            return Py.tuple(a, b, c);
-        }
+        static PyTuple f3pk(int a, String b, Object c) { return Py.tuple(a, b, c); }
 
         // Signature: ($module, /, a, b, c)
         @PythonMethod(positionalOnly = false)
         @SuppressWarnings("static-method")
-        PyTuple m3pk(int a, String b, Object c) {
-            return Py.tuple(a, b, c);
-        }
+        PyTuple m3pk(int a, String b, Object c) { return Py.tuple(a, b, c); }
 
         // Signature: (a, b, /, c)
         @PythonStaticMethod
-        static PyTuple f3p2(int a, @PositionalOnly String b, Object c) {
-            return Py.tuple(a, b, c);
-        }
+        static PyTuple f3p2(int a, @PositionalOnly String b, Object c) { return Py.tuple(a, b, c); }
 
         // Signature: ($module, a, b, /, c)
         @PythonMethod
         @SuppressWarnings("static-method")
-        PyTuple m3p2(int a, @PositionalOnly String b, Object c) {
-            return Py.tuple(a, b, c);
-        }
+        PyTuple m3p2(int a, @PositionalOnly String b, Object c) { return Py.tuple(a, b, c); }
     }
 
     @Nested
@@ -110,20 +99,11 @@ class ModuleExposerTest extends UnitTestSupport {
     class TestExposer {
 
         @Test
-        @DisplayName("produces a ModuleExposer")
-        void getExposer() {
-            ModuleExposer exposer =
-                    Exposer.exposeModule(FakeModule.class);
-            assertNotNull(exposer);
-        }
-
-        @Test
         @DisplayName("finds the expected methods")
         void getMethodDefs() {
-            ModuleExposer exposer =
-                    Exposer.exposeModule(FakeModule.class);
-            MethodDef[] mdArray =
-                    exposer.getMethodDefs(FakeModule.LOOKUP);
+            ModuleExposer exposer = new ModuleExposer("fake_module");
+            exposer.scanJavaMethods(FakeModule.class);
+            MethodDef[] mdArray = exposer.getMethodDefs(FakeModule.LOOKUP);
             checkMethodDefArray(mdArray);
         }
     }
@@ -148,9 +128,9 @@ class ModuleExposerTest extends UnitTestSupport {
         @DisplayName("has expected method signatures")
         void hasMethods() {
             /*
-             * As FakeModule is not a PyModule, we must work a bit
-             * harder to take care of things normally automatic. Make a
-             * ModuleDef to hold the MethodDefs from the Exposer.
+             * As FakeModule is not a PyModule, we must work a bit harder to take
+             * care of things later masde automatic. Make a ModuleDef to hold the
+             * MethodDefs from the Exposer.
              */
             ModuleDef def = new ModuleDef("example", FakeModule.LOOKUP);
             // An instance of the "module" to bind in PyJavaMethods
@@ -161,8 +141,7 @@ class ModuleExposerTest extends UnitTestSupport {
             for (MethodDef md : def.getMethods()) {
                 ArgParser ap = md.argParser;
                 MethodHandle mh = md.handle;
-                PyJavaFunction m =
-                        PyJavaFunction.fromParser(ap, mh, fake, def.name);
+                PyJavaFunction m = PyJavaFunction.forModule(ap, mh, fake, def.name);
                 dict.put(md.argParser.name, m);
             }
             // And here we check what's in it
@@ -181,11 +160,10 @@ class ModuleExposerTest extends UnitTestSupport {
                 "f0", "f1", "f3", "f3pk", "f3p2", //
                 "m0", "m1", "m3", "m3pk", "m3p2"));
 
-        assertEquals(expected, mds.keySet(), "contains expected names");
+        assertEquals(expected, mds.keySet(), "check expected names");
     }
 
-    private static void
-            checkMethodSignatures(Map<Object, Object> dict) {
+    private static void checkMethodSignatures(Map<Object, Object> dict) {
         assertNotNull(dict);
 
         checkSignature(dict, "f0()");
@@ -201,14 +179,12 @@ class ModuleExposerTest extends UnitTestSupport {
     }
 
     /**
-     * Check that a method with the expected signature is in the
-     * dictionary.
+     * Check that a method with the expected signature is in the dictionary.
      *
      * @param dict dictionary
      * @param spec signature
      */
-    private static void checkSignature(Map<Object, Object> dict,
-            String spec) {
+    private static void checkSignature(Map<Object, Object> dict, String spec) {
         int k = spec.indexOf('(');
         assertTrue(k > 0);
         String name = spec.substring(0, k);

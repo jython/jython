@@ -1,10 +1,11 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
@@ -14,16 +15,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
 import org.python.types.Exposed;
-import org.python.types.TypeSpec;
 import org.python.types.Exposed.DocString;
 import org.python.types.Exposed.Member;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
- * Test that members exposed by a Python <b>type</b> defined in
- * Java, using the annotation defined in {@link Exposed.Member} on
- * fields implementing them, results in data descriptors with
- * characteristics that correspond to the definition.
+ * Test that members exposed by a Python <b>type</b> defined in Java,
+ * using the annotation defined in {@link Exposed.Member} on fields
+ * implementing them, results in data descriptors with characteristics
+ * that correspond to the definition.
  * <p>
  * There is a nested test suite for each pattern of characteristics.
  */
@@ -31,9 +34,8 @@ import org.python.types.Exposed.Member;
 class TypeExposerMemberTest extends UnitTestSupport {
 
     /**
-     * Java base class of a Python type definition showing that some of
-     * the member definitions explored in the tests can be
-     * Java-inherited.
+     * Java base class of a Python type definition showing that some of the
+     * member definitions explored in the tests can be Java-inherited.
      */
     private static class BaseMembers {
         @Member
@@ -45,14 +47,13 @@ class TypeExposerMemberTest extends UnitTestSupport {
     }
 
     /**
-     * A Python type definition that exhibits a range of member
-     * definitions explored in the tests.
+     * A Python type definition that exhibits a range of member definitions
+     * explored in the tests.
      */
-    private static class ObjectWithMembers extends BaseMembers {
+    private static class ObjectWithMembers extends BaseMembers implements WithClass {
 
         static PyType TYPE =
-                PyType.fromSpec(new TypeSpec("ObjectWithMembers", MethodHandles.lookup())
-                        .adopt(DerivedWithMembers.class));
+                PyType.fromSpec(new TypeSpec("ObjectWithMembers", MethodHandles.lookup()));
 
         @Member
         @DocString("My test x")
@@ -96,24 +97,18 @@ class TypeExposerMemberTest extends UnitTestSupport {
             i2 = i = Math.round((float)value);
             t2 = t = s = String.format("%d", i);
             obj = i;
-            tup = new PyTuple(i, x, t);
+            tup = PyTuple.of(i, x, t);
             strhex = newPyUnicode(Integer.toString(i, 16));
         }
+
+        @Override
+        public PyType getType() { return TYPE; }
     }
 
     /**
-     * A class that extends the above, with the same Python type. We
-     * want to check that what we're doing to reflect on the parent
-     * produces descriptors we can apply to a sub-class.
-     */
-    private static class DerivedWithMembers extends ObjectWithMembers {
-        DerivedWithMembers(double value) { super(value); }
-    }
-
-    /**
-     * Certain nested test classes implement these as standard. A base
-     * class here is just a way to describe the tests once that reappear
-     * in each nested case.
+     * Certain nested test classes implement these as standard. A base class
+     * here is just a way to describe the tests once that reappear in each
+     * nested case.
      */
     abstract static class Base {
 
@@ -158,7 +153,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
          */
         @Test
         void descr_has_expected_fields() throws Throwable {
-            assertEquals(name, md.name);
+            assertEquals(name, md.__name__());
             assertEquals(doc, md.doc);
             String s = String.format("<member '%s' of 'ObjectWithMembers' objects>", name);
             assertEquals(s, md.toString());
@@ -177,8 +172,8 @@ class TypeExposerMemberTest extends UnitTestSupport {
         }
 
         /**
-         * The member descriptor may be used to read the field in an
-         * instance of the object.
+         * The member descriptor may be used to read the field in an instance of
+         * the object.
          */
         abstract void descr_get_works();
 
@@ -197,24 +192,24 @@ class TypeExposerMemberTest extends UnitTestSupport {
     abstract static class BaseSettable extends Base {
 
         /**
-         * The member descriptor may be used to set the field in an instance
-         * of the object.
+         * The member descriptor may be used to set the field in an instance of
+         * the object.
          *
          * @throws Throwable unexpectedly
          */
         abstract void descr_set_works() throws Throwable;
 
         /**
-         * {@link Abstract#setAttr(Object, String, Object)} may be used to
-         * set the field in an instance of the object.
+         * {@link Abstract#setAttr(Object, String, Object)} may be used to set
+         * the field in an instance of the object.
          *
          * @throws Throwable unexpectedly
          */
         abstract void abstract_setAttr_works() throws Throwable;
 
         /**
-         * The member raises {@link TypeError} when supplied a value of
-         * unacceptable type.
+         * The member raises {@link PyExc#TypeError TypeError} when supplied a
+         * value of unacceptable type.
          *
          * @throws Throwable unexpectedly
          */
@@ -228,22 +223,22 @@ class TypeExposerMemberTest extends UnitTestSupport {
 
         /**
          * Attempting to delete the member implemented by a primitive raises
-         * {@link TypeError}.
+         * {@link PyExc#TypeError TypeError}.
          */
         @Test
         void rejects_descr_delete() {
-            assertThrows(TypeError.class, () -> md.__delete__(o));
-            assertThrows(TypeError.class, () -> md.__set__(o, null));
+            assertRaises(PyExc.TypeError, () -> md.__delete__(o));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, null));
         }
 
         /**
          * Attempting to delete the member implemented by a primitive raises
-         * {@link TypeError}.
+         * {@link PyExc#TypeError TypeError}.
          */
         @Test
         void rejects_abstract_delAttr() {
-            assertThrows(TypeError.class, () -> Abstract.delAttr(o, name));
-            assertThrows(TypeError.class, () -> Abstract.setAttr(o, name, null));
+            assertRaises(PyExc.TypeError, () -> Abstract.delAttr(o, name));
+            assertRaises(PyExc.TypeError, () -> Abstract.setAttr(o, name, null));
         }
     }
 
@@ -252,7 +247,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestInt extends BaseSettablePrimitive {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("i", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("i", 42, -1); }
 
         @Override
         @Test
@@ -290,9 +285,9 @@ class TypeExposerMemberTest extends UnitTestSupport {
         @Test
         void set_detects_TypeError() throws Throwable {
             // Things that are not a Python int
-            assertThrows(TypeError.class, () -> md.__set__(o, "Gumby"));
-            assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, 1.0));
-            assertThrows(TypeError.class, () -> md.__set__(o, Py.None));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, "Gumby"));
+            assertRaises(PyExc.TypeError, () -> Abstract.setAttr(p, name, 1.0));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, Py.None));
         }
 
     }
@@ -302,7 +297,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestDouble extends BaseSettablePrimitive {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("x", "My test x", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("x", "My test x", 42, -1); }
 
         @Override
         @Test
@@ -340,23 +335,22 @@ class TypeExposerMemberTest extends UnitTestSupport {
         @Test
         void set_detects_TypeError() throws Throwable {
             // Things that are not a Python float
-            assertThrows(TypeError.class, () -> md.__set__(o, "Gumby"));
-            assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, "42"));
-            assertThrows(TypeError.class, () -> md.__set__(o, Py.None));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, "Gumby"));
+            assertRaises(PyExc.TypeError, () -> Abstract.setAttr(p, name, "42"));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, Py.None));
         }
 
     }
 
     /**
-     * Base test of settable attribute with object reference
-     * implementation.
+     * Base test of settable attribute with object reference implementation.
      */
     abstract static class BaseSettableReference extends BaseSettable {
 
         /**
-         * The member descriptor may be used to delete a field from an
-         * instance of the object, meaning set it to {@code null}
-         * internally, appearing as {@code None} externally.
+         * The member descriptor may be used to delete a field from an instance
+         * of the object, meaning set it to {@code null} internally, appearing
+         * as {@code None} externally.
          *
          * @throws Throwable unexpectedly
          */
@@ -370,9 +364,9 @@ class TypeExposerMemberTest extends UnitTestSupport {
         }
 
         /**
-         * {@link Abstract#delAttr(Object, String)} to delete a field from
-         * an instance of the object, meaning set it to {@code null}
-         * internally, appearing as {@code None} externally.
+         * {@link Abstract#delAttr(Object, String)} to delete a field from an
+         * instance of the object, meaning set it to {@code null} internally,
+         * appearing as {@code None} externally.
          *
          * @throws Throwable unexpectedly
          */
@@ -391,7 +385,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestString extends BaseSettableReference {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("text", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("text", 42, -1); }
 
         @Override
         @Test
@@ -439,21 +433,21 @@ class TypeExposerMemberTest extends UnitTestSupport {
         @Test
         void set_detects_TypeError() throws Throwable {
             // Things that are not a Python str
-            assertThrows(TypeError.class, () -> md.__set__(o, 1));
-            assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, 10.0));
-            assertThrows(TypeError.class, () -> md.__set__(o, new Object()));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, 1));
+            assertRaises(PyExc.TypeError, () -> Abstract.setAttr(p, name, 10.0));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, new Object()));
         }
     }
 
     /**
-     * Base test of an optional attribute, necessarily with object
-     * reference implementation.
+     * Base test of an optional attribute, necessarily with object reference
+     * implementation.
      */
     abstract static class BaseOptionalReference extends BaseSettable {
 
         /**
-         * The member descriptor may be used to delete a field from an
-         * instance of the object, causing it to disappear externally.
+         * The member descriptor may be used to delete a field from an instance
+         * of the object, causing it to disappear externally.
          *
          * @throws Throwable unexpectedly
          */
@@ -462,14 +456,14 @@ class TypeExposerMemberTest extends UnitTestSupport {
             md.__delete__(o);
             // After deletion, ...
             // ... __get__ raises AttributeError
-            assertThrows(AttributeError.class, () -> md.__get__(o, null));
+            assertRaises(PyExc.AttributeError, () -> md.__get__(o, null));
             // ... __delete__ raises AttributeError
-            assertThrows(AttributeError.class, () -> md.__delete__(o));
+            assertRaises(PyExc.AttributeError, () -> md.__delete__(o));
         }
 
         /**
-         * {@link Abstract#delAttr(Object, String)} to delete a field from
-         * an instance of the object, causing it to disappear externally.
+         * {@link Abstract#delAttr(Object, String)} to delete a field from an
+         * instance of the object, causing it to disappear externally.
          *
          * @throws Throwable unexpectedly
          */
@@ -478,8 +472,8 @@ class TypeExposerMemberTest extends UnitTestSupport {
             Abstract.delAttr(o, name);
             // After deletion, ...
             // ... getAttr and delAttr raise AttributeError
-            assertThrows(AttributeError.class, () -> Abstract.getAttr(o, name));
-            assertThrows(AttributeError.class, () -> Abstract.delAttr(o, name));
+            assertRaises(PyExc.AttributeError, () -> Abstract.getAttr(o, name));
+            assertRaises(PyExc.AttributeError, () -> Abstract.delAttr(o, name));
         }
 
     }
@@ -489,7 +483,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestOptionalString extends BaseOptionalReference {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("s", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("s", 42, -1); }
 
         @Override
         @Test
@@ -537,9 +531,9 @@ class TypeExposerMemberTest extends UnitTestSupport {
         @Test
         void set_detects_TypeError() throws Throwable {
             // Things that are not a Python str
-            assertThrows(TypeError.class, () -> md.__set__(o, 1));
-            assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, 10.0));
-            assertThrows(TypeError.class, () -> md.__set__(o, new Object()));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, 1));
+            assertRaises(PyExc.TypeError, () -> Abstract.setAttr(p, name, 10.0));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, new Object()));
         }
     }
 
@@ -548,7 +542,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestObject extends BaseSettableReference {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("obj", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("obj", 42, -1); }
 
         @Override
         @Test
@@ -617,10 +611,10 @@ class TypeExposerMemberTest extends UnitTestSupport {
         PyTuple oRef, pRef;
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable {
+        void setup() throws PyAttributeError, Throwable {
             setup("tup", 42, -1);
-            oRef = new PyTuple(42, 42.0, "42");
-            pRef = new PyTuple(-1, -1.0, "-1");
+            oRef = PyTuple.of(42, 42.0, "42");
+            pRef = PyTuple.of(-1, -1.0, "-1");
         }
 
         @Override
@@ -640,13 +634,13 @@ class TypeExposerMemberTest extends UnitTestSupport {
         @Override
         @Test
         void descr_set_works() throws Throwable {
-            final Object tup2 = new PyTuple(2, 3, 4);
+            final Object tup2 = PyTuple.of(2, 3, 4);
             md.__set__(o, tup2);
             assertEquals(tup2, o.tup);
             // __set__ works after delete
             md.__delete__(o);
             assertNull(o.tup);
-            final Object tup3 = new PyTuple(3, 4, 5);
+            final Object tup3 = PyTuple.of(3, 4, 5);
             md.__set__(o, tup3);
             assertEquals(tup3, o.tup);
         }
@@ -670,9 +664,9 @@ class TypeExposerMemberTest extends UnitTestSupport {
         @Test
         void set_detects_TypeError() throws Throwable {
             // Things that are not a Python tuple
-            assertThrows(TypeError.class, () -> md.__set__(o, 1));
-            assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, ""));
-            assertThrows(TypeError.class, () -> md.__set__(o, new Object()));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, 1));
+            assertRaises(PyExc.TypeError, () -> Abstract.setAttr(p, name, ""));
+            assertRaises(PyExc.TypeError, () -> md.__set__(o, new Object()));
         }
     }
 
@@ -682,49 +676,49 @@ class TypeExposerMemberTest extends UnitTestSupport {
     abstract static class BaseReadonly extends Base {
 
         /**
-         * Raises {@link AttributeError} when the member descriptor is asked
-         * to set the field in an instance of the object, even if the type
-         * is correct.
+         * Raises {@link PyAttributeError AttributeError} when the member
+         * descriptor is asked to set the field in an instance of the object,
+         * even if the type is correct.
          */
         @Test
         void rejects_descr_set() {
-            assertThrows(AttributeError.class, () -> md.__set__(o, 1234));
-            assertThrows(AttributeError.class, () -> md.__set__(p, 1.0));
-            assertThrows(AttributeError.class, () -> md.__set__(o, "Gumby"));
-            assertThrows(AttributeError.class, () -> md.__set__(p, Py.None));
+            assertRaises(PyExc.AttributeError, () -> md.__set__(o, 1234));
+            assertRaises(PyExc.AttributeError, () -> md.__set__(p, 1.0));
+            assertRaises(PyExc.AttributeError, () -> md.__set__(o, "Gumby"));
+            assertRaises(PyExc.AttributeError, () -> md.__set__(p, Py.None));
         }
 
         /**
-         * Raises {@link AttributeError} when
+         * Raises {@link PyAttributeError AttributeError} when
          * {@link Abstract#setAttr(Object, String, Object)} tries to set the
          * field in an instance of the object, even if the type is correct.
          */
         @Test
         void rejects_abstract_setAttr() {
-            assertThrows(AttributeError.class, () -> Abstract.setAttr(o, name, 1234));
-            assertThrows(AttributeError.class, () -> Abstract.setAttr(p, name, 1.0));
-            assertThrows(AttributeError.class, () -> Abstract.setAttr(o, name, "Gumby"));
-            assertThrows(AttributeError.class, () -> Abstract.setAttr(p, name, Py.None));
+            assertRaises(PyExc.AttributeError, () -> Abstract.setAttr(o, name, 1234));
+            assertRaises(PyExc.AttributeError, () -> Abstract.setAttr(p, name, 1.0));
+            assertRaises(PyExc.AttributeError, () -> Abstract.setAttr(o, name, "Gumby"));
+            assertRaises(PyExc.AttributeError, () -> Abstract.setAttr(p, name, Py.None));
         }
 
         /**
-         * Raises {@link AttributeError} when the member descriptor is asked
-         * to delete the field in an instance of the object.
+         * Raises {@link PyAttributeError AttributeError} when the member
+         * descriptor is asked to delete the field in an instance of the object.
          */
         @Test
         void rejects_descr_delete() {
-            assertThrows(AttributeError.class, () -> md.__delete__(o));
-            assertThrows(AttributeError.class, () -> md.__set__(o, null));
+            assertRaises(PyExc.AttributeError, () -> md.__delete__(o));
+            assertRaises(PyExc.AttributeError, () -> md.__set__(o, null));
         }
 
         /**
-         * Raises {@link AttributeError} when
-         * {@link Abstract#delAttr(Object, String)} tries to delete the
-         * field from an instance of the object.
+         * Raises {@link PyAttributeError AttributeError} when
+         * {@link Abstract#delAttr(Object, String)} tries to delete the field
+         * from an instance of the object.
          */
         @Test
         void rejects_abstract_delAttr() {
-            assertThrows(AttributeError.class, () -> Abstract.delAttr(o, name));
+            assertRaises(PyExc.AttributeError, () -> Abstract.delAttr(o, name));
         }
     }
 
@@ -733,7 +727,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestIntRO extends BaseReadonly {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("i2", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("i2", 42, -1); }
 
         @Override
         @Test
@@ -755,7 +749,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestDoubleRO extends BaseReadonly {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("x2", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("x2", 42, -1); }
 
         @Override
         @Test
@@ -777,7 +771,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestStringRO extends BaseReadonly {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("text2", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("text2", 42, -1); }
 
         @Override
         @Test
@@ -799,7 +793,7 @@ class TypeExposerMemberTest extends UnitTestSupport {
     class TestPyUnicodeRO extends BaseReadonly {
 
         @BeforeEach
-        void setup() throws AttributeError, Throwable { setup("strhex", 42, -1); }
+        void setup() throws PyAttributeError, Throwable { setup("strhex", 42, -1); }
 
         @Override
         @Test
