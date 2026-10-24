@@ -1,34 +1,24 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
+import org.python.support.JavaClassShorthand;
+
 /**
- * Some shorthands used to construct method signatures,
- * {@code MethodType}s, etc..
+ * Some shorthands used to construct method signatures of runtime
+ * methods, {@code MethodType}s, etc.. Clients can access the constants
+ * by implementing the interface (slightly frowned upon in public code),
+ * or paste this into their imports section: <pre>
+import static org.python.runtime.ClassShorthand.*;
+ *</pre>
  */
-public interface ClassShorthand {
-    /** Shorthand for {@code Object.class}. */
-    static final Class<Object> O = Object.class;
-    /** Shorthand for {@code Class.class}. */
-    static final Class<?> C = Class.class;
-    /** Shorthand for {@code String.class}. */
-    static final Class<String> S = String.class;
-    /** Shorthand for {@code int.class}. */
-    static final Class<?> I = int.class;
-    /** Shorthand for {@code boolean.class}. */
-    static final Class<?> B = boolean.class;
+public interface ClassShorthand extends JavaClassShorthand {
     /** Shorthand for {@code PyType.class}. */
-    static final Class<PyType> T = PyType.class;
-    /** Shorthand for {@code void.class}. */
-    static final Class<?> V = void.class;
-    // ** Shorthand for {@code Comparison.class}. */
+    public static final Class<PyType> T = PyType.class;
+    /** Shorthand for {@code Comparison.class}. */
     // static final Class<Comparison> CMP = Comparison.class;
     /** Shorthand for {@code PyTuple.class}. */
     static final Class<PyTuple> TUPLE = PyTuple.class;
-    /// ** Shorthand for {@code PyDict.class}. */
-    // static final Class<PyDict> DICT = PyDict.class;
-    /** Shorthand for {@code Object[].class}. */
-    static final Class<Object[]> OA = Object[].class;
-    /** Shorthand for {@code String[].class}. */
-    static final Class<String[]> SA = String[].class;
+    /** Shorthand for {@code PyDict.class}. */
+    static final Class<PyDict> DICT = PyDict.class;
 }
