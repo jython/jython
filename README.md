@@ -1,3 +1,5 @@
+[![APIdia](https://apidia.net/java/Jython/3/badge.svg)](https://apidia.net/java/Jython/3)
+
 # Jython 3: Python 3 for the Java Platform
 
 This is the development repository of Jython,
