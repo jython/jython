@@ -231,15 +231,15 @@ public class SyspathJavaLoader extends ClassLoader {
     }
 
     private File getFile(String dir, String name) {
-        String accum = "";
+        StringBuilder accum = new StringBuilder();
         boolean first = true;
         for (StringTokenizer t = new StringTokenizer(name, "."); t
                 .hasMoreTokens();) {
             String token = t.nextToken();
             if (!first) {
-                accum += File.separator;
+                accum.append(File.separator);
             }
-            accum += token;
+            accum.append(token);
             first = false;
         }
         return new RelativeFile(dir, accum + ".class");
