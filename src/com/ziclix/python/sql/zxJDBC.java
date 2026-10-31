@@ -396,12 +396,12 @@ public class zxJDBC extends PyObject implements ClassDictInit {
             StringBuilder buffer = new StringBuilder();
             do {
                 buffer.append(sqlException.getMessage());
-                buffer.append(" [SQLCode: " + sqlException.getErrorCode() + "]");
+                buffer.append(" [SQLCode: ").append(sqlException.getErrorCode()).append("]");
                 if (sqlException.getSQLState() != null) {
-                    buffer.append(", [SQLState: " + sqlException.getSQLState() + "]");
+                    buffer.append(", [SQLState: ").append(sqlException.getSQLState()).append("]");
                 }
                 if (rowIndex >= 0) {
-                    buffer.append(", [Row number: " + rowIndex + "]");
+                    buffer.append(", [Row number: ").append(rowIndex).append("]");
                 }
                 sqlException = sqlException.getNextException();
                 if (sqlException != null) {
