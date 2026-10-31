@@ -61,7 +61,7 @@ public class DBSource extends BaseDB implements Source {
     protected String createSql(String where) {
 
         // create the sql statement, using the columns if available
-        StringBuffer sb = new StringBuffer("select ");
+        StringBuilder sb = new StringBuilder("select ");
 
         if ((this.include == Py.None) || (this.include.__len__() == 0)) {
             sb.append("*");

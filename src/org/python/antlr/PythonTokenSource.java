@@ -359,7 +359,7 @@ public class PythonTokenSource implements TokenSource {
     }
 
     public String stackString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int j = sp; j >= 0; j--) {
             buf.append(" ");
             buf.append(indentStack[j]);

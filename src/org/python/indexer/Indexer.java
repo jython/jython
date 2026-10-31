@@ -435,16 +435,15 @@ public class Indexer {
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Error creating binding ");
-        sb.append(newb);
-        sb.append(" in file ");
-        sb.append(newb.getFirstFile());
-        sb.append(": qname already bound to ");
-        sb.append(oldb);
-        sb.append(" in file ");
-        sb.append(oldb.getFirstFile());
-        reportFailedAssertion(sb.toString());
+        String sb = "Error creating binding " +
+                    newb +
+                    " in file " +
+                    newb.getFirstFile() +
+                    ": qname already bound to " +
+                    oldb +
+                    " in file " +
+                    oldb.getFirstFile();
+        reportFailedAssertion(sb);
     }
 
     public void putProblem(NNode loc, String msg) {

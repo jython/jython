@@ -146,9 +146,9 @@ public class TemplateAntTask extends MatchingTask {
         }
         e.setCommandline(command);
         if(verbose) {
-            String out = "";
+            StringBuilder out = new StringBuilder();
             for(int k = 0; k < e.getCommandline().length; k++) {
-                out += (e.getCommandline()[k] + " ");
+                out.append(e.getCommandline()[k]).append(" ");
             }
             log("executing: " + out);
         }
