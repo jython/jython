@@ -14,6 +14,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -335,19 +336,19 @@ public class ParserFacade {
         }
 
         Charset cs;
-        try {
-            // Use ascii for the raw bytes when no encoding was specified
-            if (encoding == null) {
-                if (fromString) {
-                    cs = Charset.forName("ISO-8859-1");
-                } else {
-                    cs = Charset.forName("ascii");
-                }
+        // Use ascii for the raw bytes when no encoding was specified
+        if (encoding == null) {
+            if (fromString) {
+                cs = StandardCharsets.ISO_8859_1;
             } else {
-                cs = Charset.forName(encoding);
+                cs = StandardCharsets.US_ASCII;
             }
-        } catch (UnsupportedCharsetException exc) {
-            throw new PySyntaxError("Unknown encoding: " + encoding, 1, 0, "", filename);
+        } else {
+            try {
+                cs = Charset.forName(encoding);
+            } catch (UnsupportedCharsetException exc) {
+                throw new PySyntaxError("Unknown encoding: " + encoding, 1, 0, "", filename);
+            }
         }
         CharsetDecoder dec = cs.newDecoder();
         dec.onMalformedInput(CodingErrorAction.REPORT);
@@ -398,7 +399,7 @@ public class ParserFacade {
     private static String readEncoding(InputStream stream) throws IOException {
         stream.mark(MARK_LIMIT);
         String encoding = null;
-        BufferedReader br = new BufferedReader(new InputStreamReader(stream, "ISO-8859-1"), 512);
+        BufferedReader br = new BufferedReader(new InputStreamReader(stream, StandardCharsets.ISO_8859_1), 512);
         encoding = findEncoding(br);
         // XXX: reset() can still raise an IOException if a line exceeds our large mark
         // limit
