@@ -1595,9 +1595,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         private String upto(String x, int n) {
             x = x.replace('\n', '|');
             if (x.length() > n) {
-                StringBuilder item = new StringBuilder(x.substring(0, n));
-                item.append("...");
-                return item.toString();
+                return x.substring(0, n) + "...";
             } else {
                 return x;
             }

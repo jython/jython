@@ -67,9 +67,7 @@ public class GrammarActions {
     }
 
     String makeFromText(List dots, List<Name> names) {
-        StringBuilder d = new StringBuilder();
-        d.append(PythonTree.dottedNameListToString(names));
-        return d.toString();
+        return PythonTree.dottedNameListToString(names);
     }
 
     List<Name> makeModuleNameNode(List dots, List<Name> names) {
