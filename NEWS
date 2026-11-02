@@ -47,7 +47,7 @@ New Features
       Java). Opt in by setting python.options.reflectedArgsLegacyMode=false in
       the registry or on the command line. The default (for now) is true.
 
-Jython 2.7.5b2 Bugs fixed
+Jython 2.7.5rc1 is unchanged from 2.7.5b1
 
 
 Jython 2.7.5b1 Bugs fixed

@@ -33,7 +33,7 @@ rather than during the release process:
   This magic declares old compiled files incompatible, forcing a fresh compilation for users.
   (Maybe do it anyway, if it's been a long time.)
 
-Consider *not* doing some of these actions until a release candidate is imminent.
+Consider *not* doing some of these actions until a beta release is imminent.
 The way we manage dependencies means the repository history contains
 a copy of every version of every JAR we ever used.
 This is a lot of space.
@@ -172,6 +172,11 @@ to match the identity of the next release.
 The build script ensures that, until we actually tag a change set as a release,
 the version numbers set here will always appear with a "snapshot" suffix.
 
+You may also like to update a copy of `ProcessDocs/releasing.md` (this document),
+as you discover errors or changes while following it.
+It cannot be done on the same repo as the release work
+because it looks to the build like a modified file.
+
 You should run the `ant javatest` and `ant regrtest` targets at this point,
 and also the gradle build `.\gradlew --console=plain publish`.
 These should run cleanly, or at least failures be explained and acceptable,
@@ -202,6 +207,7 @@ Changes to be committed:
         modified:   build.gradle
         modified:   build.xml
 
+$ git commit -m"Prepare for 2.7.5b1 release."
 [master 4ff770969] Prepare for 2.7.5b1 release.
  3 files changed, 9 insertions(+), 4 deletions(-)
 
