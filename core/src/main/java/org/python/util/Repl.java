@@ -73,7 +73,7 @@ public class Repl {
             out.print(prompt);
             out.flush();
             String line = in.readLine();
-            if (line == null) {
+            if (line == null || isEndOfInput(line)) {
                 // End of input: finish any statement in progress.
                 if (!buffer.isEmpty()) { push(""); }
                 out.println();
@@ -81,6 +81,20 @@ public class Repl {
             }
             prompt = push(line) ? PS2 : PS1;
         }
+    }
+
+    /**
+     * Whether a line begins with an end-of-input control character that
+     * nothing upstream has turned into a real end of file. On Windows,
+     * Ctrl-D arrives as the character U+0004, and Ctrl-Z (U+001A) may
+     * arrive literally when input is piped (e.g. through Gradle). Like
+     * CPython on Windows, we honour these only at the start of a line.
+     *
+     * @param line as read
+     * @return {@code true} if the line means end of input
+     */
+    private static boolean isEndOfInput(String line) {
+        return !line.isEmpty() && (line.charAt(0) == '\u0004' || line.charAt(0) == '\u001a');
     }
 
     /**
@@ -142,7 +156,7 @@ public class Repl {
         try (ReplCompiler compiler = new ReplCompiler()) {
             System.out.printf("Jython 3 (prototype) using CPython compiler %s%n",
                     compiler.executable);
-            System.out.println("Ctrl-D to exit.");
+            System.out.println("Ctrl-D (or Ctrl-Z, Enter) to exit.");
             new Repl(in, System.out, System.err, compiler).run();
         }
     }

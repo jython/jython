@@ -105,6 +105,16 @@ class ReplTest extends UnitTestSupport {
     }
 
     @Test
+    @DisplayName("treats Ctrl-D or Ctrl-Z at the start of a line as end of input")
+    void controlCharEndsInput() throws IOException {
+        for (String eof : new String[] {"\u0004", "\u001a"}) {
+            Session s = session("x = 6 * 7", eof + "junk", "x");
+            assertEquals(">>> >>> \n", s.out());
+            assertEquals("", s.err());
+        }
+    }
+
+    @Test
     @DisplayName("reports a syntax error and carries on")
     void reportsSyntaxError() throws IOException {
         Session s = session("1 +", "2");
