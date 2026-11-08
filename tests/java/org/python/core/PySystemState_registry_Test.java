@@ -170,12 +170,20 @@ public class PySystemState_registry_Test extends TestCase {
         URL url = thisClass.getResource(classFileName);
         assertNotNull(url);
         String path = URLDecoder.decode(url.getPath(), "UTF-8");
-        assertTrue(path.endsWith(classFileName));
-        String classesDirName = path.substring(0, path.length() - classFileName.length());
-        File classesDir = new File(classesDirName);
-        assertTrue(classesDir.exists());
-        assertTrue(classesDir.isDirectory());
-        _root = new File(classesDir.getParentFile().getParentFile(), DIST);
+        if  (path.contains("jython-test.jar!")) {
+            path = path.substring(0, path.indexOf("jython-test.jar!"));
+            if (path.startsWith("file:")) {
+                path = path.substring("file:".length());
+            }
+            _root = new File(path);
+        } else {
+            assertTrue(path.endsWith(classFileName));
+            String classesDirName = path.substring(0, path.length() - classFileName.length());
+            File classesDir = new File(classesDirName);
+            assertTrue(classesDir.exists());
+            assertTrue(classesDir.isDirectory());
+            _root = new File(classesDir.getParentFile().getParentFile(), DIST);
+        }
         assertTrue(_root.exists());
         assertTrue(_root.isDirectory());
     }
