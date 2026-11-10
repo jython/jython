@@ -33,7 +33,7 @@ rather than during the release process:
   This magic declares old compiled files incompatible, forcing a fresh compilation for users.
   (Maybe do it anyway, if it's been a long time.)
 
-Consider *not* doing some of these actions until a release candidate is imminent.
+Consider *not* doing some of these actions until a beta release is imminent.
 The way we manage dependencies means the repository history contains
 a copy of every version of every JAR we ever used.
 This is a lot of space.
@@ -54,7 +54,7 @@ To complete a public release you need the following things:
 * The right to publish Jython at the
   [Maven Central Repository](https://central.sonatype.com).
 * A PGP signing key pair (generated with `gpg --gen-key`).
-* Access to the channels where we announce releases (e.g. Twitter).
+* Access to the channels where we announce releases (e.g. Bluesky).
 
 You can dry-run this process with only the first pre-requisite (driver JARs),
 and a Git clone of the official repository.
@@ -172,6 +172,11 @@ to match the identity of the next release.
 The build script ensures that, until we actually tag a change set as a release,
 the version numbers set here will always appear with a "snapshot" suffix.
 
+You may also like to update a copy of `ProcessDocs/releasing.md` (this document),
+as you discover errors or changes while following it.
+It cannot be done on the same repo as the release work
+because it looks to the build like a modified file.
+
 You should run the `ant javatest` and `ant regrtest` targets at this point,
 and also the gradle build `.\gradlew --console=plain publish`.
 These should run cleanly, or at least failures be explained and acceptable,
@@ -202,6 +207,7 @@ Changes to be committed:
         modified:   build.gradle
         modified:   build.xml
 
+$ git commit -m"Prepare for 2.7.5b1 release."
 [master 4ff770969] Prepare for 2.7.5b1 release.
  3 files changed, 9 insertions(+), 4 deletions(-)
 
@@ -348,7 +354,8 @@ The artifacts of interest are produced in the `./dist` directory and they are:
 1. `sources.jar`
 1. `javadoc.jar`
 
-> [!NOTE] At the time of writing, the `javadoc` sub-target produces many warnings.
+> [!NOTE]
+> At the time of writing, the `javadoc` sub-target produces many warnings.
 > Java 8 is much stricter than Java 7 about correct Javadoc.
 > These are not fatal to the build:
 > they are a sign that our Javadoc is a bit shabby (and always was secretly).
@@ -358,7 +365,7 @@ The artifacts of interest are produced in the `./dist` directory and they are:
 
 We will also build a slim JAR (one *not* containing its dependencies) using Gradle.
 The Gradle build was released experimentally in Jython 2.7.2.
-Now users have a experience using this JAR for applications,
+Now users have experience using this JAR for applications,
 we consider it a normal part of the build.
 
 Gradle operates a build entirely parallel to the Ant build,
@@ -653,7 +660,30 @@ This leaves the following new artifacts in `./publications`:
 
 ## Publication
 
-### Account
+We publish our artefacts by two routes:
+Sonatype (Maven Central) and GitHub Releases.
+
+Since we published 2.7.4,
+Sonatype has begun to constrain the volume and frequency of publication.
+While our frequency of publication presents no challenge,
+our use of shaded JARs significantly exceeds their normal limits.
+We have been granted increased limits but will also moderate our use.
+
+We only need Maven Central to contain those artefacts that are
+cited in a user's Maven or Gradle build as a dependency:
+`jython-slim`, `jython-standalone` and plain `jython` JARs.
+Files that users download and use locally are hosted at GitHub:
+`jython-installer` and `jython-standalone`.
+
+The `jython-standalone` JAR appears in both lists.
+On the website we direct users who want that to GitHub
+assuming they are seeking a copy to download.
+The Maven Central route must continue to work for build scripts.
+It is possible for Sonatype to redirect requests for `jython-standalone`
+to the GitHub copy, but this is not active as far as we know.
+
+
+### Sonatype Account
 
 In order to publish the bundles created in `./publications`,
 it is necessary to have an account with access to `groupId` `org.python`,
@@ -672,10 +702,8 @@ This must be published through the pool of PGP key servers
 for Sonatype to pick up,
 and so reassure users that
 this release of Jython is really from the project.
-
 Follow the Maven Central guide
-[Working with PGP Signatures](https://central.sonatype.org/publish/requirements/gpg/),
-which now appears to have been updated with the changes.
+[Working with PGP Signatures](https://central.sonatype.org/publish/requirements/gpg/).
 
 ```posh
 PS work> gpg --list-secret-keys
@@ -731,10 +759,12 @@ It has changed a lot since we published version 2.7.4.
   (It takes a little time for the dialogue to close.)
 
 Do this process in turn for:
-  * `jython-slim-2.7.5b1-bundle.jar`
+  * `jython-slim-2.7.5b1-bundle.jar` (done)
   * `jython-standalone-2.7.5b1-bundle.jar`
   * `jython-2.7.5b1-bundle.jar`
-  * `jython-installer-2.7.5b1-bundle.jar`
+
+The script makes a bundle for `jython-installer` too
+but we do not any more publish that via Sonatype.
 
 Each upload creates a "Deployment" where we have the option to "Publish"
 (if validation was successful)
@@ -756,23 +786,21 @@ are correct for each.
 > If any vulnerability is sufficiently serious to warrant upgrading JARs,
 > treat this as a late test failure:
 > fix it in your normal development environment with a PR and repeat the process.  
-> 
-> Assuming you have deferred pushing the tag no publicly visible harm has been done.
-> (See [Push with tag](#only-now-is-it-safe-to-git-push) below.)
-> If you already pushed the tag,
-> repeat the release process with an appropriate increment on the version number.
 
-You may discard (drop) Repositories that you decide not to publish
-from the "Staging Repositories" tab in the repository manager.
+If something has failed,
+and you choose to drop the deployments in order to address it, 
+then assuming you have deferred pushing the tag,
+no publicly visible harm has been done.
+(See [Push with tag](#only-now-is-it-safe-to-git-push) below.)
+If you already pushed the tag,
+repeat the build for release with an appropriate increment on the version number.
 
-* Under "Build Promotion" select the "Staging Repositories" tab.
-* Check (on the "Activity" tab)
-  that the upload reached "Close" with good status,
-  If not, it should tell you what is lacking, and you have to go back and fix it.
+Before you publish, you may test the Sonatype JARs.
+
 * In a fresh directory,
   download the (as yet unreleased) JAR files from Sonatype and test them,
   repeating the section [Test what you built](#test-what-you-built).
-  (Do this for at least the standalone and installer JARs,
+  (Do this for at least the standalone JAR,
   and the SHA-1 and SHA-256 checksum files too.)
   You get the files from the deployments page,
   under each component's "Component Files" section.
@@ -791,8 +819,17 @@ from the "Staging Repositories" tab in the repository manager.
 
 If testing convinces you this is a build we should let loose
 on an unsuspecting public,
-it is time to push these changes and the tag you made
+you are ready to push these changes and the tag you made
 upstream to the Jython repository.
+
+It *should* be safe once testing is complete,
+but trying to publsh at Sonatype has sometimes revealed problems
+in our packaging scripts,
+which are checked-in code.
+GitHub releases are based on a tag,
+which has to be on the public repository.
+So we have to push here before we publish at GitHub.
+
 Back in the place where the release was built (and using Bash):
 
 ```bash
@@ -805,6 +842,50 @@ It is problematic to delete a tag after the push.
 It is better to increment the version,
 which is painless if it is an `a`, `b`, or `rc` release,
 and painfully obvious if this is a final release.
+
+
+
+### Publication via GitHub Releases
+
+There is extensive documentation on [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github).
+We are following the step-by-step process in [Creating a Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release).
+
+[!NOTE]
+> We do not currently make our releases immutable.
+> We probably should, but as the process is new to us,
+> we wish to be able to remedy errors.
+
+Go to the [repository main page](https://github.com/jython/jython)
+and from there into "Releases"
+or directly to [Releases](https://github.com/jython/jython/releases).
+Choose "Draft a new Release" and choose the tag you just pushed.
+
+The release title is something like "Jython v2.7.5b1", with no "installer" or other qualifier,
+because we shall put all the artefacts of that release into one GitHub Release.
+
+GitHub will generate release notes for you from the commit history,
+which may be adequate for a beta release after the first or a release candidate,
+since little will have changed.
+The notes on a first beta or a final should describe the progress since the last full release.
+The new features text in NEWS is ready-made for this so paste that in.
+
+In the next section we add the release JARs as "binary artefacts".
+The JARs we need to post are essentially those in `dist`, in the working directory.
+A small annoyance is that the JARs we post
+should have version numbers in the name, and these don't.
+The most consistent approach is to take the JARs from the bundles we built for Sonatype,
+which are just ZIP files with a particular structure.
+
+* In the ` ./publications` directory,
+  unpack both `jython-installer-2.7.5b1-bundle.zip` and `jython-standalone-2.7.5b1-bundle.zip`.
+* Navigate to `jython-installer-2.7.5b1.jar` and `jython-standalone-2.7.5b1.jar`,
+  and add each to the release by dragging them onto the window.
+* Optionally add `jython-standalone-2.7.5b1-javadoc.jar`
+
+We do not add checksums or sources as GitHub takes care of that.
+
+Under "Release label" choose "Latest" if this is a final relase for the version,
+or choose "Pre-release" for anything else (alpha, beta, candidate).
 
 
 ### Announcement
@@ -822,7 +903,7 @@ and painfully obvious if this is a final release.
 
   Exactly what you do here will depend on the kind of release you just made.
 
-* announce on Twitter (as `jython`), mailing lists, blog ...
+* announce on Bluesky (as `jython`), mailing lists, X, blog ...
 
 
 ## Ready for new work
