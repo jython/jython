@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +118,7 @@ public class AstCache {
         try {
             mod = parse(path, contents);
             if (mod != null) {
-                mod.setFileAndMD5(path, Util.getMD5(contents.getBytes("UTF-8")));
+                mod.setFileAndMD5(path, Util.getMD5(contents.getBytes(StandardCharsets.UTF_8)));
             }
         } finally {
             cache.put(path, mod);  // may be null
