@@ -182,6 +182,11 @@ class TestPOP3Class(TestCase):
         self.assertOK(self.client.pass_('python'))
         self.assertRaises(poplib.error_proto, self.client.user, 'invalid')
 
+    def test_control_characters(self):
+        for c0 in [chr(c) for c in range(0x20)] + ['\x7f']:
+            self.assertRaises(ValueError, self.client.user, 'user%s' % c0)
+            self.assertRaises(ValueError, self.client.pass_, '%spass' % c0)
+
     def test_stat(self):
         self.assertEqual(self.client.stat(), (10, 100))
 
