@@ -823,7 +823,7 @@ you are ready to push these changes and the tag you made
 upstream to the Jython repository.
 
 It *should* be safe once testing is complete,
-but trying to publsh at Sonatype has sometimes revealed problems
+but trying to publish at Sonatype has sometimes revealed problems
 in our packaging scripts,
 which are checked-in code.
 GitHub releases are based on a tag,
@@ -884,7 +884,7 @@ which are just ZIP files with a particular structure.
 
 We do not add checksums or sources as GitHub takes care of that.
 
-Under "Release label" choose "Latest" if this is a final relase for the version,
+Under "Release label" choose "Latest" if this is a final release for the version,
 or choose "Pre-release" for anything else (alpha, beta, candidate).
 
 
