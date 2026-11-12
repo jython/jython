@@ -208,13 +208,13 @@ dependencies {
 
     implementation 'jline:jline:2.14.6'
 
-    implementation 'io.netty:netty-buffer:4.1.136.Final'
-    implementation 'io.netty:netty-codec:4.1.136.Final'
-    implementation 'io.netty:netty-common:4.1.136.Final'
-    implementation 'io.netty:netty-handler:4.1.136.Final'
-    implementation 'io.netty:netty-resolver:4.1.136.Final'
-    implementation 'io.netty:netty-transport:4.1.136.Final'
-    implementation 'io.netty:netty-transport-native-unix-common:4.1.136.Final'
+    implementation 'io.netty:netty-buffer:4.1.140.Final'
+    implementation 'io.netty:netty-codec:4.1.140.Final'
+    implementation 'io.netty:netty-common:4.1.140.Final'
+    implementation 'io.netty:netty-handler:4.1.140.Final'
+    implementation 'io.netty:netty-resolver:4.1.140.Final'
+    implementation 'io.netty:netty-transport:4.1.140.Final'
+    implementation 'io.netty:netty-transport-native-unix-common:4.1.140.Final'
 
     // Used implicitly in the Ant build, must be explicit here
     implementation 'org.apache.ant:ant:1.10.14'
