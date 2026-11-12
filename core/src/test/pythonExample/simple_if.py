@@ -1,5 +1,6 @@
 # simple_if.py
 
+# Opcodes POP_JUMP_FORWARD_IF_FALSE, JUMP_FORWARD
 b = False
 if b:
     r0 = 1
@@ -30,3 +31,14 @@ r5 = 1 if b else 0
 b = None
 r6 = 1 if b else 0
 
+# Opcodes POP_JUMP_FORWARD_IF_NOT_NONE
+if b is None:
+    r7 = 1
+else:
+    r7 = 0
+
+# Opcode is POP_JUMP_FORWARD_IF_NONE
+if b is not None:
+    r8 = 1
+else:
+    r8 = 0

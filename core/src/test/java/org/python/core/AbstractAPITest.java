@@ -1,11 +1,10 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigInteger;
@@ -29,6 +28,9 @@ import org.junit.jupiter.api.Test;
 @DisplayName("The API class Abstract")
 class AbstractAPITest extends UnitTestSupport {
 
+    /** A shorthand for the Python {@code object} type. */
+    static PyType OBJECT = PyObject.TYPE;
+
     /** A shorthand for the Python {@code int} type. */
     static PyType INT = PyLong.TYPE;
 
@@ -47,9 +49,23 @@ class AbstractAPITest extends UnitTestSupport {
 
         abstract void supports_richCompare() throws Throwable;
 
+        abstract void supports_getItem() throws Throwable;
+
+        abstract void supports_setItem() throws Throwable;
+
+        abstract void supports_delItem() throws Throwable;
+
         abstract void supports_getAttr_String() throws Throwable;
 
         abstract void supports_lookupAttr_String() throws Throwable;
+
+        abstract void supports_setAttr_String() throws Throwable;
+
+        abstract void supports_delAttr_String() throws Throwable;
+
+        abstract void supports_isInstance() throws Throwable;
+
+        abstract void supports_isSubclass() throws Throwable;
     }
 
     /** The {@code int} implementations all behave like this. */
@@ -118,6 +134,27 @@ class AbstractAPITest extends UnitTestSupport {
 
         @Override
         @Test
+        void supports_getItem() throws Throwable {
+            // You can't do this with an int
+            assertRaises(PyExc.TypeError, () -> PySequence.getItem(small, 0));
+        }
+
+        @Override
+        @Test
+        void supports_setItem() throws Throwable {
+            // You can't do this with an int
+            assertRaises(PyExc.TypeError, () -> PySequence.setItem(small, 0, large));
+        }
+
+        @Override
+        @Test
+        void supports_delItem() throws Throwable {
+            // You can't do this with an int
+            assertRaises(PyExc.TypeError, () -> PySequence.delItem(small, 0));
+        }
+
+        @Override
+        @Test
         void supports_getAttr_String() throws Throwable {
             // An int has a "real" attribute that is itself
             // But we haven't implemented it yet
@@ -125,7 +162,7 @@ class AbstractAPITest extends UnitTestSupport {
             // assertSame(v, Abstract.getAttr(v, "real"));
             // }
             // An int doesn't have a "foo" attribute
-            assertThrows(AttributeError.class, () -> Abstract.getAttr(small, "foo"));
+            assertRaises(PyExc.AttributeError, () -> Abstract.getAttr(small, "foo"));
         }
 
         @Override
@@ -133,6 +170,38 @@ class AbstractAPITest extends UnitTestSupport {
         void supports_lookupAttr_String() throws Throwable {
             // An int doesn't have a foo attribute
             assertNull(Abstract.lookupAttr(small, "foo"));
+        }
+
+        @Override
+        @Test
+        void supports_setAttr_String() throws Throwable {
+            // An int won't let us set its "real"
+            assertRaises(PyExc.AttributeError, () -> Abstract.setAttr(small, "foo", 0));
+        }
+
+        @Override
+        @Test
+        void supports_delAttr_String() throws Throwable {
+            // An int won't let us delete its "real"
+            assertRaises(PyExc.AttributeError, () -> Abstract.delAttr(large, "foo"));
+        }
+
+        @Override
+        @Test
+        void supports_isInstance() throws Throwable {
+            // An int is an int
+            assertTrue(Abstract.isInstance(small, INT));
+            // An int is an object
+            assertTrue(Abstract.isInstance(small, OBJECT));
+        }
+
+        @Override
+        @Test
+        void supports_isSubclass() throws Throwable {
+            // An int is an int
+            assertTrue(Abstract.isSubclass(PyType.of(small), INT));
+            // An int is an object
+            assertTrue(Abstract.isSubclass(PyType.of(small), OBJECT));
         }
     }
 

@@ -1,7 +1,7 @@
 /*
- * build.gradle
+ * $projectDir/build.gradle
  *
- * Build file for the Jython Project, a multi-project build.
+ * Root project build file for the Jython Project, a multi-project build.
  */
 
 plugins {
@@ -25,7 +25,7 @@ plugins {
 // Versions are specified in this grammar:
 // <major> . <minor> ( . <micro> )? ( <release> <serial> )? ( - <word> )?
 
-version = '3.11.0a1'
+version = '3.11.0a2'
 
 // Valid examples (please preserve in comments):
 //version = '2.7.2a2'
@@ -35,17 +35,18 @@ version = '3.11.0a1'
 //version = '2.7.2'
 
 group = 'org.python'
+description = 'Jython - Python for the Java Platform'
+
 
 // ---------------- Miscellaneous configuration --------------------------------
 
 allprojects {
 
     apply plugin: 'java'
-    // We support Java 11 onwards officially.
-    sourceCompatibility = '17'
 
     // Same configuiration all sub-projects
     tasks.withType(JavaCompile) {
+        sourceCompatibility = '17'
         options.encoding = 'UTF-8'
         options.debug = true
 
@@ -58,12 +59,12 @@ allprojects {
 
     tasks.withType(Javadoc) {
         options.encoding = 'UTF-8'
-        options.showFromPackage()
     }
 
     repositories {
         mavenLocal()
-        // Jython is distributed through Maven Central. Get our dependencies there too.
+        // Jython is distributed through Maven Central.
+        // Get our dependencies there too.
         mavenCentral()
     }
 }

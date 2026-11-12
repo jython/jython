@@ -19,8 +19,8 @@ include 'core'          // core API and objects of the interpreter runtime
 
 // Each sub-project contains a build file named after it.
 rootProject.children.each {
-    println it
     it.buildFileName = it.name + '.gradle'
+    // println "" + it + " : " + it.buildFileName
 }
 
 /*

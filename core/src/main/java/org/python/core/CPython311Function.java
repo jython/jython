@@ -1,4 +1,4 @@
-// Copyright (c)2023 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -9,8 +9,8 @@ class CPython311Function extends PyFunction<CPython311Code> {
     private ArgParser argParser;
 
     /**
-     * Create a Python {@code function} object defined in CPython 3.11
-     * code (full-featured constructor).
+     * Create a Python {@code function} object defined in CPython 3.11 code
+     * (full-featured constructor).
      *
      * @param interpreter providing the module context
      * @param code defining the function
@@ -18,8 +18,8 @@ class CPython311Function extends PyFunction<CPython311Code> {
      * @param defaults default positional argument values
      * @param kwdefaults default keyword argument values
      * @param annotations type annotations
-     * @param closure variable referenced but not defined here, must be
-     *     the same size as code
+     * @param closure variable referenced but not defined here, must be the
+     *     same size as code
      */
     CPython311Function(Interpreter interpreter, CPython311Code code, PyDict globals,
             Object[] defaults, PyDict kwdefaults, Object annotations, PyCell[] closure) {
@@ -28,22 +28,46 @@ class CPython311Function extends PyFunction<CPython311Code> {
     }
 
     /**
-     * Create a Python {@code function} object defined in CPython 3.11
-     * code in a simplified form suitable to represent execution of a
-     * top-level module.
+     * Create a Python {@code function} object defined in CPython 3.11 code
+     * in a simplified form suitable to represent execution of a top-level
+     * module.
      *
      * @param interpreter providing the module context
      * @param code defining the function
      * @param globals name space to treat as global variables
      */
-    public CPython311Function(Interpreter interpreter, CPython311Code code, PyDict globals) {
+    CPython311Function(Interpreter interpreter, CPython311Code code, PyDict globals) {
         this(interpreter, code, globals, null, null, null, null);
+    }
+
+    @Override
+    void setCode(CPython311Code code) {
+        super.setCode(code);
+        argParser = code.buildParser().defaults(defaults).kwdefaults(kwdefaults);
+    }
+
+    @Override
+    Object getDefaults() { return tupleOrNone(defaults); }
+
+    @Override
+    void setDefaults(PyTuple defaults) {
+        this.defaults = defaults.toArray();
+        argParser.defaults(this.defaults);
+    }
+
+    @Override
+    Object getKwdefaults() { return kwdefaults != null ? kwdefaults : Py.None; }
+
+    @Override
+    void setKwdefaults(PyDict kwdefaults) {
+        this.kwdefaults = kwdefaults;
+        argParser.kwdefaults(this.kwdefaults);
     }
 
     @Override
     CPython311Frame createFrame(Object locals) { return new CPython311Frame(this, locals); }
 
-    // slot methods --------------------------------------------------
+    // Special methods ------------------------------------------------
 
     @Override
     Object __call__(Object[] args, String[] names) throws Throwable {
@@ -58,4 +82,8 @@ class CPython311Function extends PyFunction<CPython311Code> {
         // Run the function body
         return frame.eval();
     }
+
+    // FastCall support ----------------------------------------------
+
+    // plumbing ------------------------------------------------------
 }

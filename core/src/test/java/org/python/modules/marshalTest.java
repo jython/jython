@@ -1,9 +1,10 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.modules;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -20,39 +21,68 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import org.python.core.Abstract;
+import org.python.core.Interpreter;
 import org.python.core.Py;
+import org.python.core.PyAttributeError;
 import org.python.core.PyBytes;
 import org.python.core.PyDict;
+import org.python.core.PyExc;
 import org.python.core.PyList;
+import org.python.core.PyModule;
 import org.python.core.PySequence;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
-import org.python.core.StopIteration;
 import org.python.core.UnitTestSupport;
-import org.python.modules.marshal.BytesReader;
-import org.python.modules.marshal.BytesWriter;
-import org.python.modules.marshal.Reader;
-import org.python.modules.marshal.StreamReader;
-import org.python.modules.marshal.StreamWriter;
-import org.python.modules.marshal.Writer;
-import org.python.core.stringlib.ByteArrayBuilder;
+import org.python.modules.MarshalModule.BytesWriter;
+import org.python.modules.MarshalModule.Reader;
+import org.python.modules.MarshalModule.StreamWriter;
+import org.python.modules.MarshalModule.Writer;
+import org.python.stringlib.ByteArrayBuilder;
 
 /**
- * Test reading (and to some extent writing) objects using the
- * marshal module. We are interested for now only in reading code
- * objects and their reference results.
- *
- * We test the Java API only, consistent with our interest in
- * reading code for execution.
+ * Test reading (and to some extent writing) objects using the marshal
+ * module. We are interested for now only in reading code objects and
+ * their reference results.
+ * <p>
+ * We test the Java API only, consistent with our interest in reading
+ * code for execution.
  */
-@DisplayName("Read and write objects with marshal")
+@DisplayName("The marshal module ...")
 class marshalTest extends UnitTestSupport {
 
+    @Test
+    @DisplayName("can be loaded by an interpreter")
+    @SuppressWarnings("static-method")
+    void loadIntoInterpreter() {
+        Interpreter interp = new Interpreter();
+        // Hand-crank adding the module
+        PyModule marshal = new MarshalModule();
+        interp.addModule(marshal);
+        assertSame(marshal, interp.getModule("marshal"));
+    }
+
+    @Test
+    @DisplayName("has expected attributes")
+    @SuppressWarnings("static-method")
+    void canBeAccessed() throws PyAttributeError, Throwable {
+        // Hand-crank adding and executing the module
+        PyModule marshal = new MarshalModule();
+        marshal.exec();
+        // Look up arbitrary functions
+        assertNotNull(Abstract.getAttr(marshal, "dumps"));
+        assertNotNull(Abstract.getAttr(marshal, "load"));
+        assertPythonEquals(4, Abstract.getAttr(marshal, "version"));
+    }
+
     /**
-     * Base of tests that read or write elementary values where a
-     * reference is available serialised by CPython.
+     * Base of tests that read or write elementary values where a reference
+     * is available serialised by CPython.
      */
     abstract static class AbstractElementTest {
+
+        /** Instance of the {@code marshal} module. */
+        MarshalModule marshal = new MarshalModule();
 
         /**
          * Test cases for serialising 16-bit ints.
@@ -114,8 +144,8 @@ class marshalTest extends UnitTestSupport {
         }
 
         /**
-         * Wrap a {@code byte}, {@code short} or {@code int} expected value
-         * and its marshalled form as a arguments for a test.
+         * Wrap a {@code byte}, {@code short} or {@code int} expected value and
+         * its marshalled form as a arguments for a test.
          *
          * @param expected result
          * @param bytes containing value to decode
@@ -140,19 +170,19 @@ class marshalTest extends UnitTestSupport {
     }
 
     /**
-     * Tests reading from a {@code ByteBuffer}, which is also how we
-     * shall address objects with the Python buffer protocol
-     * ({@link PyBytes} etc.), and native {@code byte[]}.
+     * Tests reading from a {@code ByteBuffer}, which is also how we shall
+     * address objects with the Python buffer protocol ({@link PyBytes}
+     * etc.), and native {@code byte[]}.
      */
     @Nested
-    @DisplayName("Read elementary values from bytes")
+    @DisplayName("reads elementary values from bytes")
     class ReadBytesElementary extends AbstractElementTest {
 
         @DisplayName("r.readShort()")
         @ParameterizedTest(name = "r.readShort() = {0}")
         @MethodSource("int16")
         void int16read(Integer expected, byte[] b) {
-            Reader r = new BytesReader(b);
+            Reader r = marshal.new BytesReader(b);
             assertEquals(expected, r.readShort());
         }
 
@@ -160,7 +190,7 @@ class marshalTest extends UnitTestSupport {
         @ParameterizedTest(name = "r.readInt() = {0}")
         @MethodSource("int32")
         void int32read(Integer expected, byte[] b) {
-            Reader r = new BytesReader(b);
+            Reader r = marshal.new BytesReader(b);
             assertEquals(expected, r.readInt());
         }
 
@@ -168,7 +198,7 @@ class marshalTest extends UnitTestSupport {
         @ParameterizedTest(name = "r.readInt() = {0}")
         @MethodSource("int64")
         void int64read(Long expected, byte[] b) {
-            Reader r = new BytesReader(b);
+            Reader r = marshal.new BytesReader(b);
             assertEquals(expected, r.readLong());
         }
 
@@ -176,25 +206,25 @@ class marshalTest extends UnitTestSupport {
         @ParameterizedTest(name = "r.readBigInteger() = {0}")
         @MethodSource("bigint")
         void bigintread(BigInteger expected, byte[] b) {
-            Reader r = new BytesReader(b);
+            Reader r = marshal.new BytesReader(b);
             assertEquals(expected, r.readBigInteger());
         }
     }
 
     /**
-     * Tests reading elementary values from an {@code InputStream},
-     * which is also how we shall address file-like objects in Python,
-     * and native Java input streams.
+     * Tests reading elementary values from an {@code InputStream}, which is
+     * also how we shall address file-like objects in Python, and native
+     * Java input streams.
      */
     @Nested
-    @DisplayName("Read elementary values from a stream")
+    @DisplayName("reads elementary values from a stream")
     class ReadStreamElementary extends AbstractElementTest {
 
         @DisplayName("r.readShort()")
         @ParameterizedTest(name = "r.readShort() = {0}")
         @MethodSource("int16")
         void int16read(Integer expected, byte[] b) {
-            Reader r = new StreamReader(new ByteArrayInputStream(b));
+            Reader r = marshal.new StreamReader(new ByteArrayInputStream(b));
             assertEquals(expected, r.readShort());
         }
 
@@ -202,7 +232,7 @@ class marshalTest extends UnitTestSupport {
         @ParameterizedTest(name = "r.readInt() = {0}")
         @MethodSource("int32")
         void int32read(Integer expected, byte[] b) {
-            Reader r = new StreamReader(new ByteArrayInputStream(b));
+            Reader r = marshal.new StreamReader(new ByteArrayInputStream(b));
             assertEquals(expected, r.readInt());
         }
 
@@ -210,7 +240,7 @@ class marshalTest extends UnitTestSupport {
         @ParameterizedTest(name = "r.readInt() = {0}")
         @MethodSource("int64")
         void int64read(Long expected, byte[] b) {
-            Reader r = new StreamReader(new ByteArrayInputStream(b));
+            Reader r = marshal.new StreamReader(new ByteArrayInputStream(b));
             assertEquals(expected, r.readLong());
         }
 
@@ -218,19 +248,18 @@ class marshalTest extends UnitTestSupport {
         @ParameterizedTest(name = "r.readBigInteger() = {0}")
         @MethodSource("bigint")
         void bigintread(BigInteger expected, byte[] b) {
-            Reader r = new StreamReader(new ByteArrayInputStream(b));
+            Reader r = marshal.new StreamReader(new ByteArrayInputStream(b));
             assertEquals(expected, r.readBigInteger());
         }
     }
 
     /**
-     * Tests writing to a {@code ByteArrayBuilder}, which is how we
-     * create a {@link PyBytes} serialising an object. In the test, we
-     * recover a native {@code byte[]} to compare with the expected
-     * bytes.
+     * Tests writing to a {@code ByteArrayBuilder}, which is how we create a
+     * {@link PyBytes} serialising an object. In the test, we recover a
+     * native {@code byte[]} to compare with the expected bytes.
      */
     @Nested
-    @DisplayName("Write elementary values to bytes")
+    @DisplayName("writes elementary values to bytes")
     class WriteBytesElementary extends AbstractElementTest {
 
         @DisplayName("w.writeShort()")
@@ -275,14 +304,14 @@ class marshalTest extends UnitTestSupport {
     }
 
     /**
-     * Tests writing elementary values to an {@code OutputStream}, which
-     * is also how we shall address file-like objects in Python, and
-     * native Java input streams. In the test, we write to a
-     * {@link ByteArrayOutputStream} and recover a native {@code byte[]}
-     * to compare with the expected bytes.
+     * Tests writing elementary values to an {@code OutputStream}, which is
+     * also how we shall address file-like objects in Python, and native
+     * Java input streams. In the test, we write to a
+     * {@link ByteArrayOutputStream} and recover a native {@code byte[]} to
+     * compare with the expected bytes.
      */
     @Nested
-    @DisplayName("Write elementary values to a stream")
+    @DisplayName("writes elementary values to a stream")
     class WriteStreamElementary extends AbstractElementTest {
 
         @DisplayName("w.writeShort()")
@@ -329,17 +358,20 @@ class marshalTest extends UnitTestSupport {
     /** Base of tests that read objects serialised by CPython. */
     abstract static class AbstractLoadTest {
 
+        /** Instance of the {@code marshal} module. */
+        MarshalModule marshal = new MarshalModule();
+
         /**
-         * Provide a stream of examples as parameter sets to the tests. In
-         * each example, the expression is given (as documentation only)
-         * that was originally evaluated by CPython, and the serialisation
-         * of the result as bytes. The final argument is an equivalent
-         * expression within this implementation of Python. Deserialising
-         * the bytes should be equal to this argument.
+         * Provide a stream of examples as parameter sets to the tests. In each
+         * example, the expression is given (as documentation only) that was
+         * originally evaluated by CPython, and the serialisation of the result
+         * as bytes. The final argument is an equivalent expression within this
+         * implementation of Python. Deserialising the bytes should be equal to
+         * this argument.
          * <p>
          * The examples were generated programmatically from a list of the
          * expressions using the script at
-         * {@code ~/build-tools/python/tool/marshal_test.py}.
+         * {@code ~/tools/python/lib/marshal_test.py}.
          *
          * @return the examples for object loading tests.
          */
@@ -456,13 +488,13 @@ class marshalTest extends UnitTestSupport {
                     // Hand-generated examples
 
                     loadExample("StopIteration", // tc='S'
-                            bytes('S'), StopIteration.TYPE));
+                            bytes('S'), PyExc.StopIteration));
 
         }
 
         /**
-         * A list referring to itself: {@code listself = [1, listself, 3]},
-         * used for tesing the marshalling of a self-referential list.
+         * A list referring to itself: {@code listself = [1, listself, 3]}, used
+         * for tesing the marshalling of a self-referential list.
          */
         static final PyList LISTSELF = listself();
 
@@ -479,8 +511,8 @@ class marshalTest extends UnitTestSupport {
                 0x00, 0x00, 0x00, 0xe9, 0x03, 0x00, 0x00, 0x00, 0xe9, 0x04, 0x00, 0x00, 0x00);
 
         /**
-         * Construct a set of test arguments for a single test of load, and
-         * a reference result provided by the caller.
+         * Construct a set of test arguments for a single test of load, and a
+         * reference result provided by the caller.
          *
          * @param expression to identify the test
          * @param bytes to deserialise
@@ -496,7 +528,7 @@ class marshalTest extends UnitTestSupport {
      * Python buffer protocol.
      */
     @Nested
-    @DisplayName("Read object from bytes-like")
+    @DisplayName("reads objects from bytes-like")
     class MarshalLoadBytesTest extends AbstractLoadTest {
 
         @DisplayName("loads(b)")
@@ -524,11 +556,11 @@ class marshalTest extends UnitTestSupport {
     }
 
     /**
-     * Tests reading a complete object from a {@code byte[]}, wrapping
-     * it as a stream.
+     * Tests reading a complete object from a {@code byte[]}, wrapping it as
+     * a stream.
      */
     @Nested
-    @DisplayName("Read object from a stream")
+    @DisplayName("reads objects from a stream")
     class MarshalLoadStreamTest extends AbstractLoadTest {
 
         @DisplayName("load(f)")
@@ -558,8 +590,7 @@ class marshalTest extends UnitTestSupport {
     // Support methods ------------------------------------------------
 
     /**
-     * Copy values to a new {@code byte[]} casting each to a
-     * {@code byte}.
+     * Copy values to a new {@code byte[]} casting each to a {@code byte}.
      *
      * @param v to convert to {@code byte}
      * @return the byte array of cast values

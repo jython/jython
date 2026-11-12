@@ -1,3 +1,5 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandles;
@@ -11,18 +13,24 @@ import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySequence.Delegate;
 import org.python.core.PySlice.Indices;
-import org.python.core.stringlib.ByteArrayBuilder;
+import org.python.core.PyUtil.NoConversion;
+import org.python.stringlib.ByteArrayBuilder;
+import org.python.types.Feature;
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /** The Python {@code bytes} object. */
-public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
+public class PyBytes extends AbstractList<Integer> implements WithClass {
 
     /** The type of Python object this class implements. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("bytes", MethodHandles.lookup()));
+            new TypeSpec("bytes", MethodHandles.lookup()).add(Feature.BASETYPE,
+                    Feature.SEQUENCE_PROTOCOL));
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[] {};
+
+    /** Zero length {@code PyBytes} as sharable constant. */
     static final PyBytes EMPTY = new PyBytes(EMPTY_BYTE_ARRAY);
 
     /** The Python type of this instance. */
@@ -41,10 +49,9 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
      * As {@link #PyBytes(byte[])} for Python sub-class specifying
      * {@link #type}. Construct an instance of {@code PyBytes} or a
      * sub-class, from a given array of bytes, with the option to re-use
-     * that array as the implementation. If the actual array is is
-     * re-used the caller must give up ownership and never modify it
-     * after the call. See {@link #concat(PySequenceInterface)} for a
-     * correct use.
+     * that array as the implementation. If the actual array is is re-used
+     * the caller must give up ownership and never modify it after the call.
+     * See {@link #concat(PySequenceInterface)} for a correct use.
      *
      * @param type sub-type for which this is being created
      * @param iPromiseNotToModify if {@code true}, the array becomes the
@@ -115,9 +122,9 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
     public PyBytes(ByteArrayBuilder value) { this(TYPE, true, value.take()); }
 
     /**
-     * Unsafely wrap an array of bytes as a {@code PyBytes}. The caller
-     * must not hold a reference to the argument array (and definitely
-     * not manipulate the contents).
+     * Unsafely wrap an array of bytes as a {@code PyBytes}. The caller must
+     * not hold a reference to the argument array (and definitely not
+     * manipulate the contents).
      *
      * @param value to wrap as a {@code bytes}
      * @return the {@code bytes}
@@ -172,8 +179,7 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
     // Java API -------------------------------------------------------
 
     /**
-     * Expose the contents of the object as a read-only
-     * {@code ByteBuffer}.
+     * Expose the contents of the object as a read-only {@code ByteBuffer}.
      * {@code This is temporary API until we implement the buffer interface.}
      *
      * @return a Java NIO buffer
@@ -193,18 +199,16 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
      *
      * @return array of {@code byte}
      */
-    public byte[] asByteArray() {
-        return Arrays.copyOf(value, value.length);
-    }
+    public byte[] asByteArray() { return Arrays.copyOf(value, value.length); }
 
     // Plumbing -------------------------------------------------------
 
     /**
-     * A class to act as the delegate implementing {@code __getitem__}
-     * and other index-related operations. By inheriting {@link Delegate
+     * A class to act as the delegate implementing {@code __getitem__} and
+     * other index-related operations. By inheriting {@link Delegate
      * PySequence.Delegate} in this inner class, we obtain boilerplate
-     * implementation code for slice translation and range checks. We
-     * need only specify the work specific to {@link PyBytes} instances.
+     * implementation code for slice translation and range checks. We need
+     * only specify the work specific to {@link PyBytes} instances.
      */
     class BytesDelegate extends PySequence.Delegate<Integer, PyBytes> implements PySequence.OfInt {
 
@@ -228,10 +232,7 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
             else {
                 v = new byte[slice.slicelength];
                 int i = slice.start;
-                for (int j = 0; j < slice.slicelength; j++) {
-                    v[j] = value[i];
-                    i += slice.step;
-                }
+                for (int j = 0; j < slice.slicelength; j++) { v[j] = value[i]; i += slice.step; }
             }
             return wrap(v);
         }
@@ -294,8 +295,8 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
         }
 
         /**
-         * Compare for equality with a sequence. This is a little simpler
-         * than {@code compareTo}.
+         * Compare for equality with a sequence. This is a little simpler than
+         * {@code compareTo}.
          *
          * @param b another
          * @return whether values equal
@@ -323,8 +324,8 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
      * {@link PyBytes#spliterator()}. We need this only because
      * {@link #tryAdvance(IntConsumer) tryAdvance} deals in java
      * {@code int}s, while our array is {@code byte[]}. There is no
-     * ready-made {@code Spliterator.OfByte}, and if there were, it
-     * would return signed values.
+     * ready-made {@code Spliterator.OfByte}, and if there were, it would
+     * return signed values.
      */
     private class BytesSpliterator extends Spliterators.AbstractIntSpliterator {
 
@@ -344,8 +345,8 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
     }
 
     /**
-     * A consumer of primitive int values that stores them in an array
-     * given it at construction.
+     * A consumer of primitive int values that stores them in an array given
+     * it at construction.
      */
     private static class ByteStore implements IntConsumer {
 
@@ -365,11 +366,12 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
      * Adapt a Python object to a sequence of Java {@code int} values or
      * throw an exception. If the method throws the special exception
      * {@link NoConversion}, the caller must catch it and deal with it,
-     * perhaps by throwing a {@link TypeError}. A binary operation will
-     * normally return {@link Py#NotImplemented} in that case.
+     * perhaps by throwing a {@link PyExc#TypeError TypeError}. A binary
+     * operation will normally return {@link Py#NotImplemented} in that
+     * case.
      * <p>
-     * Note that implementing {@link PySequence.OfInt} is not enough,
-     * which other types may, but be incompatible in Python.
+     * Note that implementing {@link PySequence.OfInt} is not enough, which
+     * other types may, but be incompatible in Python.
      *
      * @param v to wrap or return
      * @return adapted to a sequence
@@ -379,6 +381,6 @@ public class PyBytes extends AbstractList<Integer> implements CraftedPyObject {
         // Check against supported types, most likely first
         if (v instanceof PyBytes /* || v instanceof PyByteArray */)
             return ((PyBytes)v).delegate;
-        throw PyObjectUtil.NO_CONVERSION;
+        throw PyUtil.NO_CONVERSION;
     }
 }

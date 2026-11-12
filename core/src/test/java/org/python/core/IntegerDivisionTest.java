@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -15,10 +15,10 @@ import org.junit.jupiter.api.Test;
 
 /**
  * These are unit tests of the methods that underlie integer division
- * and modulus: {@code x//y} and {@code x%y}. The Java and Python have
- * differing semantics for integer division and remainder, so it is not
+ * and modulus: {@code x//y} and {@code x%y}. Java and Python have
+ * different semantics for integer division and remainder, so it is not
  * just a case of wrapping up the Java implementation, but of carefully
- * adjusting the arguments and result according to quadrant in which
+ * adjusting the arguments and result according to the quadrant in which
  * {@code (x,y)} lies.
  * <p>
  * Furthermore, we have made an attempt to optimise these
@@ -29,14 +29,14 @@ class IntegerDivisionTest extends UnitTestSupport {
 
     /**
      * We use these values as the dividend. The list includes zero and
-     * {@code Integer.MIN_VALUE}, both of which have alternate paths in
-     * the implementation. {@code -Integer.MIN_VALUE / -1} is important
-     * because Java division silently overflows.
+     * {@code Integer.MIN_VALUE}, both of which have alternate paths in the
+     * implementation. {@code -Integer.MIN_VALUE / -1} is important because
+     * Java division silently overflows.
      */
     private static final int[] XVALUES = argValues(8191, true);
     /**
-     * We use these values as the divisor. The list does not include
-     * zero, since you can't divide by that.
+     * We use these values as the divisor. The list does not include zero,
+     * since you can't divide by that.
      */
     private static final int[] YVALUES = argValues(8933, false);
 
@@ -44,8 +44,7 @@ class IntegerDivisionTest extends UnitTestSupport {
      * 2**31 aka {@code -Integer.MIN_VALUE / -1}, which Java can't
      * represent, but is a reasonable request in Python.
      */
-    private static BigInteger MINUS_INT_MIN =
-            BigInteger.valueOf(-(long)Integer.MIN_VALUE);
+    private static BigInteger MINUS_INT_MIN = BigInteger.valueOf(-(long)Integer.MIN_VALUE);
 
     /**
      * Reference implementation of integer division.
@@ -60,15 +59,14 @@ class IntegerDivisionTest extends UnitTestSupport {
         long lq = Math.round(Math.floor(dq));
         int q = (int)lq;
         if (q != lq)
-            throw new IllegalArgumentException(String
-                    .format("Can't return an int from Q(%d,%d)", x, y));
+            throw new IllegalArgumentException(
+                    String.format("Can't return an int from Q(%d,%d)", x, y));
         return q;
     }
 
     /**
-     * Reference implementation of integer division returning
-     * {@code Object} and correctly handling dividend of
-     * {@link Integer#MIN_VALUE}.
+     * Reference implementation of integer division returning {@code Object}
+     * and correctly handling dividend of {@link Integer#MIN_VALUE}.
      *
      * @param x dividend
      * @param y divisor
@@ -112,8 +110,7 @@ class IntegerDivisionTest extends UnitTestSupport {
     }
 
     /**
-     * Compare {@code x%y} computed by class under test and reference
-     * means.
+     * Compare {@code x%y} computed by class under test and reference means.
      *
      * @param x dividend
      * @param y divisor
@@ -144,10 +141,9 @@ class IntegerDivisionTest extends UnitTestSupport {
     }
 
     /**
-     * Generate values across the range of integers, positive,
-     * (optionally) zero and negative, with some at or near the
-     * extremes. A good choice for the parameter {@code P} is a large
-     * prime less than a million.
+     * Generate values across the range of integers, positive, (optionally)
+     * zero and negative, with some at or near the extremes. A good choice
+     * for the parameter {@code P} is a large prime less than a million.
      *
      * @param P some values will be small multiples of this.
      * @param withZero include zero in the range
@@ -157,19 +153,14 @@ class IntegerDivisionTest extends UnitTestSupport {
         final int N = 5, M = 3;
         List<Integer> values = new LinkedList<>();
         // Some values either side of zero
-        for (int x = -N; x <= N; x++) {
-            if (x != 0 || withZero) { values.add(x); }
-        }
+        for (int x = -N; x <= N; x++) { if (x != 0 || withZero) { values.add(x); } }
         // A few values at each extreme
         for (int i = 0; i < M; i++) {
             values.add(Integer.MIN_VALUE + i);
             values.add(Integer.MAX_VALUE - i);
         }
         // Some large-ish values from the middle of the range
-        for (int i = 2; i <= N; i++) {
-            values.add(P * i);
-            values.add(-P * i);
-        }
+        for (int i = 2; i <= N; i++) { values.add(P * i); values.add(-P * i); }
 
         final int L = values.size();
         int[] v = new int[L];
@@ -178,26 +169,17 @@ class IntegerDivisionTest extends UnitTestSupport {
     }
 
     /** Test division in 4 quadrants. */
+    @SuppressWarnings("static-method")
     @Test
-    void testDivide() {
-        for (int y : YVALUES) {
-            for (int x : XVALUES) { singleDivision(x, y); }
-        }
-    }
+    void testDivide() { for (int y : YVALUES) { for (int x : XVALUES) { singleDivision(x, y); } } }
 
     /** Test remainder on division in 4 quadrants. */
+    @SuppressWarnings("static-method")
     @Test
-    void testModulo() {
-        for (int y : YVALUES) {
-            for (int x : XVALUES) { singleModulo(x, y); }
-        }
-    }
+    void testModulo() { for (int y : YVALUES) { for (int x : XVALUES) { singleModulo(x, y); } } }
 
     /** Test division and modulus combined in 4 quadrants. */
+    @SuppressWarnings("static-method")
     @Test
-    void testDivMod() {
-        for (int y : YVALUES) {
-            for (int x : XVALUES) { singleDivMod(x, y); }
-        }
-    }
+    void testDivMod() { for (int y : YVALUES) { for (int x : XVALUES) { singleDivMod(x, y); } } }
 }

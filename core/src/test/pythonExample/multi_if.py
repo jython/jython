@@ -1,5 +1,8 @@
 # multi_if.py
 
+# Opcodes POP_JUMP_FORWARD_IF_FALSE, POP_JUMP_FORWARD_IF_TRUE,
+# and JUMP_FORWARD.
+
 a = False
 b = False
 

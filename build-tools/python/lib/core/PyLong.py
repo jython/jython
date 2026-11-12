@@ -1,6 +1,6 @@
 # PyLong.py: A generator for Java files that define the Python int
 
-# Copyright (c)2021 Jython Developers.
+# Copyright (c)2025 Jython Developers.
 # Licensed to PSF under a contributor agreement.
 
 # This generator writes PyLongMethods.java and PyLongBinops.java .
@@ -394,6 +394,34 @@ class PyLongGenerator(ImplementationGenerator):
             lambda x, y: f'(double){y} / (double){x}',
             True),
 
+        # These produce very poor code, because the shift is promoted
+        # needlessly to a BigInteger. The int << shift is probably
+        # incorrect.
+        # BinaryOpInfo('__lshift__', OBJECT_CLASS, WorkingType.BIG,
+        #     binary_intmethod,
+        #     lambda x, y: f'{x}.shiftLeft(toShift({y}))',
+        #     lambda x, y: f'{x} << toShift({y})', 
+        #     lambda x, y: f'{x} << toShift({y})',
+        #     True),
+        # BinaryOpInfo('__rlshift__', OBJECT_CLASS, WorkingType.BIG,
+        #     binary_intmethod,
+        #     lambda x, y: f'{y}.shiftLeft(toShift({x}))',
+        #     lambda x, y: f'{y} << toShift({x})', 
+        #     lambda x, y: f'{y} << toShift({x})',
+        #     True),
+        # BinaryOpInfo('__rshift__', OBJECT_CLASS, WorkingType.BIG,
+        #     binary_intmethod,
+        #     lambda x, y: f'{x}.shiftRight(toShift({y}))',
+        #     lambda x, y: f'{x} >> toShift({y})', 
+        #     lambda x, y: f'{x} >> toShift({y})',
+        #     True),
+        # BinaryOpInfo('__rrshift__', OBJECT_CLASS, WorkingType.BIG,
+        #     binary_intmethod,
+        #     lambda x, y: f'{y}.shiftRight(toShift({x}))',
+        #     lambda x, y: f'{y} >> toShift({x})', 
+        #     lambda x, y: f'{y} >> toShift({x})',
+        #     True),
+
         BinaryOpInfo('__and__', OBJECT_CLASS, WorkingType.INT,
             binary_intmethod,
             lambda x, y: f'{x}.and({y})',
@@ -467,13 +495,13 @@ class PyLongGenerator(ImplementationGenerator):
 
         # Emit the unary operations
         for op in self.UNARY_OPS:
-            self.emit_heading(e, op.name)
+            self.emit_heading(e, op)
             for t in self.ACCEPTED_CLASSES:
                 self.special_unary(e, op, t)
 
         # Emit the binary operations op(T, Object)
         for op in self.BINARY_OPS:
-            self.emit_heading(e, op.name)
+            self.emit_heading(e, op)
             for vt in self.ACCEPTED_CLASSES:
                 self.special_binary(e, op, vt, OBJECT_CLASS)
 
@@ -483,12 +511,13 @@ class PyLongGenerator(ImplementationGenerator):
         # Emit the binary operations and comparisons
         for op in self.BINARY_OPS:
             if op.class_specific:
-                self.emit_heading(e, op.name)
+                self.emit_heading(e, op)
                 for vt in self.ACCEPTED_CLASSES:
                     for wt in self.OPERAND_CLASSES:
                         self.special_binary(e, op, vt, wt)
 
     def special_unary(self, e, op:UnaryOpInfo, t):
+        self.emit_unary_javadoc(e, op, 'self')
         e.emit('static ').emit(op.return_type.name).emit(' ')
         e.emit(op.name).emit('(').emit(t.name).emit(' self) {')
         with e.indentation():
@@ -505,6 +534,7 @@ class PyLongGenerator(ImplementationGenerator):
         reflected = op.name.startswith('__r') and \
             op.name not in ("__rshift__", "__round__", "__repr__")
         n1, n2 = 'vw' if not reflected else 'wv'
+        self.emit_binary_javadoc(e, op, n1, n2)
         e.emit('static ').emit(op.return_type.name).emit(' ')
         e.emit(op.name).emit('(')
         e.emit(t1.name).emit(' ').emit(n1).emit(', ')

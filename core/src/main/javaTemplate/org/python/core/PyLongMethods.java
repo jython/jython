@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -6,43 +6,51 @@ import java.math.BigInteger;
 import static java.math.BigInteger.ZERO;
 import static java.math.BigInteger.ONE;
 
-import org.python.core.PyObjectUtil.NoConversion;
+import org.python.core.PyUtil.NoConversion;
 
 // $OBJECT_GENERATOR$ PyLongGenerator
 
 /**
  * This class contains static methods implementing operations on the
  * Python {@code int} object, supplementary to those defined in
- * {@link PyLong}.
- * <p>
- * These methods may cause creation of descriptors in the dictionary of
- * the type. Those with reserved names in the data model will also fill
- * slots in the {@code Operations} object for the type.
- * <p>
- * Implementations of binary operations defined here will have
- * {@code Object} as their second argument, and should return
- * {@link Py#NotImplemented} when the type in that position is not
- * supported.
+ * {@link PyLong}, and used internally by the run-time system.
+ * The class is {@code public} only for technical reasons.
  */
-class PyLongMethods {
-
+public class PyLongMethods {
+    /*
+     * These methods may cause creation of descriptors in the dictionary
+     * of the type. Those with reserved names in the data model will
+     * also contribute to the definition of special methods in the type.
+     * 
+     * Implementations of binary operations defined here will have
+     * Object as their second argument, and should return
+     * NotImplemented} when the type in that position is not supported.
+     */
     private PyLongMethods() {}  // no instances
 
     // $SPECIAL_METHODS$ ---------------------------------------------
 
     // ----------------------------------------------------- __pow__
     // Hand-crafted
-    static Object __pow__(Object v, Object w, Object modulus) {
-        modulus = (modulus == Py.None) ? null : modulus;
+    /**
+     * Ternary special method {@code __pow__}.
+     *
+     * @param x base
+     * @param y exponent
+     * @param z the modulus (or {@code null} for none)
+     * @return <i>x<sup>y</sup></i>mod <i>z</i> or <i>x<sup>y</sup></i>
+     */
+    static Object __pow__(Object x, Object y, Object z) {
+        z = (z == Py.None) ? null : z;
         try {
             // If any conversion fails __pow__ is not implemented
-            BigInteger y = toBig(w);
-            if (y.signum() < 0 && modulus == null) {
-                // No modulus and w<0: let PyFloat handle it
-                return floatPow(v, w, modulus);
+            BigInteger yy = toBig(y);
+            if (yy.signum() < 0 && z == null) {
+                // No modulus and y<0: let PyFloat handle it
+                return floatPow(x, y, z);
             } else {
-                BigInteger z = modulus == null ? null : toBig(modulus);
-                return pow(toBig(v), y, z);
+                BigInteger zz = z == null ? null : toBig(z);
+                return pow(toBig(x), yy, zz);
             }
         } catch (NoConversion e) {
             return Py.NotImplemented;
@@ -51,14 +59,21 @@ class PyLongMethods {
 
     // ---------------------------------------------------- __rpow__
     // Hand-crafted
-    static Object __rpow__(Object w, Object v) {
+    /**
+     * Binary special method {@code __rpow__}.
+     *
+     * @param y exponent
+     * @param x base
+     * @return <i>x<sup>y</sup></i>
+     */
+    static Object __rpow__(Object y, Object x) {
         try {
             // If either conversion fails __rpow__ is not implemented
-            BigInteger y = toBig(w);
+            BigInteger yy = toBig(y);
             // For negative exponent, resort to float calculation
-            if (y.signum() < 0) { return floatPow(v, w, null); }
-            BigInteger x = toBig(v);
-            return pow(x, y, null);
+            if (yy.signum() < 0) { return floatPow(x, y, null); }
+            BigInteger xx = toBig(x);
+            return pow(xx, yy, null);
         } catch (NoConversion e) {
             return Py.NotImplemented;
         }
@@ -66,10 +81,24 @@ class PyLongMethods {
 
     // -------------------------------------------------- __lshift__
     // Hand-crafted
+    /**
+     * Binary special method {@code __lshift__}.
+     *
+     * @param v operand
+     * @param w shift
+     * @return {@code v << w}
+     */
     static Object __lshift__(PyLong v, Object w) {
         return __lshift__(v.value, w);
     }
 
+    /**
+     * Binary special method {@code __lshift__}.
+     *
+     * @param v operand
+     * @param w shift
+     * @return {@code v << w}
+     */
     static Object __lshift__(BigInteger v, Object w) {
         try {
             int iw;
@@ -85,6 +114,13 @@ class PyLongMethods {
         }
     }
 
+    /**
+     * Binary special method {@code __lshift__}.
+     *
+     * @param v operand
+     * @param w shift
+     * @return {@code v << w}
+     */
     static Object __lshift__(Integer v, Object w) {
         if (v == 0) {
             return 0;
@@ -94,12 +130,26 @@ class PyLongMethods {
         }
     }
 
+    /**
+     * Binary special method {@code __lshift__}.
+     *
+     * @param v operand
+     * @param w shift
+     * @return {@code v << w}
+     */
     static Object __lshift__(Boolean v, Object w) {
         return v ? __lshift__(ONE, w) : 0;
     }
 
     // ------------------------------------------------- __rlshift__
     // Hand-crafted
+    /**
+     * Binary special method {@code __rlshift__}.
+     *
+     * @param w shift
+     * @param v operand
+     * @return {@code v << w}
+     */
     static Object __rlshift__(Object w, Object v) {
         try {
             return __lshift__(toBig(v), w);
@@ -110,10 +160,24 @@ class PyLongMethods {
 
     // -------------------------------------------------- __rshift__
     // Hand-crafted
+    /**
+     * Binary special method {@code __rshift__}.
+     *
+     * @param v operand
+     * @param w shift
+     * @return {@code v >> w}
+     */
     static Object __rshift__(PyLong v, Object w) {
         return __rshift__(v.value, w);
     }
 
+    /**
+     * Binary special method {@code __rshift__}.
+     *
+     * @param v operand
+     * @param w shift
+     * @return {@code v >> w}
+     */
     static Object __rshift__(BigInteger v, Object w) {
         try {
             int iw;
@@ -129,6 +193,13 @@ class PyLongMethods {
         }
     }
 
+    /**
+     * Binary special method {@code __rshift__}.
+     *
+     * @param v operand
+     * @param w shift
+     * @return {@code v >> w}
+     */
     static Object __rshift__(Integer v, Object w) {
         if (v == 0) {
             return 0;
@@ -138,12 +209,26 @@ class PyLongMethods {
         }
     }
 
+    /**
+     * Binary special method {@code __rshift__}.
+     *
+     * @param v operand
+     * @param w shift
+     * @return {@code v >> w}
+     */
     static Object __rshift__(Boolean v, Object w) {
         return v ? __rshift__(ONE, w) : 0;
     }
 
     // ------------------------------------------------- __rrshift__
     // Hand-crafted
+    /**
+     * Binary special method {@code __rrshift__}.
+     *
+     * @param w shift
+     * @param v operand
+     * @return {@code v >> w}
+     */
     static Object __rrshift__(Object w, Object v) {
         try {
             return __rshift__(toBig(v), w);
@@ -170,15 +255,15 @@ class PyLongMethods {
     private static BigInteger toBig(Object v) throws NoConversion {
         // Check against supported types, most likely first
         if (v instanceof Integer)
-            return BigInteger.valueOf(((Integer) v).longValue());
+            return BigInteger.valueOf(((Integer)v).longValue());
         else if (v instanceof BigInteger)
-            return (BigInteger) v;
+            return (BigInteger)v;
         else if (v instanceof PyLong)
-            return ((PyLong) v).value;
+            return ((PyLong)v).value;
         else if (v instanceof Boolean)
-            return (Boolean) v ? ONE : ZERO;
+            return (Boolean)v ? ONE : ZERO;
 
-        throw PyObjectUtil.NO_CONVERSION;
+        throw PyUtil.NO_CONVERSION;
     }
 
     /**
@@ -194,8 +279,8 @@ class PyLongMethods {
          * Implementation note: r.intValueExact() is for exactly this
          * purpose, but building the ArithmeticException is a huge cost.
          * (2900ns is added to a 100ns __add__.) The compiler (as tested
-         * in JDK 11.0.9) doesn't recognise that it can be optimised
-         * to a jump. This version of toInt() adds around 5ns.
+         * in JDK 11.0.9) doesn't recognise that it can be optimised to
+         * a jump. This version of toInt() adds around 5ns.
          */
         if (r.bitLength() < 32)
             return r.intValue();
@@ -216,10 +301,11 @@ class PyLongMethods {
      * @throws ValueError when the argument is negative
      */
     private static final int toShift(Object shift)
-            throws NoConversion, ValueError {
+            throws NoConversion, PyBaseException {
         BigInteger s = toBig(shift); // implicitly: check it's an int
         if (s.signum() < 0) {
-            throw new ValueError("negative shift count");
+            throw PyErr.format(PyExc.ValueError,
+                    "negative shift count");
         } else if (s.bitLength() < 32) {
             return s.intValue();
         } else {
@@ -236,8 +322,8 @@ class PyLongMethods {
      *
      * @return to throw
      */
-    private static ZeroDivisionError zeroDivisionError() {
-        return new ZeroDivisionError(
+    private static PyBaseException zeroDivisionError() {
+        return PyErr.format(PyExc.ZeroDivisionError,
                 "integer division or modulo by zero");
     }
 
@@ -429,9 +515,9 @@ class PyLongMethods {
                     q = (x + 1) / y - 1;
                 else
                     // y == -1 and x == Integer.MIN_VALUE
-                    return new PyTuple(MINUS_INT_MIN, 0);
+                    return Py.tuple(MINUS_INT_MIN, 0);
             }
-            return new PyTuple(q, x - q * y);
+            return Py.tuple(q, x - q * y);
         } catch (ArithmeticException ae) {
             // This can only be because y==0
             throw zeroDivisionError();
@@ -448,7 +534,7 @@ class PyLongMethods {
      */
     static PyTuple divmod(BigInteger x, BigInteger y) {
         BigInteger q = divide(x, y);
-        return new PyTuple(q, x.subtract(q.multiply(y)));
+        return Py.tuple(q, x.subtract(q.multiply(y)));
     }
 
     /**
@@ -516,7 +602,8 @@ class PyLongMethods {
         if (x != 0.0) {
             return PyFloat.__pow__(x, oy, modulus);
         } else {
-            throw new ZeroDivisionError("zero to a negative power");
+            throw PyErr.format(PyExc.ZeroDivisionError,
+                    "zero to a negative power");
         }
     }
 
@@ -539,7 +626,8 @@ class PyLongMethods {
         } else {
             // Identify some special cases for quick treatment
             if (z.signum() == 0) {
-                throw new ValueError("pow(x, y, z) with z == 0");
+                throw PyErr.format(PyExc.ValueError,
+                        "pow(x, y, z) with z == 0");
             } else if (z.abs().equals(ONE)) {
                 return 0;
             } else if (z.signum() < 0) {

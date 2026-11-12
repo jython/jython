@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -14,9 +14,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test the {@link PyWrapperDescr}s for unary special functions on a
- * variety of types. The particular operations are not the focus: we
- * are testing the mechanisms for creating and calling slot
- * wrappers.
+ * variety of types. The particular operations are not the focus: we are
+ * testing the mechanisms for creating and calling slot wrappers.
  */
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class UnarySlotWrapperTest extends UnitTestSupport {
@@ -41,7 +40,7 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             void check(Object exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 // x is Integer, BigInteger, PyLong, Boolean
                 Integer ix = 42;
                 super.setup(PyLong.TYPE, NAME,
@@ -50,6 +49,8 @@ class UnarySlotWrapperTest extends UnitTestSupport {
 
             /**
              * As {@link #supports_call()} but with empty keyword array.
+             *
+             * @throws Throwable unexpectedly
              */
             @Test
             void supports_call_with_keywords() throws Throwable {
@@ -61,6 +62,8 @@ class UnarySlotWrapperTest extends UnitTestSupport {
 
             /**
              * As {@link #supports_bound_call()} but with empty keyword array.
+             *
+             * @throws Throwable unexpectedly
              */
             @Test
             void supports_bound_call_with_keywords() throws Throwable {
@@ -82,7 +85,7 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             void check(Object exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 super.setup(PyBool.TYPE, NAME, List.of(false, true));
             }
         }
@@ -97,17 +100,14 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             Object expected(Object x) { return exp; }
 
             @Override
-            void check(Object exp, Object r) throws Throwable {
-                checkFloat(exp, r);
-            }
+            void check(Object exp, Object r) throws Throwable { checkFloat(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 // Invoke for Double, PyFloat
                 double dx = 42.0;
                 exp = -dx;
-                super.setup(PyFloat.TYPE, NAME,
-                        List.of(dx, newPyFloat(dx)));
+                super.setup(PyFloat.TYPE, NAME, List.of(dx, newPyFloat(dx)));
             }
         }
     }
@@ -129,7 +129,7 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             void check(String exp, Object r) throws Throwable { checkStr(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 // x is Integer, BigInteger, PyLong but not Boolean
                 Integer ix = 42;
                 super.setup(PyLong.TYPE, NAME, List.of(ix, BigInteger.valueOf(ix), newPyLong(ix)));
@@ -147,7 +147,7 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             void check(String exp, Object r) throws Throwable { checkStr(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 super.setup(PyBool.TYPE, NAME, List.of(false, true));
             }
         }
@@ -162,17 +162,34 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             String expected(Object x) { return exp; }
 
             @Override
-            void check(String exp, Object r) throws Throwable {
-                checkStr(exp, r);
-            }
+            void check(String exp, Object r) throws Throwable { checkStr(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 // Invoke for Double, PyFloat
                 double dx = 42.0;
                 exp = "42.0";
-                super.setup(PyFloat.TYPE, NAME,
-                        List.of(dx, newPyFloat(dx)));
+                super.setup(PyFloat.TYPE, NAME, List.of(dx, newPyFloat(dx)));
+            }
+        }
+
+        @Nested
+        @DisplayName("of 'str' objects")
+        class OfStr extends UnaryTest<String, Object> {
+
+            private String exp;
+
+            @Override
+            String expected(Object x) { return exp; }
+
+            @Override
+            void check(String exp, Object r) throws Throwable { checkStr(exp, r); }
+
+            @BeforeEach
+            void setup() throws PyAttributeError, Throwable {
+                String sx = "forty-two";
+                exp = "'" + sx + "'";
+                super.setup(PyUnicode.TYPE, NAME, List.of(sx, newPyUnicode(sx)));
             }
         }
     }
@@ -194,7 +211,7 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             void check(Integer exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 // x is Integer, BigInteger, PyLong, Boolean
                 Integer ix = 42;
                 super.setup(PyLong.TYPE, NAME,
@@ -213,13 +230,12 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             void check(Integer exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 super.setup(PyBool.TYPE, NAME, List.of(false, true));
             }
         }
 
-        // XXX Disabled until float.__hash__ implemented
-        // @Nested
+        @Nested
         @DisplayName("of 'float' objects")
         class OfFloat extends LenTest<Integer, Object> {
 
@@ -229,17 +245,35 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             Integer expected(Object x) { return exp; }
 
             @Override
-            void check(Integer exp, Object r) throws Throwable {
-                checkInt(exp, r);
-            }
+            void check(Integer exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
-            void setup() throws AttributeError, Throwable {
+            void setup() throws PyAttributeError, Throwable {
                 // Invoke for Double, PyFloat
                 double dx = 42.0;
-                exp = 42; // since equal in Python
-                super.setup(PyFloat.TYPE, NAME,
-                        List.of(dx, newPyFloat(dx)));
+                // Expect compatibility with Java Double not Python (keys)
+                exp = Double.valueOf(dx).hashCode();
+                super.setup(PyFloat.TYPE, NAME, List.of(dx, newPyFloat(dx)));
+            }
+        }
+
+        @Nested
+        @DisplayName("of 'str' objects")
+        class OfStr extends LenTest<Integer, Object> {
+
+            private Integer exp;
+
+            @Override
+            Integer expected(Object x) { return exp; }
+
+            @Override
+            void check(Integer exp, Object r) throws Throwable { checkInt(exp, r); }
+
+            @BeforeEach
+            void setup() throws PyAttributeError, Throwable {
+                String sx = "forty-two";
+                exp = sx.hashCode();
+                super.setup(PyUnicode.TYPE, NAME, List.of(sx, newPyUnicode(sx)));
             }
         }
     }

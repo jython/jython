@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -13,15 +13,15 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * This is a test of {@link ArgParser}. Since it is quite a
- * complicated beast, and that might make it fragile, we try to be
- * thorough here, rather than wait for it to let us down inside some
- * complicated Python built-in called in an unforeseen way.
+ * This is a test of {@link ArgParser}. Since it is quite a complicated
+ * beast, and that might make it fragile, we try to be thorough here,
+ * rather than wait for it to let us down inside some complicated Python
+ * built-in called in an unforeseen way.
  * <p>
- * Each nested test class provides one parser specification to all
- * its test methods, which then exercise that parser in a range of
- * circumstances. As far as possible, we use the same test names
- * when testing the same kind of behaviour.
+ * Each nested test class provides one parser specification to all its
+ * test methods, which then exercise that parser in a range of
+ * circumstances. As far as possible, we use the same test names when
+ * testing the same kind of behaviour.
  */
 class ArgParserTest {
 
@@ -161,7 +161,7 @@ class ArgParserTest {
             kwargs.put("c", 3);
             kwargs.put("b", 2);
 
-            assertThrows(TypeError.class, () -> ap.parse(args, kwargs));
+            assertThrows(PyBaseException.class, () -> ap.parse(args, kwargs));
         }
 
         @Override
@@ -203,7 +203,7 @@ class ArgParserTest {
             PyTuple args = Py.tuple(1);
             PyDict kwargs = Py.dict();
             kwargs.put("c", 3);
-            assertThrows(TypeError.class, () -> ap.parse(args, kwargs));
+            assertThrows(PyBaseException.class, () -> ap.parse(args, kwargs));
         }
 
         @Override
@@ -246,7 +246,7 @@ class ArgParserTest {
             PyTuple args = Py.tuple(1);
             PyDict kwargs = Py.dict();
             kwargs.put("c", 3);
-            assertThrows(TypeError.class, () -> ap.parse(args, kwargs));
+            assertThrows(PyBaseException.class, () -> ap.parse(args, kwargs));
         }
 
         @Override
@@ -297,7 +297,7 @@ class ArgParserTest {
             kwargs.put("b", 2);
             kwargs.put("c", 3);
             kwargs.put("a", 1);
-            assertThrows(TypeError.class, () -> ap.parse(args, kwargs));
+            assertThrows(PyBaseException.class, () -> ap.parse(args, kwargs));
         }
 
         @Override
@@ -313,7 +313,7 @@ class ArgParserTest {
         ArgParser ap = new ArgParser("func", names, names.length - 2, 4, 3, true, true) //
                 .defaults(3, 4, 5, 6) //
                 .kwdefaults(77, null, 99);
-        private String SIG = "func(a, b, c=3, d=4, /, e=5, f=6, *aa, g=77, h, i=99, **kk)";
+        private String SIG = "func(a, b, c=3, d=4, /, e=5, f=6, *aa, " + "g=77, h, i=99, **kk)";
 
         @Override
         @Test

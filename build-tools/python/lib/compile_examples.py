@@ -1,12 +1,13 @@
-# Reading compiled Python files
+# Generate compiled Python files as test material
 
 import sys, os.path
 import marshal, py_compile, dis
 
 # Normally you don't get a .pyc file if you just run a program.
 # You do get a .pyc file from compiling a module.
-# It is written in ./__pycache__ and called NAME.cpython-311.pyc
-
+# It is written in ./__pycache__ and called NAME.cpython-VERSION.pyc
+# and we use this to generate .pyc as test material for the byte
+# code interpreter.
 CACHE = '__pycache__'
 COMPILER = 'cpython-311'
 

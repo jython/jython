@@ -1,3 +1,5 @@
+// Copyright (c)2026 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,7 +15,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,12 +22,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.python.base.MissingFeature;
-import org.python.core.PyType.Spec;
+
+import org.python.types.TypeSpec;
+import org.python.types.WithClass;
 
 /**
- * Test selected methods of {@link PyUnicode} on a variety of
- * argument types.
+ * Test selected methods of {@link PyUnicode} on a variety of argument
+ * types.
  */
 @DisplayName("In PyUnicode")
 class PyUnicodeTest extends UnitTestSupport {
@@ -35,8 +37,8 @@ class PyUnicodeTest extends UnitTestSupport {
     abstract static class AbstractFindTest {
         /**
          * Provide a stream of examples as parameter sets to the tests of
-         * methods that have "search" character, that is {@code find},
-         * {@code index}, {@code partition}, {@code count}, etc..
+         * methods that have "search" (but not replace) character, that is
+         * {@code find}, {@code index}, {@code partition}, {@code count}, etc..
          *
          * @return the examples for search tests.
          */
@@ -46,14 +48,15 @@ class PyUnicodeTest extends UnitTestSupport {
                     findExample("pandemic", "mic"), //
                     findExample("abracadabra", "bra"), //
                     findExample("abracadabra", "a"), //
+                    findExample("ab", ""), //
                     findExample("Bananaman", "ana"), //
                     findExample(GREEK, "λόγος"), //
                     findExample(GREEK, " "), //
                     findExample("画蛇添足 添足 添足", " 添"), //
                     /*
-                     * The following contain non-BMP characters 🐍=U+1F40D and
-                     * 🦓=U+1F993, each of which Python must consider to be a single
-                     * character, but in the Java String realisation each is two chars.
+                     * The following contain non-BMP characters 🐍=U+1F40D and 🦓=U+1F993,
+                     * each of which Python must consider to be a single character, but in
+                     * the Java String realisation each is two chars.
                      */
                     // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     findExample("One 🐍, a 🦓, two 🐍🐍.", "🐍", new int[] {4, 16, 17}),
@@ -64,8 +67,7 @@ class PyUnicodeTest extends UnitTestSupport {
          * Construct a search problem and reference result. This uses Java
          * {@code String.indexOf} for the reference answer, so it will work
          * correctly only for BMP strings. Where any SMP characters are
-         * involved, call
-         * {@link #findExample(String, String, int[], String)}.
+         * involved, call {@link #findExample(String, String, int[], String)}.
          *
          * @param self to search
          * @param needle to search for
@@ -166,71 +168,53 @@ class PyUnicodeTest extends UnitTestSupport {
         @ParameterizedTest(name = "\"{0}\".partition(\"{1}\")")
         @MethodSource("findExamples")
         void S_partition_S(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyTuple r = PyUnicode.partition(s, needle);
-            assertPythonType(PyTuple.TYPE, r);
-            assertEquals(3, r.size());
-            for (int i = 0; i < 3; i++) { assertPythonType(PyUnicode.TYPE, r.get(i)); }
-            if (indices.length == 0) {
-                // There should be no match
-                assertEquals(Py.tuple(s, "", ""), r);
-            } else {
-                // Match at indices[0]
-                int[] charIndices = toCharIndices(s, indices);
-                // Work in char indices (so doubtful with surrogates)
-                int n = charIndices[0], m = n + needle.length();
-                assertEquals(Py.tuple(s.substring(0, n), needle, s.substring(m)), r);
-            }
+            checkTuple(r, s, needle, indices);
         }
 
         @DisplayName("partition(String, PyUnicode)")
         @ParameterizedTest(name = "\"{0}\".partition(\"{1}\")")
         @MethodSource("findExamples")
         void S_partition_U(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode uNeedle = new PyUnicode(needle.codePoints().toArray());
             PyTuple r = PyUnicode.partition(s, uNeedle);
-            assertPythonType(PyTuple.TYPE, r);
-            assertEquals(3, r.size());
-            for (int i = 0; i < 3; i++) { assertPythonType(PyUnicode.TYPE, r.get(i)); }
-            if (indices.length == 0) {
-                // There should be no match
-                assertEquals(Py.tuple(s, "", ""), r);
-            } else {
-                // Match at indices[0]
-                int[] charIndices = toCharIndices(s, indices);
-                // Work in char indices (so doubtful with surrogates)
-                int n = charIndices[0], m = n + needle.length();
-                assertEquals(Py.tuple(s.substring(0, n), needle, s.substring(m)), r);
-            }
+            checkTuple(r, s, needle, indices);
         }
 
         @DisplayName("partition(PyUnicode, String)")
         @ParameterizedTest(name = "\"{0}\".partition(\"{1}\")")
         @MethodSource("findExamples")
         void U_partition_S(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyTuple r = u.partition(needle);
-            assertPythonType(PyTuple.TYPE, r);
-            assertEquals(3, r.size());
-            for (int i = 0; i < 3; i++) { assertPythonType(PyUnicode.TYPE, r.get(i)); }
-            if (indices.length == 0) {
-                // There should be no match
-                assertEquals(Py.tuple(s, "", ""), r);
-            } else {
-                // Match at indices[0]
-                int[] charIndices = toCharIndices(s, indices);
-                // Work in char indices (so doubtful with surrogates)
-                int n = charIndices[0], m = n + needle.length();
-                assertEquals(Py.tuple(s.substring(0, n), needle, s.substring(m)), r);
-            }
+            checkTuple(r, s, needle, indices);
         }
 
         @DisplayName("partition(PyUnicode, PyUnicode)")
         @ParameterizedTest(name = "\"{0}\".partition(\"{1}\")")
         @MethodSource("findExamples")
         void U_partition_U(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyUnicode uNeedle = new PyUnicode(needle.codePoints().toArray());
             PyTuple r = u.partition(uNeedle);
+            checkTuple(r, s, needle, indices);
+        }
+
+        /**
+         * Boilerplate validation of the returned {@code tuple}. Target and
+         * needle are supplied as Java {@code String}s, irrespective of the
+         * argument types in the test.
+         *
+         * @param r tuple returned by method under test
+         * @param s target of call
+         * @param needle to find in s
+         * @param indices at which needle may be found
+         */
+        protected void checkTuple(PyTuple r, String s, String needle, int[] indices) {
             assertPythonType(PyTuple.TYPE, r);
             assertEquals(3, r.size());
             for (int i = 0; i < 3; i++) { assertPythonType(PyUnicode.TYPE, r.get(i)); }
@@ -298,48 +282,44 @@ class PyUnicodeTest extends UnitTestSupport {
         @ParameterizedTest(name = "\"{0}\".split(\"{1}\")")
         @MethodSource("findExamples")
         void S_split_S(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyList r = PyUnicode.split(s, needle, -1);
             PyUnicode[] segments = expectedSplit(s, needle, indices);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @DisplayName("split(String, PyUnicode)")
         @ParameterizedTest(name = "\"{0}\".split(\"{1}\")")
         @MethodSource("findExamples")
         void S_split_U(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode uNeedle = new PyUnicode(needle.codePoints().toArray());
             PyList r = PyUnicode.split(s, uNeedle, -1);
             PyUnicode[] segments = expectedSplit(s, needle, indices);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @DisplayName("split(PyUnicode, String)")
         @ParameterizedTest(name = "\"{0}\".split(\"{1}\")")
         @MethodSource("findExamples")
         void U_split_S(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyList r = u.split(needle, -1);
             PyUnicode[] segments = expectedSplit(s, needle, indices);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @DisplayName("split(PyUnicode, PyUnicode)")
         @ParameterizedTest(name = "\"{0}\".split(\"{1}\")")
         @MethodSource("findExamples")
         void U_split_U(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyUnicode uNeedle = new PyUnicode(needle.codePoints().toArray());
             PyList r = u.split(uNeedle, -1);
             PyUnicode[] segments = expectedSplit(s, needle, indices);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @Test
@@ -349,9 +329,7 @@ class PyUnicodeTest extends UnitTestSupport {
             PyList r = u.split("o", 2);
             PyUnicode[] segments =
                     toPyUnicodeArray("The quick br", "wn f", FOX.substring(FOX.indexOf("x")));
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @Test
@@ -381,14 +359,15 @@ class PyUnicodeTest extends UnitTestSupport {
                     rfindExample("pandemic", "pan"), //
                     rfindExample("pandemic", "mic"), //
                     rfindExample("abracadabra", "bra"), //
+                    rfindExample("ab", ""), //
                     rfindExample("Bananaman", "ana"), //
                     rfindExample(GREEK, "λόγος"), //
                     rfindExample(GREEK, " "), //
                     rfindExample("画蛇添足 添足 添足", " 添"), //
                     /*
-                     * The following contain non-BMP characters 🐍=U+1F40D and
-                     * 🦓=U+1F993, each of which Python must consider to be a single
-                     * character, but in the Java String realisation each is two chars.
+                     * The following contain non-BMP characters 🐍=U+1F40D and 🦓=U+1F993,
+                     * each of which Python must consider to be a single character, but in
+                     * the Java String realisation each is two chars.
                      */
                     // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     rfindExample("One 🐍, a 🦓, two 🐍🐍.", "🐍", new int[] {4, 16, 17}),
@@ -399,8 +378,7 @@ class PyUnicodeTest extends UnitTestSupport {
          * Construct a search problem and reference result. This uses Java
          * {@code String.indexOf} for the reference answer, so it will work
          * correctly only for BMP strings. Where any SMP characters are
-         * involved, call
-         * {@link #rfindExample(String, String, int[], String)}.
+         * involved, call {@link #rfindExample(String, String, int[], String)}.
          *
          * @param self to search
          * @param needle to search for
@@ -505,74 +483,53 @@ class PyUnicodeTest extends UnitTestSupport {
         @ParameterizedTest(name = "\"{0}\".rpartition(\"{1}\")")
         @MethodSource("rfindExamples")
         void S_rpartition_S(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyTuple r = PyUnicode.rpartition(s, needle);
-            assertPythonType(PyTuple.TYPE, r);
-            assertEquals(3, r.size());
-            for (int i = 0; i < 3; i++) { assertPythonType(PyUnicode.TYPE, r.get(i)); }
-            int M = indices.length;
-            if (M == 0) {
-                // There should be no match
-                assertEquals(Py.tuple(s, "", ""), r);
-            } else {
-                // Match at indices[M-1]
-                int[] charIndices = toCharIndices(s, indices);
-                // Work in char indices (so doubtful with surrogates)
-                int n = charIndices[M - 1], m = n + needle.length();
-                assertEquals(Py.tuple(s.substring(0, n), needle, s.substring(m)), r);
-            }
+            checkTuple(r, s, needle, indices);
         }
 
         @DisplayName("rpartition(String, String)")
         @ParameterizedTest(name = "\"{0}\".rpartition(\"{1}\")")
         @MethodSource("rfindExamples")
         void S_rpartition_U(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode uNeedle = new PyUnicode(needle.codePoints().toArray());
             PyTuple r = PyUnicode.rpartition(s, uNeedle);
-            assertPythonType(PyTuple.TYPE, r);
-            assertEquals(3, r.size());
-            for (int i = 0; i < 3; i++) { assertPythonType(PyUnicode.TYPE, r.get(i)); }
-            int M = indices.length;
-            if (M == 0) {
-                // There should be no match
-                assertEquals(Py.tuple(s, "", ""), r);
-            } else {
-                // Match at indices[M-1]
-                int[] charIndices = toCharIndices(s, indices);
-                // Work in char indices (so doubtful with surrogates)
-                int n = charIndices[M - 1], m = n + needle.length();
-                assertEquals(Py.tuple(s.substring(0, n), needle, s.substring(m)), r);
-            }
+            checkTuple(r, s, needle, indices);
         }
 
         @DisplayName("rpartition(String, String)")
         @ParameterizedTest(name = "\"{0}\".rpartition(\"{1}\")")
         @MethodSource("rfindExamples")
         void U_rpartition_S(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyTuple r = u.rpartition(needle);
-            assertPythonType(PyTuple.TYPE, r);
-            assertEquals(3, r.size());
-            for (int i = 0; i < 3; i++) { assertPythonType(PyUnicode.TYPE, r.get(i)); }
-            int M = indices.length;
-            if (M == 0) {
-                // There should be no match
-                assertEquals(Py.tuple(s, "", ""), r);
-            } else {
-                // Match at indices[M-1]
-                int[] charIndices = toCharIndices(s, indices);
-                // Work in char indices (so doubtful with surrogates)
-                int n = charIndices[M - 1], m = n + needle.length();
-                assertEquals(Py.tuple(s.substring(0, n), needle, s.substring(m)), r);
-            }
+            checkTuple(r, s, needle, indices);
         }
 
         @DisplayName("rpartition(String, String)")
         @ParameterizedTest(name = "\"{0}\".rpartition(\"{1}\")")
         @MethodSource("rfindExamples")
         void U_rpartition_U(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyUnicode uNeedle = new PyUnicode(needle.codePoints().toArray());
             PyTuple r = u.rpartition(uNeedle);
+            checkTuple(r, s, needle, indices);
+        }
+
+        /**
+         * Boilerplate validation of the returned {@code tuple}. Target and
+         * needle are supplied as Java {@code String}s, irrespective of the
+         * argument types in the test.
+         *
+         * @param r tuple returned by method under test
+         * @param s target of call
+         * @param needle to find in s
+         * @param indices at which needle may be found
+         */
+        protected void checkTuple(PyTuple r, String s, String needle, int[] indices) {
             assertPythonType(PyTuple.TYPE, r);
             assertEquals(3, r.size());
             for (int i = 0; i < 3; i++) { assertPythonType(PyUnicode.TYPE, r.get(i)); }
@@ -599,48 +556,44 @@ class PyUnicodeTest extends UnitTestSupport {
         @ParameterizedTest(name = "\"{0}\".rsplit(\"{1}\")")
         @MethodSource("rfindExamples")
         void S_rsplit_S(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyList r = PyUnicode.rsplit(s, needle, -1);
             PyUnicode[] segments = expectedSplit(s, needle, indices);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @DisplayName("rsplit(String, PyUnicode)")
         @ParameterizedTest(name = "\"{0}\".rsplit(\"{1}\")")
         @MethodSource("rfindExamples")
         void S_rsplit_U(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode uNeedle = new PyUnicode(needle.codePoints().toArray());
             PyList r = PyUnicode.rsplit(s, uNeedle, -1);
             PyUnicode[] segments = expectedSplit(s, needle, indices);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @DisplayName("rsplit(PyUnicode, String)")
         @ParameterizedTest(name = "\"{0}\".rsplit(\"{1}\")")
         @MethodSource("rfindExamples")
         void U_rsplit_S(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyList r = u.rsplit(needle, -1);
             PyUnicode[] segments = expectedSplit(s, needle, indices);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @DisplayName("rsplit(PyUnicode, PyUnicode)")
         @ParameterizedTest(name = "\"{0}\".rsplit(\"{1}\")")
         @MethodSource("rfindExamples")
         void U_rsplit_U(String s, String needle, int[] indices) {
+            if (needle.length() == 0) { return; }
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyUnicode uNeedle = new PyUnicode(needle.codePoints().toArray());
             PyList r = u.rsplit(uNeedle, -1);
             PyUnicode[] segments = expectedSplit(s, needle, indices);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @Test
@@ -650,9 +603,7 @@ class PyUnicodeTest extends UnitTestSupport {
             PyList r = u.rsplit("o", 2);
             PyUnicode[] segments =
                     toPyUnicodeArray(FOX.substring(0, FOX.indexOf("over")), "ver the lazy d", "g.");
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @Test
@@ -685,9 +636,9 @@ class PyUnicodeTest extends UnitTestSupport {
                     replaceExample("Σωκρατικὸς λόγος", "ς", "σ"), //
                     replaceExample("画蛇添足 添足 添足", " 添", "**"), //
                     /*
-                     * The following contain non-BMP characters 🐍=U+1F40D and
-                     * 🦓=U+1F993, each of which Python must consider to be a single
-                     * character, but in the Java String realisation each is two chars.
+                     * The following contain non-BMP characters 🐍=U+1F40D and 🦓=U+1F993,
+                     * each of which Python must consider to be a single character, but in
+                     * the Java String realisation each is two chars.
                      */
                     // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     replaceExample("One 🐍, a 🦓, two 🐍🐍.", "🐍", new int[] {4, 16, 17}, "🦓"),
@@ -728,10 +679,10 @@ class PyUnicodeTest extends UnitTestSupport {
 
         /**
          * Return a list of strings equal to {@code s} with {@code 0} to
-         * {@code M} replacements of the needle by the pin, guided by an
-         * array of {@code M} char indices for the needle. Element zero of
-         * the returned value is {@code s}. We return this as
-         * {@link PyUnicode} to ensure that {@code assertEquals} uses
+         * {@code M} replacements of the needle by the pin, guided by an array
+         * of {@code M} char indices for the needle. Element zero of the
+         * returned value is {@code s}. We return this as {@link PyUnicode} to
+         * ensure that {@code assertEquals} uses
          * {@link PyUnicode#equals(Object)} for comparison during tests.
          *
          * @param s in which to effect the replacements.
@@ -750,8 +701,8 @@ class PyUnicodeTest extends UnitTestSupport {
             for (int m = 0; m < M; m++) {
                 /*
                  * r contains s with m replacements, and its value has already been
-                 * emitted to results. We shall compute the result of m+1
-                 * replacements. We start by trimming r at the (m+1)th needle.
+                 * emitted to results. We shall compute the result of m+1 replacements.
+                 * We start by trimming r at the (m+1)th needle.
                  */
                 r.setLength(charIndices[m] + m * (P - N));
                 // Now append the pin and the rest of s after the needle
@@ -905,6 +856,7 @@ class PyUnicodeTest extends UnitTestSupport {
 
             // No low surrogate (DC00-DFFF) accidental replacement
             needle = "\udc0d";
+
             // Assert that Java gets the non-Pythonic answer
             assert s.replace(needle, pin).equals("\ud83d#\ud83d#");
 
@@ -1016,9 +968,9 @@ class PyUnicodeTest extends UnitTestSupport {
                     splitExample(GREEK), //
                     splitExample("画蛇添足 添足 添足"), //
                     /*
-                     * The following contain non-BMP characters 🐍=U+1F40D and
-                     * 🦓=U+1F993, each of which Python must consider to be a single
-                     * character, but in the Java String realisation each is two chars.
+                     * The following contain non-BMP characters 🐍=U+1F40D and 🦓=U+1F993,
+                     * each of which Python must consider to be a single character, but in
+                     * the Java String realisation each is two chars.
                      */
                     // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     splitExample("One 🐍, a 🦓, two 🐍🐍."), //
@@ -1027,8 +979,8 @@ class PyUnicodeTest extends UnitTestSupport {
         }
 
         /**
-         * Construct a search problem and reference result that is segments
-         * that are separated in {@code s} by runs of space characters.
+         * Construct a search problem and reference result that is segments that
+         * are separated in {@code s} by runs of space characters.
          *
          * @param self to search
          * @return example data for a test
@@ -1038,11 +990,11 @@ class PyUnicodeTest extends UnitTestSupport {
         }
 
         /**
-         * Return an array of segments that are separated in {@code s} by
-         * runs of space characters. This uses Java {@code char} tests and
-         * will work correctly for BMP strings, but would be unreliable
-         * where any SMP space characters are involved. We return these as
-         * {@link PyUnicode} to ensure that {@code assertEquals} uses
+         * Return an array of segments that are separated in {@code s} by runs
+         * of space characters. This uses Java {@code char} tests and will work
+         * correctly for BMP strings, but would be unreliable where any SMP
+         * space characters are involved. We return these as {@link PyUnicode}
+         * to ensure that {@code assertEquals} uses
          * {@link PyUnicode#equals(Object)} for comparison during tests.
          *
          * @param s string in question
@@ -1064,10 +1016,7 @@ class PyUnicodeTest extends UnitTestSupport {
                 } else {
                     if (p >= N) {
                         break;
-                    } else if (!isPythonSpace(s.charAt(p))) {
-                        start = p;
-                        text = true;
-                    }
+                    } else if (!isPythonSpace(s.charAt(p))) { start = p; text = true; }
                 }
                 p++;
             }
@@ -1085,9 +1034,7 @@ class PyUnicodeTest extends UnitTestSupport {
         @MethodSource("splitExamples")
         void S_split_S(String s, PyUnicode[] segments) {
             PyList r = PyUnicode.split(s, null, -1);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @DisplayName("split(PyUnicode)")
@@ -1096,9 +1043,7 @@ class PyUnicodeTest extends UnitTestSupport {
         void U_split_S(String s, PyUnicode[] segments) {
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyList r = u.split(null, -1);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @Test
@@ -1108,9 +1053,7 @@ class PyUnicodeTest extends UnitTestSupport {
             PyList r = u.split(null, 3);
             PyUnicode[] segments =
                     toPyUnicodeArray("The", "quick", "brown", "fox jumps over the lazy dog.");
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @Test
@@ -1134,9 +1077,7 @@ class PyUnicodeTest extends UnitTestSupport {
         @MethodSource("splitExamples")
         void S_split_S(String s, PyUnicode[] segments) {
             PyList r = PyUnicode.rsplit(s, null, -1);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @DisplayName("rsplit(PyUnicode)")
@@ -1145,9 +1086,7 @@ class PyUnicodeTest extends UnitTestSupport {
         void U_split_S(String s, PyUnicode[] segments) {
             PyUnicode u = new PyUnicode(s.codePoints().toArray());
             PyList r = u.rsplit(null, -1);
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @Test
@@ -1157,9 +1096,7 @@ class PyUnicodeTest extends UnitTestSupport {
             PyList r = u.rsplit(null, 3);
             PyUnicode[] segments =
                     toPyUnicodeArray("The quick brown fox jumps over", "the", "lazy", "dog.");
-            assertEquals(segments.length, r.size(), "number of segments");
-            int i = 0;
-            for (Object ri : r) { assertEquals(segments[i++], ri); }
+            splitListCheck(r, segments);
         }
 
         @Test
@@ -1192,9 +1129,9 @@ class PyUnicodeTest extends UnitTestSupport {
                     splitExample(NEWLINES, NEWLINES_SPLIT), //
                     splitExample("画蛇\u2029画蛇\u2028添足\u2029", "画蛇\u2029", "画蛇\u2028", "添足\u2029"), //
                     /*
-                     * The following contain non-BMP characters 🐍=U+1F40D and
-                     * 🦓=U+1F993, each of which Python must consider to be a single
-                     * character, but in the Java String realisation each is two chars.
+                     * The following contain non-BMP characters 🐍=U+1F40D and 🦓=U+1F993,
+                     * each of which Python must consider to be a single character, but in
+                     * the Java String realisation each is two chars.
                      */
                     // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     splitExample("One 🐍\na 🦓,\ftwo 🐍🐍.", "One 🐍\n", "a 🦓,\f", "two 🐍🐍."), //
@@ -1203,8 +1140,8 @@ class PyUnicodeTest extends UnitTestSupport {
         }
 
         /**
-         * Construct a line-split problem and reference result that includes
-         * the end-of-line characters.
+         * Construct a line-split problem and reference result that includes the
+         * end-of-line characters.
          *
          * @param self to split
          * @param lines of the split (with ends kept)
@@ -1240,9 +1177,9 @@ class PyUnicodeTest extends UnitTestSupport {
         }
 
         /**
-         * Names of line separators followed by the separators themselves.
-         * The exceptions are CR-LF and LF-CR sequences: the first is one
-         * separator and the second is two (creating a blank line).
+         * Names of line separators followed by the separators themselves. The
+         * exceptions are CR-LF and LF-CR sequences: the first is one separator
+         * and the second is two (creating a blank line).
          */
         private static final String NEWLINES =
                 "LF\nVT\u000bFF\fCR\rFS\u001cGS\u001dRS\u001eNEL\u0085"
@@ -1308,8 +1245,8 @@ class PyUnicodeTest extends UnitTestSupport {
     }
 
     /**
-     * Base of tests of {@code str.join}, here so it can be declared
-     * static, and the test class itself nested.
+     * Base of tests of {@code str.join}, here so it can be declared static,
+     * and the test class itself nested.
      */
     static class AbstractJoinTest {
         /**
@@ -1348,9 +1285,9 @@ class PyUnicodeTest extends UnitTestSupport {
         }
 
         /**
-         * Compute a reference join using integer arrays of code points as
-         * the intermediary representation. We return {@link PyUnicode} so
-         * that comparisons have Python semantics.
+         * Compute a reference join using integer arrays of code points as the
+         * intermediary representation. We return {@link PyUnicode} so that
+         * comparisons have Python semantics.
          *
          * @param self joiner
          * @param parts to be joined
@@ -1406,18 +1343,19 @@ class PyUnicodeTest extends UnitTestSupport {
         }
 
         /**
-         * A Python type that is not iterable but defines
-         * {@code __getitem__}. We should find this to be an acceptable
-         * argument to {@code str.join()}.
+         * A Python type that is not iterable but defines {@code __getitem__}.
+         * We should find this to be an acceptable argument to
+         * {@code str.join()}.
          */
-        protected static class MySequence extends AbstractPyObject {
-            static PyType TYPE = PyType.fromSpec(new Spec("MySequence", MethodHandles.lookup()));
+        protected static class MySequence implements WithClass {
+            static PyType TYPE =
+                    PyType.fromSpec(new TypeSpec("MySequence", MethodHandles.lookup()));
             final String value;
 
-            protected MySequence(String value) {
-                super(TYPE);
-                this.value = value;
-            }
+            protected MySequence(String value) { this.value = value; }
+
+            @Override
+            public PyType getType() { return TYPE; }
 
             @SuppressWarnings("unused")
             Object __getitem__(Object index) {
@@ -1425,24 +1363,25 @@ class PyUnicodeTest extends UnitTestSupport {
                 if (i < value.length())
                     return value.substring(i, i + 1);
                 else
-                    throw new IndexError("");
+                    throw PyErr.format(PyExc.IndexError, "");
             }
         }
 
         /**
          * A Python type that is an iterator, defining {@code __iter__} and
-         * {@code __next__}. We should find this to be an acceptable
-         * argument to {@code str.join()}.
+         * {@code __next__}. We should find this to be an acceptable argument to
+         * {@code str.join()}.
          */
-        protected static class MyIterator extends AbstractPyObject {
-            static PyType TYPE = PyType.fromSpec(new Spec("MyIterator", MethodHandles.lookup()));
+        protected static class MyIterator implements WithClass {
+            static PyType TYPE =
+                    PyType.fromSpec(new TypeSpec("MyIterator", MethodHandles.lookup()));
             final String value;
             int i = 0;
 
-            protected MyIterator(String value) {
-                super(TYPE);
-                this.value = value;
-            }
+            protected MyIterator(String value) { this.value = value; }
+
+            @Override
+            public PyType getType() { return TYPE; }
 
             @SuppressWarnings("unused")
             Object __iter__() { return this; }
@@ -1452,8 +1391,7 @@ class PyUnicodeTest extends UnitTestSupport {
                 if (i < value.length())
                     return value.substring(i++, i);
                 else
-                    // throw new StopIteration();
-                    throw new MissingFeature("StopIteration");
+                    throw new PyStopIteration();
             }
         }
     }
@@ -1499,7 +1437,6 @@ class PyUnicodeTest extends UnitTestSupport {
             assertEquals(expected, r);
         }
 
-        @Disabled("until PySequence.fastList accepts more types")
         @Test
         @DisplayName("'-+'.join('hello') [String, String]")
         void S_join_str_S() throws Throwable {
@@ -1510,7 +1447,6 @@ class PyUnicodeTest extends UnitTestSupport {
             assertEquals(expected, r);
         }
 
-        @Disabled("until PySequence.fastList accepts more types")
         @Test
         @DisplayName("'-+'.join('hello') [String, PyUnicode]")
         void S_join_str_U() throws Throwable {
@@ -1521,7 +1457,6 @@ class PyUnicodeTest extends UnitTestSupport {
             assertEquals(expected, r);
         }
 
-        @Disabled("until PySequence.fastList accepts more types")
         @Test
         @DisplayName("'-+'.join('hello') [PyUnicode, String]")
         void U_join_str_S() throws Throwable {
@@ -1532,7 +1467,6 @@ class PyUnicodeTest extends UnitTestSupport {
             assertEquals(expected, r);
         }
 
-        @Disabled("until PySequence.fastList accepts more types")
         @Test
         @DisplayName("'-+'.join('hello') [PyUnicode, PyUnicode]")
         void U_join_str_U() throws Throwable {
@@ -1543,7 +1477,6 @@ class PyUnicodeTest extends UnitTestSupport {
             assertEquals(expected, r);
         }
 
-        @Disabled("until PySequence.fastList accepts more types")
         @Test
         @DisplayName("', '.join(MySequence('hello'))")
         void U_join_sequence() throws Throwable {
@@ -1554,7 +1487,6 @@ class PyUnicodeTest extends UnitTestSupport {
             assertEquals(expected, r);
         }
 
-        @Disabled("until PySequence.fastList accepts more types")
         @Test
         @DisplayName("', '.join(MyIterator('hello'))")
         void U_join_iterator() throws Throwable {
@@ -1791,9 +1723,9 @@ class PyUnicodeTest extends UnitTestSupport {
     }
 
     /**
-     * This isn't a test of our implementation at all. It simply
-     * validates our understanding of how Java treats lone surrogates
-     * and SMP characters.
+     * This isn't a test of our implementation at all. It simply validates
+     * our understanding of how Java treats lone surrogates and SMP
+     * characters.
      */
     @SuppressWarnings("static-method")
     @Test
@@ -1825,7 +1757,6 @@ class PyUnicodeTest extends UnitTestSupport {
         assertEquals(snake, snakeCB.toString());
 
         // Java (and Python) will tolerate lone surrogates ------------
-
         String loners = new String(new char[] {head, head, tail, tail, head});
 
         // But in Java, surrogates may make one character
@@ -1852,10 +1783,9 @@ class PyUnicodeTest extends UnitTestSupport {
 
     /**
      * Return a list of char indices on {@code s} at which the given
-     * {@code needle} may be found. Occurrences found are
-     * non-overlapping. This uses Java {@code String.indexOf} and will
-     * work correctly for BMP strings, but is unreliable where any SMP
-     * characters are involved.
+     * {@code needle} may be found. Occurrences found are non-overlapping.
+     * This uses Java {@code String.indexOf} and will work correctly for BMP
+     * strings, but is unreliable where any SMP characters are involved.
      *
      * @param s string in question
      * @param needle to search for
@@ -1864,10 +1794,7 @@ class PyUnicodeTest extends UnitTestSupport {
     static int[] findIndices(String s, String needle) {
         LinkedList<Integer> charIndices = new LinkedList<>();
         int n = Math.max(1, needle.length()), p = 0;
-        while (p <= s.length() && (p = s.indexOf(needle, p)) >= 0) {
-            charIndices.add(p);
-            p += n;
-        }
+        while (p <= s.length() && (p = s.indexOf(needle, p)) >= 0) { charIndices.add(p); p += n; }
         int[] a = new int[charIndices.size()];
         for (int i = 0; i < a.length; i++) { a[i] = charIndices.pop(); }
         return a;
@@ -1875,11 +1802,10 @@ class PyUnicodeTest extends UnitTestSupport {
 
     /**
      * Return a list of char indices on {@code s} at which the given
-     * {@code needle} may be found, working backwards from the end.
-     * Although generated by a reverse scan, the return array is in
-     * ascending order. This uses Java {@code String.indexOf} and will
-     * work correctly for BMP strings, but is unreliable where any SMP
-     * characters are involved.
+     * {@code needle} may be found, working backwards from the end. Although
+     * generated by a reverse scan, the return array is in ascending order.
+     * This uses Java {@code String.indexOf} and will work correctly for BMP
+     * strings, but is unreliable where any SMP characters are involved.
      *
      * @param s string in question
      * @param needle to search for
@@ -1887,11 +1813,8 @@ class PyUnicodeTest extends UnitTestSupport {
      */
     static int[] rfindIndices(String s, String needle) {
         LinkedList<Integer> charIndices = new LinkedList<>();
-        int n = needle.length(), p = s.length() - n;
-        while ((p = s.lastIndexOf(needle, p)) >= 0) {
-            charIndices.push(p);
-            p -= n;
-        }
+        int n = Math.max(1, needle.length()), p = s.length();
+        while ((p = s.lastIndexOf(needle, p)) >= 0) { charIndices.push(p); p -= n; }
         int[] a = new int[charIndices.size()];
         for (Integer i = 0; i < a.length; i++) { a[i] = charIndices.pop(); }
         return a;
@@ -1937,11 +1860,11 @@ class PyUnicodeTest extends UnitTestSupport {
     }
 
     /**
-     * Take the {@code M} occurrences of the {@code needle} in
-     * {@code s}, which are enumerated by ascending code point index in
-     * {@code cpIndex}, and return an array of {@code M+1} segments
-     * between the needles. We return {@link PyUnicode} so that
-     * comparisons have Python semantics.
+     * Take the {@code M} occurrences of the {@code needle} in {@code s},
+     * which are enumerated by ascending code point index in
+     * {@code cpIndex}, and return an array of {@code M+1} segments between
+     * the needles. We return {@link PyUnicode} so that comparisons have
+     * Python semantics.
      *
      * @param s the reference string
      * @param needle identified (we use the length only)
@@ -1962,6 +1885,20 @@ class PyUnicodeTest extends UnitTestSupport {
         // And the last segment is from after the last needle
         segments[i] = s.substring(p);
         return toPyUnicodeArray(segments);
+    }
+
+    /**
+     * Boilerplate validation of a {@code list} returned in some kind of
+     * split operation. Expected segments are supplied as Java
+     * {@code PyUnicode}, irrespective of the argument types in the test.
+     *
+     * @param r list returned by method under test
+     * @param segments expected content
+     */
+    private static void splitListCheck(PyList r, PyUnicode[] segments) {
+        assertEquals(segments.length, r.size(), "number of segments");
+        int i = 0;
+        for (Object ri : r) { assertEquals(segments[i++], ri); }
     }
 
     /** Simple English string for ad hoc tests. */

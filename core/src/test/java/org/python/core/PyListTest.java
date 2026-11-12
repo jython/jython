@@ -1,4 +1,4 @@
-// Copyright (c)2023 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -21,8 +21,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Test selected methods of {@link PyList} on a variety of argument
- * types. We can mostly use Java List as a reference, except that,
- * where we need it, the definition of equality must be Python's.
+ * types. We can mostly use Java List as a reference, except that, where
+ * we need it, the definition of equality must be Python's.
  */
 @DisplayName("In PyList")
 class PyListTest extends UnitTestSupport {
@@ -44,15 +44,14 @@ class PyListTest extends UnitTestSupport {
         }
 
         /**
-         * Construct an insertion (etc.) problem and reference result. This
-         * uses Java {@code ArrayList} for the reference answer. The result
-         * is an
-         * {@code arguments(without, with, front, back, needle, index)}
-         * where {@code without} is (a mutable copy of) the corresponding
-         * list argument, {@code with} is the same list with {@code needle}
-         * inserted at {@code index}, and front and back have the if added
-         * first and last respectively. The arguments can be used for
-         * testing several types of insert and remove.
+         * Construct an insertion (etc.) problem and reference result. This uses
+         * Java {@code ArrayList} for the reference answer. The result is an
+         * {@code arguments(without, with, front, back, needle, index)} where
+         * {@code without} is (a mutable copy of) the corresponding list
+         * argument, {@code with} is the same list with {@code needle} inserted
+         * at {@code index}, and front and back have the if added first and last
+         * respectively. The arguments can be used for testing several types of
+         * insert and remove.
          *
          * @param without list without the needle
          * @param needle to insert
@@ -75,7 +74,6 @@ class PyListTest extends UnitTestSupport {
      * Tests of several things that amount to insertion of one element.
      */
     @Nested
-    @SuppressWarnings("unused")
     class InsertionTest extends AbstractInsertionTest {
 
         @DisplayName("Java add(i, v)")
@@ -94,7 +92,7 @@ class PyListTest extends UnitTestSupport {
         void insert(List<Object> without, List<Object> with, List<Object> front, List<Object> back,
                 Object needle, int index) throws Throwable {
             PyList list = new PyList(without);
-            list.list_insert(index, needle);
+            list.insert(index, needle);
             assertEquals(with, list);
         }
 
@@ -106,7 +104,7 @@ class PyListTest extends UnitTestSupport {
             PyList list = new PyList(without);
             PyList rhs = new PyList(List.of(needle));
             PySlice slice = new PySlice(index, index);
-            list.__setitem__(slice, rhs);
+            PySequence.setItem(list, slice, rhs);
             assertEquals(with, list);
         }
     }
@@ -195,14 +193,13 @@ class PyListTest extends UnitTestSupport {
     }
 
     /**
-     * Tests of {@code list.sort} with key functions and reverse
-     * comparison. These are simplistic: tests of change detection and
-     * concurrency are needed, and could be added here the CPython
-     * regression tests don't do so, or extra fidelity is required,
-     * which is often easier under a Java debugger.
+     * Tests of {@code list.sort} with key functions and reverse comparison.
+     * These are simplistic: tests of change detection and concurrency are
+     * needed, and could be added here the CPython regression tests don't do
+     * so, or extra fidelity is required, which is often easier under a Java
+     * debugger.
      */
     @Nested
-    @SuppressWarnings("unused")
     class SortTest extends AbstractSortTest {
 
         @DisplayName("Normal sort")

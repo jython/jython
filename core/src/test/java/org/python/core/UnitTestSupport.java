@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2026 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -14,27 +14,22 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.function.Executable;
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
 
 /**
  * A base class for unit tests that defines some common convenience
- * functions for which the need recurs. A unit test that extends
- * this base will initialise the type system before running.
+ * functions for which the need recurs. A unit test that extends this
+ * base will initialise the type system before running.
  */
 public class UnitTestSupport {
 
-    /** The {@link PyType} {@code object}. */
     /*
-     * This is needed to initialise the type system in a controlled way.
-     * Java static initialisation of PyType brings into being the
-     * critical built-in types in a carefully chosen order. If we use a
-     * Python type out of the blue (e.g. call a PyLong static method),
-     * initialising that class to use it causes the type system to
-     * initialise, but the type that caused it will complete its
-     * initialisation last. This subverts the careful ordering of the
-     * Python types in PyType.
+     * In a previous iteration we initialised the type system in a
+     * controlled way ahead of every test, by a use of PyType at this point.
+     * We have worked to make this unnecessary in the current iteration,
+     * because we do not want to impose the same burden on user
+     * applications.
      */
-    static PyType OBJECT = PyType.OBJECT_TYPE;
 
     /**
      * Convert test value to Java {@code int} (avoiding
@@ -42,10 +37,10 @@ public class UnitTestSupport {
      *
      * @param v to convert
      * @return converted value
-     * @throws ArithmeticError if out of range
-     * @throws IllegalArgumentException if wrong type
+     * @throws PyBaseException (ArithmeticError) if out of range
+     * @throws PyBaseException (IllegalArgumentException) if wrong type
      */
-    static int toInt(Object v) throws ArithmeticError, IllegalArgumentException {
+    public static int toInt(Object v) throws PyBaseException, IllegalArgumentException {
         if (v instanceof Integer)
             return ((Integer)v).intValue();
         else if (v instanceof BigInteger)
@@ -59,13 +54,13 @@ public class UnitTestSupport {
     }
 
     /**
-     * Convert test value to Java {@code String} (avoiding
-     * {@code __str__} for {@code PyUnicode} and non-crafted types).
+     * Convert test value to Java {@code String} (avoiding {@code __str__}
+     * for {@code PyUnicode} and non-crafted types).
      *
      * @param v to convert
      * @return converted value
      */
-    static String toString(Object v) {
+    public static String toString(Object v) {
         if (v instanceof String)
             return (String)v;
         else if (v instanceof PyUnicode)
@@ -80,7 +75,7 @@ public class UnitTestSupport {
      * @param value to assign
      * @return from this value.
      */
-    static PyLong newPyLong(BigInteger value) { return new PyLong(PyLong.TYPE, value); }
+    public static PyLong newPyLong(BigInteger value) { return new PyLong(value); }
 
     /**
      * Force creation of an actual {@link PyLong} from Object
@@ -88,7 +83,7 @@ public class UnitTestSupport {
      * @param value to assign
      * @return from this value.
      */
-    static PyLong newPyLong(Object value) {
+    public static PyLong newPyLong(Object value) {
         BigInteger vv = BigInteger.ZERO;
         try {
             vv = PyLong.asBigInteger(value);
@@ -107,7 +102,7 @@ public class UnitTestSupport {
      * @return converted value
      * @throws IllegalArgumentException if wrong type
      */
-    static double toDouble(Object v) {
+    public static double toDouble(Object v) {
         if (v instanceof Double)
             return ((Double)v).doubleValue();
         else if (v instanceof PyFloat)
@@ -130,7 +125,7 @@ public class UnitTestSupport {
      * @param value to wrap
      * @return from this value.
      */
-    static PyFloat newPyFloat(double value) { return new PyFloat(PyFloat.TYPE, value); }
+    public static PyFloat newPyFloat(double value) { return new PyFloat(value); }
 
     /**
      * Force creation of an actual {@link PyFloat} from Object
@@ -138,7 +133,7 @@ public class UnitTestSupport {
      * @param value to wrap
      * @return from this value.
      */
-    static PyFloat newPyFloat(Object value) {
+    public static PyFloat newPyFloat(Object value) {
         double vv = 0.0;
         try {
             vv = toDouble(value);
@@ -149,33 +144,29 @@ public class UnitTestSupport {
     }
 
     /**
-     * Force creation of an actual {@link PyUnicode} from a
-     * {@code String} to be treated as in the usual Java encoding.
-     * Surrogate pairs will be interpreted as their characters, unless
-     * lone.
+     * Force creation of an actual {@link PyUnicode} from a {@code String}
+     * to be treated as in the usual Java encoding. Surrogate pairs will be
+     * interpreted as their characters, unless lone.
      *
      * @param value to wrap
      * @return from this value.
      */
-    static PyUnicode newPyUnicode(String value) { return new PyUnicode(PyUnicode.TYPE, value); }
+    public static PyUnicode newPyUnicode(String value) { return new PyUnicode(value); }
 
     /**
-     * Force creation of an actual {@link PyUnicode} from an array of
-     * code points, which could include surrogates, even in pairs.
+     * Force creation of an actual {@link PyUnicode} from an array of code
+     * points, which could include surrogates, even in pairs.
      *
      * @param value the code points
      * @return from this value.
      */
-    static PyUnicode newPyUnicode(int[] value) {
-        return new PyUnicode(PyUnicode.TYPE, value);
-    }
+    public static PyUnicode newPyUnicode(int[] value) { return new PyUnicode(value); }
 
     /**
      * The object {@code o} is equal to the expected value according to
-     * Python (e.g. {@code True == 1} and strings may be equal even if
-     * one is {@code String} and the other {@link PyUnicode}). An
-     * unchecked exception may be thrown if the comparison goes badly
-     * enough.
+     * Python (e.g. {@code True == 1} and strings may be equal even if one
+     * is {@code String} and the other {@link PyUnicode}). An unchecked
+     * exception may be thrown if the comparison goes badly enough.
      *
      * @param expected value
      * @param o to test
@@ -208,14 +199,15 @@ public class UnitTestSupport {
 
     /**
      * Test whether the object {@code o} is equal to the expected value
-     * according to Python (e.g. {@code True == 1} and strings may be
-     * equal even if one is a {@link PyUnicode}. An unchecked exception
-     * may be thrown if the comparison goes badly enough.
+     * according to Python (e.g. {@code True == 1} and strings may be equal
+     * even if one is a {@link PyUnicode}. An unchecked exception may be
+     * thrown if the comparison goes badly enough.
      *
-     * @param x value
+     * @param x value expected
      * @param o to test
+     * @return whether equal in Python
      */
-    private static boolean pythonEquals(Object x, Object o) {
+    static boolean pythonEquals(Object x, Object o) {
         try {
             return Abstract.richCompareBool(x, o, Comparison.EQ);
         } catch (RuntimeException | Error e) {
@@ -234,49 +226,60 @@ public class UnitTestSupport {
      * @param o to test
      */
     public static void assertPythonType(PyType expected, Object o) {
-        assertTrue(expected.checkExact(o),
-                () -> String.format("Java %s not a Python '%s'",
-                        o.getClass().getSimpleName(), expected.name));
+        if (!expected.checkExact(o)) {
+            fail(() -> String.format("Java '%s' is not a Python '%s'", o.getClass().getSimpleName(),
+                    expected.getName()));
+        }
     }
 
     /**
-     * Assertion for test that a result is a string beginning a certain
-     * way.
+     * Assertion for test that a result is a string beginning a certain way.
      *
      * @param expected prefix
      * @param actual result to match
      */
-    static void assertStartsWith(String expected, String actual) {
-        assertTrue(actual.startsWith(expected),
-                "should start with " + expected);
+    public static void assertStartsWith(String expected, String actual) {
+        assertTrue(actual.startsWith(expected), "should start with " + expected);
     }
 
     /**
-     * Invoke an action expected to raise a Python exception and check
-     * the message. The return value may be the subject of further
-     * assertions.
+     * Invoke an action expected to raise a Python exception and check the
+     * message. The return value may be the subject of further assertions.
      *
-     * @param <E> type of exception
-     * @param expected type of exception
+     * @param expected Python type of exception
      * @param action to invoke
      * @param expectedMessage expected message text
-     * @return what was thrown
+     * @return the exception thrown
      */
-    static <T extends PyException> T assertRaises(Class<T> expected,
-            Executable action, String expectedMessage) {
-        T t = assertThrows(expected, action);
-        assertEquals(expectedMessage, t.getMessage());
-        return t;
+    static PyBaseException assertRaises(PyType expected, Executable action,
+            String expectedMessage) {
+        PyBaseException e = assertRaises(expected, action);
+        assertEquals(expectedMessage, e.getMessage());
+        return e;
+    }
+
+    /**
+     * Invoke an action expected to raise a Python exception. The return
+     * value may be the subject of further assertions.
+     *
+     * @param expected Python type of exception
+     * @param action to invoke
+     * @return the exception thrown
+     */
+    static PyBaseException assertRaises(PyType expected, Executable action) {
+        PyBaseException e = assertThrows(PyBaseException.class, action);
+        assertEquals(expected, e.getType());
+        return e;
     }
 
     /**
      * Find the (Gradle) build directory by ascending the file structure
-     * from the path to this class as a resource. Several files we need
-     * in tests are to be found at a well-defined location relative to
-     * the build directory.
+     * from the path to this class as a resource. Several files we need in
+     * tests are to be found at a well-defined location relative to the
+     * build directory.
      *
-     * This may be used from classes build by the IDE, as long as a
-     * Gradle build has been run too. *
+     * This may be used from classes build by the IDE, as long as a Gradle
+     * build has been run too. *
      *
      * @return the build directory
      */

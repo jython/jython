@@ -5,7 +5,7 @@
 This is the development repository of Jython,
 the implementation of Python in Java.
 
-You are looking at the branch intended to support version 3.8 of Python:
+You are looking at the branch intended to support version 3.x of Python:
 it doesn't build anything useful right now.
 Jython 3.x is not yet a viable product you can use in applications.
 Head over to [the 2.7 branch](https://github.com/jython/jython/tree/master)
@@ -14,8 +14,8 @@ to find the current release.
 
 ## Target
 
-Along with good language and runtime compatibility with CPython 3.8,
-Jython 3.8 is intended to provide substantial support of the Python ecosystem,
+Along with good language and runtime compatibility with CPython 3.11,
+Jython 3.11 is intended to provide substantial support of the Python ecosystem,
 and solid Java integration.
 
 For more about the target see the
@@ -34,7 +34,7 @@ pull requests, documentation changes and e-mail discussions.
 
 The current focus is to establish a foundation for the run-time
 that makes good use of the dynamic language features of the JVM.
-There are just enough classes here to illustrate the architectural ideas
+There is a growing set of classes here to test the architectural ideas
 underpinning the new foundation.
 
 The code of the Jython 2 implementation is also present on this branch,

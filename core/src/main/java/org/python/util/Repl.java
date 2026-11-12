@@ -12,7 +12,7 @@ import java.util.List;
 import org.python.core.CPython311Code;
 import org.python.core.Interpreter;
 import org.python.core.PyDict;
-import org.python.core.PyException;
+import org.python.core.PyBaseException;
 
 /**
  * An interactive read-eval-print loop for the Jython 3 runtime.
@@ -114,7 +114,7 @@ public class Repl {
     private void execute(CPython311Code code) {
         try {
             interp.eval(code, globals);
-        } catch (PyException pye) {
+        } catch (PyBaseException pye) {
             /*
              * Nothing to print: CPython311Frame already reports the
              * exception to System.err before re-throwing it. When the

@@ -13,9 +13,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.python.base.InterpreterError;
+import org.python.support.InterpreterError;
 import org.python.core.CPython311Code;
-import org.python.modules.marshal;
+import org.python.core.Interpreter;
+import org.python.core.PyModule;
+import org.python.modules.MarshalModule;
 
 /**
  * Compile interactive input to code objects for the {@link Repl}.
@@ -61,6 +63,9 @@ class ReplCompiler implements AutoCloseable {
     /** The CPython executable in use. */
     final String executable;
 
+    /** An instance of the marshal module. */
+    private final MarshalModule marshal;
+
     /** Private directory holding the copy of the script CPython runs. */
     private final Path scriptDir;
     private final Process process;
@@ -83,6 +88,14 @@ class ReplCompiler implements AutoCloseable {
      */
     ReplCompiler(String executable) throws IOException {
         this.executable = executable;
+
+        /*
+         * There is no import subsystem as yet, so add and initialise the
+         * marshal module by hand.
+         */
+        this.marshal = new MarshalModule();
+        marshal.exec();
+
         /*
          * Run the script from a file, not with -c: on Windows, Java does
          * not escape the double quotes in a -c argument, which corrupts it.
@@ -171,14 +184,13 @@ class ReplCompiler implements AutoCloseable {
     }
 
     /** Decode the marshalled code object after the status byte. */
-    private static CPython311Code readCode(byte[] reply) {
+    private CPython311Code readCode(byte[] reply) {
         byte[] data = Arrays.copyOfRange(reply, 1, reply.length);
-        Object o = new marshal.BytesReader(data).readObject();
+        Object o = marshal.new BytesReader(data).readObject();
         if (o instanceof CPython311Code code) { return code; }
         throw new InterpreterError("CPython compiler did not return a code object");
     }
 
-    /** Read the compiler script from the class path. */
     /** Copy the compiler script from our resources to the given file. */
     private static void copyScript(Path script) throws IOException {
         try (InputStream s = ReplCompiler.class.getResourceAsStream(SCRIPT)) {
