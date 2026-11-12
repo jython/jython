@@ -141,33 +141,30 @@ tasks.named('check') {
 }
 
 
-// Location of generated (Java) source
-
+// Base location of generated (Java) source
 def genSourcesDir = "$buildDir/generated/sources"
 
 // Sources and destinations when generating Java object implementations
-
 def templateInputDir = getProject().file('src/main/javaTemplate')
 def templateOutputDir = "$genSourcesDir/javaTemplate"
 def templateJavaDir = "$templateOutputDir/java/main"
-
 def templateTestInputDir = getProject().file('src/test/javaTemplate')
 def templateTestJavaDir = "$templateOutputDir/java/test"
 
 // Sources and destinations when generating the parser
-
-
 def pegenOutputDir = "$genSourcesDir/pegen"
 def pegenJavaDir = "$pegenOutputDir/java/main"
 
+// Destination when generating opcode constants from CPython
+def opcodesOutputDir = "$genSourcesDir/opcodes"
+def opcodesJavaDir = "$opcodesOutputDir/java/main"
+
 
 // Source and destinations of Python source test material
-
 // We compile these to code objects to test the CPython interpreter.
 def testPythonExampleInputDir = getProject().file('src/test/pythonExample')
-
-def pythonExampleOutput = "$buildDir/generated/sources/pythonExample"
-def testPythonExampleOutputDir = "$pythonExampleOutput/test"
+def pythonExampleOutputDir = "$buildDir/generated/sources/pythonExample"
+def testPythonExampleOutputDir = "$pythonExampleOutputDir/test"
 
 
 sourceSets {
@@ -176,6 +173,7 @@ sourceSets {
         java {
             srcDir templateJavaDir
             srcDir pegenJavaDir
+            srcDir opcodesJavaDir
         }
     }
 
@@ -190,12 +188,23 @@ sourceSets {
 }
 
 
-// A class of task that runs Python with the tools library on the path
+/*
+ * 'PythonExec' tasks here and the compiler with which we generate CPython
+ * bytecode in the 'repl' task must be for version we can execute (3.11).
+ * Choose it with -Pjython.cpython=<exe> or the environment variable
+ * JYTHON_CPYTHON; otherwise it is "python" found along the PATH.
+ * Tests and the REPL get it as the system property of the same name, which
+ * applies the same rules when run outside Gradle (see ReplCompiler).
+ */
+ext.cpythonExecutable = findProperty('jython.cpython')
+        ?: System.getenv('JYTHON_CPYTHON') ?: 'python'
 
+
+// A class of task that runs Python with the tools library on the path
 class PythonExec extends Exec {
 
     PythonExec() {
-        executable 'python'
+        executable getProject().cpythonExecutable
         environment('PYTHONPATH', getProject().getRootProject().file(
                 'build-tools/python/lib'))
     }
@@ -203,15 +212,31 @@ class PythonExec extends Exec {
 
 
 // Report the version of Python available
-
 task pythonVersion(type: PythonExec) {
     args '-V'
 }
 
 
+// The REPL tests compile with CPython (see ReplCompiler)
+test.systemProperty 'jython.cpython', cpythonExecutable
+
+
+// Generate opcode constants (OpcodeNNN.java) from the supported CPython
+task generateOpcodes(type: PythonExec,
+        description: 'Generate opcode constants from CPython') {
+    def tool = getProject().getRootProject().file(
+            'build-tools/python/tool/opcode_gen.py')
+    // Clues for the incremental build
+    inputs.file(tool)
+    outputs.dir(opcodesJavaDir)
+    args tool
+    args opcodesJavaDir
+}
+generateOpcodes.dependsOn(pythonVersion)
+compileJava.dependsOn(generateOpcodes)
+
 
 // Generate Python object definitions
-
 task generateJavaTemplate(type: PythonExec,
         description: 'Generate object definitions from templates',
         dependsOn: pythonVersion) {
@@ -221,11 +246,21 @@ task generateJavaTemplate(type: PythonExec,
     args templateInputDir
     args templateJavaDir
 }
+generateJavaTemplate.dependsOn(pythonVersion)
 compileJava.dependsOn(generateJavaTemplate)
 
 
-// Copy and compile Python source examples to the build tree
+// Run the interactive REPL (compiling with CPython)
+// ./gradlew -q --console=plain core:repl
+task repl(type: JavaExec, description: 'Run the interactive REPL') {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.python.util.Repl'
+    standardInput = System.in
+    systemProperty 'jython.cpython', cpythonExecutable
+}
 
+
+// Copy and compile Python source examples to the build tree
 task compileTestPythonExamples(type: PythonExec,
         description: 'Copy and compile Python test examples') {
     // Clues for the incremental build
@@ -233,6 +268,7 @@ task compileTestPythonExamples(type: PythonExec,
         fileTree(testPythonExampleInputDir) {
             include '**/*.py'
         })
+    inputs.property('cpython', cpythonExecutable)
     outputs.dir(testPythonExampleOutputDir)
     // Exec task is python -m compile_examples <src> <dst>
     args '-m'
@@ -303,8 +339,6 @@ task internalJavadoc(type:Exec,
 
     //println "Exec javadoc $args"
 }
-
-
 
 
 // Task to generate javadoc for test code

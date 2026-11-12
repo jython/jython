@@ -136,17 +136,13 @@ def get_parser():
     return parser
 
 
-def main():
-    # Parse the command line to argparse arguments
-    parser = get_parser()
-    args = parser.parse_args()
-
-    # Embed results of parse into factory
+def process(src_dir, dest_dir, error, verbose=False):
+    '''Friendly entry point to use this script via API.'''
+    # Embed arguments into factory
     factory = ImplementationTemplateProcessorFactory(
-            args.source_dir, args.dest_dir, parser.error, args.verbose)
+            src_dir, dest_dir, error, verbose)
 
-    # Process all Java files in the template tree at args.source_dir
-    src_dir = args.source_dir
+    # Process all Java files in the template tree at src_dir
     for dirpath, dirnames, filenames in os.walk(src_dir):
         # Any .java files here?
         javanames = [n for n in filenames
@@ -156,6 +152,13 @@ def main():
             for name in javanames:
                 proc = factory.get_processor(package, name)
                 proc.process()
+
+
+def main():
+    # Parse the command line to argparse arguments
+    parser = get_parser()
+    args = parser.parse_args()
+    process(args.source_dir, args.dest_dir, parser.error, args.verbose)
 
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ import org.python.kernel.BaseType;
 import org.python.kernel.KernelTypeFlag;
 import org.python.kernel.Representation;
 import org.python.support.InterpreterError;
+import org.python.support.MissingFeature;
 import org.python.types.TypeFlag;
 import org.python.types.WithDict;
 
@@ -286,6 +287,12 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                         sp -= 2;
                         // delItem(w, v)
                         PySequence.delItem(s[sp], s[sp + 1]);
+                        break;
+
+                    case Opcode311.PRINT_EXPR:
+                        // v | -> |
+                        // ---^sp -^sp
+                        displayHook(s[--sp]);
                         break;
 
                     case Opcode311.RETURN_VALUE:
@@ -645,12 +652,6 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                         break;
                     }
 
-                    case Opcode311.JUMP_BACKWARD_QUICK: {
-                        // Same as plain JUMP_BACKWARD for us
-                        ip -= oparg;
-                        break;
-                    }
-
                     case Opcode311.GET_ITER: {
                         // Replace an iterable with an iterator
                         // obj | -> iter(obj) |
@@ -773,65 +774,46 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                         int top = sp - 1;
                         Object v = s[top]; // TOP
                         s[top] = switch (oparg) {
-                            default -> //
-                                    Py.NotImplemented;
-                            case Opcode311.NB_ADD -> //
-                                    PyNumber.add(v, w);
-                            case Opcode311.NB_AND -> //
-                                    PyNumber.and(v, w);
-                            // case Opcode311.NB_FLOOR_DIVIDE -> //
-                            // PyNumber.FloorDivide(v, w);
-                            // case Opcode311.NB_LSHIFT -> //
-                            // PyNumber.Lshift(v, w);
-                            // case Opcode311.NB_MATRIX_MULTIPLY -> //
-                            // PyNumber.MatrixMultiply(v, w);
-                            case Opcode311.NB_MULTIPLY -> //
-                                    PyNumber.multiply(v, w);
-                            // case Opcode311.NB_REMAINDER -> //
-                            // PyNumber.Remainder(v, w);
-                            case Opcode311.NB_OR -> //
-                                    PyNumber.or(v, w);
-                            // case Opcode311.NB_POWER -> //
-                            // PyNumber.PowerNoMod(v, w);
-                            // case Opcode311.NB_RSHIFT -> //
-                            // PyNumber.Rshift(v, w);
-                            case Opcode311.NB_SUBTRACT -> //
-                                    PyNumber.subtract(v, w);
-                            // case Opcode311.NB_TRUE_DIVIDE -> //
-                            // PyNumber.TrueDivide(v, w);
-                            case Opcode311.NB_XOR -> //
-                                    PyNumber.xor(v, w);
-                            // case Opcode311.NB_INPLACE_ADD -> //
-                            // PyNumber.InPlaceAdd(v, w);
-                            // case Opcode311.NB_INPLACE_AND -> //
-                            // PyNumber.InPlaceAnd(v, w);
-                            // case Opcode311.NB_INPLACE_FLOOR_DIVIDE ->
-                            // //
-                            // PyNumber.InPlaceFloorDivide(v, w);
-                            // case Opcode311.NB_INPLACE_LSHIFT -> //
-                            // PyNumber.InPlaceLshift(v, w);
-                            // case Opcode311.NB_INPLACE_MATRIX_MULTIPLY
-                            // -> //
-                            // PyNumber.InPlaceMatrixMultiply(v, w);
-                            // case Opcode311.NB_INPLACE_MULTIPLY -> //
-                            // PyNumber.InPlaceMultiply(v, w);
-                            // case Opcode311.NB_INPLACE_REMAINDER -> //
-                            // PyNumber.InPlaceRemainder(v, w);
-                            // case Opcode311.NB_INPLACE_OR -> //
-                            // PyNumber.InPlaceOr(v, w);
-                            // case Opcode311.NB_INPLACE_POWER -> //
-                            // PyNumber.InPlacePowerNoMod(v, w);
-                            // case Opcode311.NB_INPLACE_RSHIFT -> //
-                            // PyNumber.InPlaceRshift(v, w);
-                            // case Opcode311.NB_INPLACE_SUBTRACT -> //
-                            // PyNumber.InPlaceSubtract(v, w);
-                            // case Opcode311.NB_INPLACE_TRUE_DIVIDE ->
-                            // //
-                            // PyNumber.InPlaceTrueDivide(v, w);
-                            // case Opcode311.NB_INPLACE_XOR -> //
-                            // PyNumber.InPlaceXor(v, w);
+                            default -> throw new MissingFeature("BINARY_OP %d", oparg);
+                            case Opcode311.NB_ADD -> PyNumber.add(v, w);
+                            case Opcode311.NB_AND -> PyNumber.and(v, w);
+                            // case Opcode311.NB_FLOOR_DIVIDE -> PyNumber.FloorDivide(v, w);
+                            // case Opcode311.NB_LSHIFT -> PyNumber.Lshift(v, w);
+                            // case Opcode311.NB_MATRIX_MULTIPLY
+                            // -> PyNumber.MatrixMultiply(v, w);
+                            case Opcode311.NB_MULTIPLY -> PyNumber.multiply(v, w);
+                            // case Opcode311.NB_REMAINDER -> PyNumber.Remainder(v, w);
+                            case Opcode311.NB_OR -> PyNumber.or(v, w);
+                            // case Opcode311.NB_POWER -> PyNumber.PowerNoMod(v, w);
+                            // case Opcode311.NB_RSHIFT -> PyNumber.Rshift(v, w);
+                            case Opcode311.NB_SUBTRACT -> PyNumber.subtract(v, w);
+                            // case Opcode311.NB_TRUE_DIVIDE -> PyNumber.TrueDivide(v, w);
+                            case Opcode311.NB_XOR -> PyNumber.xor(v, w);
+                            // case Opcode311.NB_INPLACE_ADD -> PyNumber.InPlaceAdd(v, w);
+                            // case Opcode311.NB_INPLACE_AND -> PyNumber.InPlaceAnd(v, w);
+                            // case Opcode311.NB_INPLACE_FLOOR_DIVIDE -> PyNumber.InPlaceFloorDivide(v, w);
+                            // case Opcode311.NB_INPLACE_LSHIFT -> PyNumber.InPlaceLshift(v, w);
+                            // case Opcode311.NB_INPLACE_MATRIX_MULTIPLY -> PyNumber.InPlaceMatrixMultiply(v, w);
+                            // case Opcode311.NB_INPLACE_MULTIPLY -> PyNumber.InPlaceMultiply(v, w);
+                            // case Opcode311.NB_INPLACE_REMAINDER -> yNumber.InPlaceRemainder(v, w);
+                            // case Opcode311.NB_INPLACE_OR -> PyNumber.InPlaceOr(v, w);
+                            // case Opcode311.NB_INPLACE_POWER -> PyNumber.InPlacePowerNoMod(v, w);
+                            // case Opcode311.NB_INPLACE_RSHIFT -> PyNumber.InPlaceRshift(v, w);
+                            // case Opcode311.NB_INPLACE_SUBTRACT -> PyNumber.InPlaceSubtract(v, w);
+                            // case Opcode311.NB_INPLACE_TRUE_DIVIDE -> PyNumber.InPlaceTrueDivide(v, w);
+                            // case Opcode311.NB_INPLACE_XOR -> PyNumber.InPlaceXor(v, w);
                         };
                         ip += Opcode311.INLINE_CACHE_ENTRIES_BINARY_OP;
+                        break;
+                    }
+
+                    case Opcode311.BUILD_SLICE: {
+                        // start | stop | [step] | -> | slice |
+                        // ---------------------^sp ---------^sp
+                        Object step = oparg == 3 ? s[--sp] : null;
+                        Object stop = s[--sp];
+                        int top = sp - 1;
+                        s[top] = new PySlice(s[top], stop, step);
                         break;
                     }
 
@@ -929,6 +911,30 @@ class CPython311Frame extends PyFrame<CPython311Code> {
     // Supporting definitions and methods -----------------------------
 
     private static final Object[] EMPTY_OBJECT_ARRAY = Util.EMPTY_ARRAY;
+
+    /**
+     * Display the value of an expression statement in interactive code,
+     * for the {@code PRINT_EXPR} operation. This prints
+     * {@code repr(value)} to standard output, unless it is
+     * {@code None}, and binds {@code builtins._} to the value.
+     * <p>
+     * This is a stop-gap until we have a {@code sys} module. CPython's
+     * {@code PRINT_EXPR} looks up {@code sys.displayhook} and calls
+     * that, so it may be replaced from Python, and writes to
+     * {@code sys.stdout}. When we have those, {@code PRINT_EXPR} should
+     * do the same and this method should go.
+     *
+     * @param value to display
+     * @throws Throwable from {@code repr()}
+     */
+    // Stop-gap for sys.displayhook: compare CPython sys_displayhook in sysmodule.c
+    private void displayHook(Object value) throws Throwable {
+        if (value != Py.None) {
+            builtins.put("_", Py.None);
+            System.out.println(Abstract.repr(value));
+            builtins.put("_", value);
+        }
+    }
 
     private static final String NAME_ERROR_MSG = "name '%.200s' is not defined";
     private static final String UNBOUNDLOCAL_ERROR_MSG =

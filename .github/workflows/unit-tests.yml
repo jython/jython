@@ -9,9 +9,16 @@ permissions:
 
 jobs:
 
-  unit-tests-Ubuntu-jdk-17:
+  unit-tests-jdk-17:
 
-    runs-on: ubuntu-latest
+    strategy:
+      # Report each platform, even if the other fails
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    name: unit tests (${{ matrix.os }}, JDK 17)
+    runs-on: ${{ matrix.os }}
 
     steps:
       - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
@@ -26,12 +33,18 @@ jobs:
           java-version: '17'
 
       - name: Set up Python 3.11
+        id: setup-python
         uses: actions/setup-python@v4
         with:
           # This has to match the language version we're targeting
           python-version: '3.11'
 
       - name: Unit test with Gradle
+        # Tell the build exactly which CPython to use (see core/core.gradle).
+        # An environment variable avoids quoting a Windows path on the
+        # command line, where PowerShell also mangles -Pjython.cpython=...
+        env:
+          JYTHON_CPYTHON: ${{ steps.setup-python.outputs.python-path }}
         run: ./gradlew --no-daemon test
 
       - name: Clean up Gradle cache
@@ -39,6 +52,7 @@ jobs:
         # by GitHub Actions. Restoring these files from a GitHub Actions
         # cache might cause problems for future builds.
         #https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
+        shell: bash
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -f ~/.gradle/caches/modules-2/gc.properties

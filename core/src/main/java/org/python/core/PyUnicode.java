@@ -3541,10 +3541,10 @@ public class PyUnicode implements WithClass, PyDict.Key {
      */
     public static <E extends PyBaseException> String asString(Object v,
             Function<Object, E> exc) throws PyBaseException {
-        if (v instanceof String)
-            return (String)v;
-        else if (v instanceof PyUnicode)
-            return ((PyUnicode)v).asString();
+        if (v instanceof String s)
+            return s;
+        else if (v instanceof PyUnicode u)
+            return u.asString();
         throw exc.apply(v);
     }
 

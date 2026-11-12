@@ -370,6 +370,53 @@ class BuiltinsModule extends JavaModule {
             "Cannot specify a default for %s() with multiple positional arguments";
 
     /**
+     * Implementation of {@code print()}, simplified: output always goes
+     * to {@code System.out}, and {@code file} and {@code flush} are not
+     * yet supported.
+     *
+     * @param sep separator between values ({@code None} means a space)
+     * @param end appended after the last value ({@code None} means a
+     *     new line)
+     * @param args the values to print
+     * @throws Throwable from {@code str()} of an argument
+     */
+    @PythonStaticMethod(positionalOnly = false)
+    @DocString("Prints the values to sys.stdout.")
+    // Simplified version of print()
+    static void print(@KeywordOnly @Default("None") Object sep, @Default("None") Object end,
+            @PositionalCollector PyTuple args) throws Throwable {
+        // Deal with defaults (and check for string nature)
+        String s = sep == Py.None ? " "
+                : PyUnicode.asString(sep, v -> noneOrStrError("print", "sep", sep));
+        String e = end == Py.None ? "\n"
+                : PyUnicode.asString(end, v -> noneOrStrError("print", "end", end));
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < args.size(); i++) {
+            if (i > 0) { sb.append(s); }
+            sb.append(Abstract.str(args.get(i)));
+        }
+        sb.append(e);
+        System.out.print(sb);
+        System.out.flush();
+    }
+
+    /**
+     * Create a {@link TypeError} for an argument that should have been
+     * {@code None} or a {@code str}.
+     *
+     * @param f name of the function or operation
+     * @param name of the argument
+     * @param v value of the argument
+     * @return exception to throw
+     */
+    private static PyBaseException noneOrStrError(String f, String name, Object v) {
+        return Abstract.argumentTypeError(f, "None or a string", name,
+               v);
+    }
+
+
+    /**
      * Return the canonical string representation of the object.
      *
      * @param obj to represent

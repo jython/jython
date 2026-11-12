@@ -75,7 +75,7 @@ public class Interpreter {
      * @return result of evaluation
      */
     // Compare CPython PyEval_EvalCode in ceval.c
-    Object eval(PyCode code, PyDict globals, Object locals) {
+    public Object eval(PyCode code, PyDict globals, Object locals) {
         if (locals == null) { locals = globals; }
         globals.putIfAbsent("__builtins__", builtinsModule);
         PyFunction<?> func = code.createFunction(this, globals);
@@ -91,7 +91,7 @@ public class Interpreter {
      * @param globals global context dictionary
      * @return result of evaluation
      */
-    Object eval(PyCode code, PyDict globals) { return eval(code, globals, globals); }
+    public Object eval(PyCode code, PyDict globals) { return eval(code, globals, globals); }
 
     /**
      * Get the value of an attribute of the built-in module, equivalent to
