@@ -192,7 +192,7 @@ dependencies {
     implementation 'org.ow2.asm:asm-commons:9.10.1'
     implementation 'org.ow2.asm:asm-util:9.10.1'
 
-    implementation 'com.google.guava:guava:33.6.0-jre'
+    implementation 'com.google.guava:guava:33.8.0-jre'
 
     // Pin icu4j to latest 77.x until Jython moves to Java 11.
     // https://unicode-org.github.io/icu/download/77.html
@@ -208,13 +208,13 @@ dependencies {
 
     implementation 'jline:jline:2.14.6'
 
-    implementation 'io.netty:netty-buffer:4.1.136.Final'
-    implementation 'io.netty:netty-codec:4.1.136.Final'
-    implementation 'io.netty:netty-common:4.1.136.Final'
-    implementation 'io.netty:netty-handler:4.1.136.Final'
-    implementation 'io.netty:netty-resolver:4.1.136.Final'
-    implementation 'io.netty:netty-transport:4.1.136.Final'
-    implementation 'io.netty:netty-transport-native-unix-common:4.1.136.Final'
+    implementation 'io.netty:netty-buffer:4.1.140.Final'
+    implementation 'io.netty:netty-codec:4.1.140.Final'
+    implementation 'io.netty:netty-common:4.1.140.Final'
+    implementation 'io.netty:netty-handler:4.1.140.Final'
+    implementation 'io.netty:netty-resolver:4.1.140.Final'
+    implementation 'io.netty:netty-transport:4.1.140.Final'
+    implementation 'io.netty:netty-transport-native-unix-common:4.1.140.Final'
 
     // Used implicitly in the Ant build, must be explicit here
     implementation 'org.apache.ant:ant:1.10.14'

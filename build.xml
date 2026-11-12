@@ -257,7 +257,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="commons-compress-1.28.0.jar"/>
                 <file name="commons-io-2.22.0.jar"/>
                 <file name="failureaccess-1.0.3.jar" />
-                <file name="guava-33.6.0-jre.jar" />
+                <file name="guava-33.8.0-jre.jar" />
                 <!-- Pin icu4j to latest 77.x until Jython moves to Java 11.
                      https://unicode-org.github.io/icu/download/77.html -->
                 <file name="icu4j-77.1.jar" />
@@ -268,13 +268,13 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="jnr-netdb-1.2.0.jar"/>
                 <file name="jnr-posix-3.2.1.jar"/>
                 <file name="jline-2.14.6.jar"/>
-                <file name="netty-buffer-4.1.136.Final.jar"/>
-                <file name="netty-codec-4.1.136.Final.jar"/>
-                <file name="netty-common-4.1.136.Final.jar"/>
-                <file name="netty-handler-4.1.136.Final.jar"/>
-                <file name="netty-resolver-4.1.136.Final.jar"/>
-                <file name="netty-transport-4.1.136.Final.jar"/>
-                <file name="netty-transport-native-unix-common-4.1.136.Final.jar"/>
+                <file name="netty-buffer-4.1.140.Final.jar"/>
+                <file name="netty-codec-4.1.140.Final.jar"/>
+                <file name="netty-common-4.1.140.Final.jar"/>
+                <file name="netty-handler-4.1.140.Final.jar"/>
+                <file name="netty-resolver-4.1.140.Final.jar"/>
+                <file name="netty-transport-4.1.140.Final.jar"/>
+                <file name="netty-transport-native-unix-common-4.1.140.Final.jar"/>
             </filelist>
         </path>
 
@@ -862,23 +862,23 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/commons-io-2.22.0.jar" excludes="META-INF/versions/9/module-info.class"/>
             <rule pattern="org.apache.commons.io.**" result="org.python.apache.commons.io.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.3.jar" excludes="META-INF/**"/>
-            <zipfileset src="extlibs/guava-33.6.0-jre.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/guava-33.8.0-jre.jar" excludes="META-INF/**"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-77.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <zipfileset src="extlibs/netty-buffer-4.1.136.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-buffer-4.1.140.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.1.136.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-codec-4.1.140.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.1.136.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-common-4.1.140.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.1.136.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-handler-4.1.140.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-resolver-4.1.136.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-resolver-4.1.140.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.1.136.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-transport-4.1.140.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-native-unix-common-4.1.136.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-transport-native-unix-common-4.1.140.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <rule pattern="com.carrotsearch.sizeof.**" result="org.python.sizeof.@1"/>
