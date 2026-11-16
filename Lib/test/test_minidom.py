@@ -2,6 +2,7 @@
 
 import copy
 import pickle
+import sys
 from StringIO import StringIO
 from test.test_support import verbose, run_unittest, findfile
 import unittest
@@ -150,6 +151,45 @@ class MinidomTest(unittest.TestCase):
         self.confirm(dom.documentElement.childNodes[-1].nodeName == "#comment")
         self.confirm(dom.documentElement.childNodes[-1].data == "Hello")
         dom.unlink()
+
+    def testAppendChildNoQuadraticComplexity(self):
+        impl = getDOMImplementation()
+
+        def work(n):
+            doc = impl.createDocument(None, "some_tag", None)
+            element = doc.documentElement
+            total_lines = [0]
+
+            # Count the lines executed in minidom as a proxy for work done
+            def line_counter(frame, event, arg):
+                total_lines[0] += 1
+                return line_counter
+
+            def tracer(frame, event, arg):
+                if frame.f_globals.get('__name__') == 'xml.dom.minidom':
+                    return line_counter
+                return None
+
+            sys.settrace(tracer)
+            try:
+                for _ in range(n):
+                    child = doc.createElement("child")
+                    element.appendChild(child)
+                    element = child
+            finally:
+                sys.settrace(None)
+            return total_lines[0]
+
+        # Doubling N should not ~quadruple the work.
+        w1 = work(256)
+        w2 = work(512)
+        w3 = work(1024)
+
+        self.assertGreater(w1, 0)
+        r1 = float(w2) / w1
+        r2 = float(w3) / w2
+        self.assertLess(max(r1, r2), 3.2,
+            "Possible quadratic behavior: work=%r ratios=%r" % ((w1, w2, w3), (r1, r2)))
 
     def testAppendChildFragment(self):
         dom, orig, c1, c2, c3, frag = self._create_fragment_test_nodes()
