@@ -165,6 +165,14 @@ class BaseThreadedNetworkedTests(unittest.TestCase):
             self.assertRaises(imaplib.IMAP4.abort,
                               self.imap_class, *server.server_address)
 
+    @reap_threads
+    def test_control_characters(self):
+        with self.reaped_server(SimpleIMAPHandler) as server:
+            client = self.imap_class(*server.server_address)
+            for c0 in [chr(c) for c in range(0x20)] + ['\x7f']:
+                self.assertRaises(ValueError, client.login, 'user%s' % c0, 'pass')
+            client.shutdown()
+
 
 class ThreadedNetworkedTests(BaseThreadedNetworkedTests):
 
