@@ -499,7 +499,7 @@ public class Time implements ClassDictInit
             items[i] = item(tup, i);
         }
 
-        String s = "";
+        StringBuilder s = new StringBuilder();
         int lastc = 0;
         int j;
         String[] syms;
@@ -508,23 +508,23 @@ public class Time implements ClassDictInit
             int i = format.indexOf("%", lastc);
             if (i < 0) {
                 // the end of the format string
-                s = s + format.substring(lastc);
+                s.append(format.substring(lastc));
                 break;
             }
             if (i == format.length() - 1) {
                 // there's a bare % at the end of the string.  Python lets
                 // this go by just sticking a % at the end of the result
                 // string
-                s = s + "%";
+                s.append("%");
                 break;
             }
-            s = s + format.substring(lastc, i);
+            s.append(format.substring(lastc, i));
             i++;
             switch (format.charAt(i)) {
             case 'a':
                 // abbrev weekday
                 j = items[6];
-                s = s + _shortday(j);
+                s.append(_shortday(j));
                 break;
             case 'A':
                 // full weekday
@@ -532,67 +532,67 @@ public class Time implements ClassDictInit
                 syms = datesyms.getWeekdays();
                 j = items[6];
                 if (0 <= j && j < 6)
-                    s = s + syms[j+2];
+                    s.append(syms[j + 2]);
                 else if (j== 6)
-                    s = s + syms[1];
+                    s.append(syms[1]);
                 else
                     throwValueError("day of week out of range (0 - 6)");
                 break;
             case 'b':
                 // abbrev month
                 j = items[1];
-                s = s + _shortmonth(j);
+                s.append(_shortmonth(j));
                 break;
             case 'B':
                 // full month
                 syms = datesyms.getMonths();
                 j = items[1];
-                s = s + syms[j];
+                s.append(syms[j]);
                 break;
             case 'c':
-                s = s + locale_asctime(tup);
+                s.append(locale_asctime(tup));
                 break;
             case 'd':
                 // day of month (01-31)
-                s = s + _twodigit(items[2]);
+                s.append(_twodigit(items[2]));
                 break;
             case 'H':
                 // hour (00-23)
-                s = s + _twodigit(items[3]);
+                s.append(_twodigit(items[3]));
                 break;
             case 'I':
                 // hour (01-12)
                 j = items[3] % 12;
                 if (j == 0)
                     j = 12;                  // midnight or noon
-                s = s + _twodigit(j);
+                s.append(_twodigit(j));
                 break;
             case 'j':
                 // day of year (001-366)
-                s = s + _padint(items[7], 3);
+                s.append(_padint(items[7], 3));
                 break;
             case 'm':
                 // month (01-12)
-                s = s + _twodigit(items[1] + 1);
+                s.append(_twodigit(items[1] + 1));
                 break;
             case 'M':
                 // minute (00-59)
-                s = s + _twodigit(items[4]);
+                s.append(_twodigit(items[4]));
                 break;
             case 'p':
                 // AM/PM
                 j = items[3];
                 syms = datesyms.getAmPmStrings();
                 if (0 <= j && j < 12)
-                    s = s + syms[0];
+                    s.append(syms[0]);
                 else if (12 <= j && j < 24)
-                    s = s + syms[1];
+                    s.append(syms[1]);
                 else
                     throwValueError("hour out of range (0-23)");
                 break;
             case 'S':
                 // seconds (00-61)
-                s = s + _twodigit(items[5]);
+                s.append(_twodigit(items[5]));
                 break;
             case 'U':
                 // week of year (sunday is first day) (00-53).  all days in
@@ -605,13 +605,13 @@ public class Time implements ClassDictInit
                 j = cal.get(Calendar.WEEK_OF_YEAR);
                 if (cal.get(Calendar.MONTH) == Calendar.JANUARY && j >= 52)
                     j = 0;
-                s = s + _twodigit(j);
+                s.append(_twodigit(j));
                 break;
             case 'w':
                 // weekday as decimal (0=Sunday-6)
                 // tuple format has monday=0
                 j = (items[6] + 1) % 7;
-                s = s + j;
+                s.append(j);
                 break;
             case 'W':
                 // week of year (monday is first day) (00-53).  all days in
@@ -625,7 +625,7 @@ public class Time implements ClassDictInit
 
                 if (cal.get(Calendar.MONTH) == Calendar.JANUARY && j >= 52)
                     j = 0;
-                s = s + _twodigit(j);
+                s.append(_twodigit(j));
                 break;
             case 'x':
                 // TBD: A note about %x and %X.  Python's time.strftime()
@@ -647,23 +647,27 @@ public class Time implements ClassDictInit
                 //     %x == mm/dd/yy
                 //     %X == HH:mm:SS
                 //
-                s = s + _twodigit(items[1] + 1) + "/" +
-                    _twodigit(items[2]) + "/" +
-                    _truncyear(items[0]);
+                s.append(_twodigit(items[1] + 1))
+                 .append("/")
+                 .append(_twodigit(items[2]))
+                 .append("/")
+                 .append(_truncyear(items[0]));
                 break;
             case 'X':
                 // See comment for %x above
-                s = s + _twodigit(items[3]) + ":" +
-                    _twodigit(items[4]) + ":" +
-                    _twodigit(items[5]);
+                s.append(_twodigit(items[3]))
+                 .append(":")
+                 .append(_twodigit(items[4]))
+                 .append(":")
+                 .append(_twodigit(items[5]));
                 break;
             case 'Y':
                 // year w/ century
-                s = s + _padint(items[0], 4);
+                s.append(_padint(items[0], 4));
                 break;
             case 'y':
                 // year w/o century (00-99)
-                s = s + _truncyear(items[0]);
+                s.append(_truncyear(items[0]));
                 break;
             case 'Z':
                 // timezone name
@@ -671,15 +675,15 @@ public class Time implements ClassDictInit
                     cal = _tupletocal(tup);
                 // If items[8] == 1, we're in daylight savings time.
                 // -1 means the information was not available; treat this as if not in dst.
-                s = s + cal.getTimeZone().getDisplayName(items[8] > 0, 0);
+                s.append(cal.getTimeZone().getDisplayName(items[8] > 0, 0));
                 break;
             case '%':
                 // %
-                s = s + "%";
+                s.append("%");
                 break;
             default:
                 // TBD: should this raise a ValueError?
-                s = s + "%" + format.charAt(i);
+                s.append("%").append(format.charAt(i));
                 i++;
                 break;
             }
@@ -697,7 +701,7 @@ public class Time implements ClassDictInit
         //        os.environ)
         //
         // TODO:  Check how CPython deals with this problem.
-        return Py.newStringUTF8(s);
+        return Py.newStringUTF8(s.toString());
     }
 
 

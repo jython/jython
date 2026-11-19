@@ -67,9 +67,7 @@ public class GrammarActions {
     }
 
     String makeFromText(List dots, List<Name> names) {
-        StringBuilder d = new StringBuilder();
-        d.append(PythonTree.dottedNameListToString(names));
-        return d.toString();
+        return PythonTree.dottedNameListToString(names);
     }
 
     List<Name> makeModuleNameNode(List dots, List<Name> names) {
@@ -461,7 +459,7 @@ public class GrammarActions {
     PyString extractStrings(List s, String encoding, boolean unicodeLiterals) {
         boolean ustring = false;
         Token last = null;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Iterator iter = s.iterator();
         while (iter.hasNext()) {
             last = (Token)iter.next();
