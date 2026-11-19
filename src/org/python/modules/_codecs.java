@@ -8,6 +8,7 @@ package org.python.modules;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 import org.python.core.Py;
@@ -679,11 +680,11 @@ public class _codecs {
     public static String encode_UTF16(String str, String errors, int byteorder) {
         final Charset utf16;
         if (byteorder == 0) {
-            utf16 = Charset.forName("UTF-16");
+            utf16 = StandardCharsets.UTF_16;
         } else if (byteorder == -1) {
-            utf16 = Charset.forName("UTF-16LE");
+            utf16 = StandardCharsets.UTF_16LE;
         } else {
-            utf16 = Charset.forName("UTF-16BE");
+            utf16 = StandardCharsets.UTF_16BE;
         }
 
         // XXX errors argument ignored: Java's codecs implement "replace"
