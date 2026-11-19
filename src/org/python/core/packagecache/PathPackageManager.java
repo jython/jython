@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.logging.Level;
 
 import org.python.core.Py;
@@ -158,7 +159,10 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
                 if (!pkgCand) {
                     try {
-                        int acc = checkAccess(new BufferedInputStream(new FileInputStream(cand)));
+                        int acc;
+                        try (BufferedInputStream cstream = new BufferedInputStream(Files.newInputStream(cand.toPath()))) {
+                            acc = checkAccess(cstream);
+                        }
                         if ((acc == -1) || filterByAccess(jname, acc)) {
                             continue;
                         }
