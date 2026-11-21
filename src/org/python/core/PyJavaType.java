@@ -999,6 +999,11 @@ public class PyJavaType extends PyType {
      * @param forClass the target class
      */
     private void addCollectionProxies(Class<?> forClass) {
+        // Native Python objects implement their own collection protocols and do not
+        // have the Java proxy required by these adapters.
+        if (PyObject.class.isAssignableFrom(forClass)) {
+            return;
+        }
         PyBuiltinMethod[] collectionProxyMethods = getCollectionProxies().get(forClass);
         if (collectionProxyMethods != null) {
             for (PyBuiltinMethod meth : collectionProxyMethods) {
