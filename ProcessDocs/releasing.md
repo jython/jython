@@ -24,8 +24,8 @@ by issues and PRs,
 rather than during the release process:
 
 * Are the JARs we reference or embed sufficiently up to date?
-  The security vunverabilities (CVEs) reported against Jython come
-  almost entirely from the JARs we cite or embed.
+  The security vulnerabilities (CVEs) reported against Jython come
+  mostly from the JARs we cite or embed.
 * Is the Unicode reference data sufficiently up to date?
   See `~/Misc/makeucnhashdat.py` and `unchash.dat`.
 * `src/org/python/core/imp.java`: If there has been any compiler change,
@@ -33,12 +33,15 @@ rather than during the release process:
   This magic declares old compiled files incompatible, forcing a fresh compilation for users.
   (Maybe do it anyway, if it's been a long time.)
 
-Consider *not* doing some of these actions until a beta release is imminent.
+Consider *not* doing some of these actions
+during the normal run of development activity,
+deferring them until a beta release is imminent,
+and the very latest JARs are available.
 The way we manage dependencies means the repository history contains
-a copy of every version of every JAR we ever used.
+a copy of every JAR in all the versions we ever used.
 This is a lot of space.
 `unchash.dat` is also large.
-Refreshing a dependency will seldom impact our own code materially,
+Refreshing a dependency will seldom affect our own code,
 but if it will, it is fine to de-risk the change earlier.
 
 
@@ -822,13 +825,13 @@ on an unsuspecting public,
 you are ready to push these changes and the tag you made
 upstream to the Jython repository.
 
-It *should* be safe once testing is complete,
+It *should* be safe once local testing is complete,
 but trying to publish at Sonatype has sometimes revealed problems
 in our packaging scripts,
-which are checked-in code.
-GitHub releases are based on a tag,
-which has to be on the public repository.
-So we have to push here before we publish at GitHub.
+which are checked-in code we would like included in the tag.
+GitHub releases reference a tag on the public repository.
+So we have to push here *after* we publish at Sonatype
+but *before* we publish at GitHub.
 
 Back in the place where the release was built (and using Bash):
 
@@ -850,7 +853,7 @@ and painfully obvious if this is a final release.
 There is extensive documentation on [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github).
 We are following the step-by-step process in [Creating a Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release).
 
-[!NOTE]
+> [!NOTE]
 > We do not currently make our releases immutable.
 > We probably should, but as the process is new to us,
 > we wish to be able to remedy errors.
@@ -867,7 +870,8 @@ GitHub will generate release notes for you from the commit history,
 which may be adequate for a beta release after the first or a release candidate,
 since little will have changed.
 The notes on a first beta or a final should describe the progress since the last full release.
-The new features text in NEWS is ready-made for this so paste that in.
+The new features text in NEWS is ready-made for this job,
+so paste that in and adjust the format if necessary.
 
 In the next section we add the release JARs as "binary artefacts".
 The JARs we need to post are essentially those in `dist`, in the working directory.
