@@ -520,8 +520,11 @@ public class PyJavaType extends PyType {
         // Add constructors declared on this type
         addConstructors(forClass, constructors);
 
-        // Special handling for Java collection types
-        addCollectionProxies(forClass);
+        // Only wrapped Java objects need collection adapters. Native Python
+        // objects implement their own protocols and have no wrapped Java proxy.
+        if (!PyObject.class.isAssignableFrom(forClass)) {
+            addCollectionProxies(forClass);
+        }
 
         // Handle classes that use the ClassDictInit pattern for their definition
         PyObject nameSpecified = null;
