@@ -520,8 +520,11 @@ public class PyJavaType extends PyType {
         // Add constructors declared on this type
         addConstructors(forClass, constructors);
 
-        // Special handling for Java collection types
-        addCollectionProxies(forClass);
+        // Only wrapped Java objects need collection adapters. Native Python
+        // objects implement their own protocols and have no wrapped Java proxy.
+        if (!PyObject.class.isAssignableFrom(forClass)) {
+            addCollectionProxies(forClass);
+        }
 
         // Handle classes that use the ClassDictInit pattern for their definition
         PyObject nameSpecified = null;
@@ -999,11 +1002,6 @@ public class PyJavaType extends PyType {
      * @param forClass the target class
      */
     private void addCollectionProxies(Class<?> forClass) {
-        // Native Python objects implement their own collection protocols and do not
-        // have the Java proxy required by these adapters.
-        if (PyObject.class.isAssignableFrom(forClass)) {
-            return;
-        }
         PyBuiltinMethod[] collectionProxyMethods = getCollectionProxies().get(forClass);
         if (collectionProxyMethods != null) {
             for (PyBuiltinMethod meth : collectionProxyMethods) {
