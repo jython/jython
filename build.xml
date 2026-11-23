@@ -288,6 +288,10 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <pathelement location="${compile.dir}" />
             <pathelement location="${test.compile.dir}" />
             <pathelement location="${cpptasks.jar.dir}" />
+            <filelist dir="${dist.dir}">
+                <file name="${jython.test.jar}" />
+                <file name="${jython.dev.jar}" />
+            </filelist>
         </path>
     </target>
 
@@ -419,19 +423,28 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <echo>build.git.version         = '${build.git.version}'</echo>
     </target>
 
-    <!-- Delete all intermediate build products. Directories correspond to those bases defined in
-         common-dirs and built upon by the various targets as they are executed.  -->
-    <target name="clean" depends="common-dirs, clean-test"
+
+    <!-- Delete all intermediate build products except the /dist directory.
+         This allows the -built targets to be tested locally.  -->
+    <target name="cleanWithoutDist" depends="common-dirs, clean-test"
         description="Delete contents of working directories">
         <delete includeemptydirs="true" failonerror="false">
             <!-- the package cache (now it is not in dist.dir). -->
             <fileset dir="${cache.dir}" includes="**/*" erroronmissingdir="false" />
             <!-- all files and subdirectories of ${build.dir}, without ${build.dir} itself. -->
             <fileset dir="${build.dir}" includes="**/*" defaultexcludes="false" />
-            <!-- all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
-            <fileset dir="${dist.dir}" includes="**/*" defaultexcludes="false" />
             <!-- all files and subdirectories of ${pubs.dir}, without ${pubs.dir} itself. -->
             <fileset dir="${pubs.dir}" includes="**/*" erroronmissingdir="false" />
+        </delete>
+    </target>
+
+    <!-- Delete all intermediate build products. Directories correspond to those bases defined in
+         common-dirs and built upon by the various targets as they are executed.  -->
+    <target name="clean" depends="cleanWithoutDist"
+        description="Delete contents of working directories">
+        <delete includeemptydirs="true" failonerror="false">
+            <!-- all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
+            <fileset dir="${dist.dir}" includes="**/*" defaultexcludes="false" />
         </delete>
     </target>
 
@@ -988,7 +1001,7 @@ The text for an official release would continue like ...
             <nameunion>
                 <fileset dir="${exposed.dir}"/>
                 <fileset dir="${compile.dir}"
-                    excludes="org/python/expose/generate/**,org/python/version.properties"/>
+                    excludes="org/python/version.properties"/>
             </nameunion>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
@@ -1303,6 +1316,13 @@ The text for an official release would continue like ...
             depends="init, clean-test, javatest-built, launchertest-built, regrtest-built, modjytest-built"
             description="run all the tests against an existing built dist without rebuilding"/>
 
+    <target name="test-ci" depends="clean-test, javatest, launchertest, regrtest-ci, modjytest"
+        description="run all the tests in ci"/>
+
+    <target name="test-ci-built"
+            depends="init, clean-test, javatest-built, launchertest-built, regrtest-ci-built, modjytest-built"
+            description="run all the ci tests against an existing built dist without rebuilding"/>
+
     <target name="singlejavatest" depends="compile-test, expose"
         description="run a single JUnit test (specify with -Dtest=classname)">
         <junit haltonfailure="true" fork="true">
@@ -1356,7 +1376,8 @@ The text for an official release would continue like ...
 
     <target name="javatest-basepath-built" depends="init">
         <mkdir dir="${junit.reports}"/>
-        <junit haltonfailure="true" fork="true" printsummary="true">
+        <mkdir dir="${test.compile.dir}"/>
+        <junit haltonfailure="true" fork="true" printsummary="withOutAndErr">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
@@ -1380,6 +1401,7 @@ The text for an official release would continue like ...
 
     <target name="javatest-import-built" depends="init">
         <mkdir dir="${junit.reports}"/>
+        <mkdir dir="${test.compile.dir}"/>
         <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
@@ -1568,6 +1590,10 @@ The text for an official release would continue like ...
             depends="developer-build, regrtest-unix-ci, regrtest-windows-ci"
             description="run Python tests expected to work on Jython for CI"/>
 
+    <target name="regrtest-ci-built"
+            depends="init, regrtest-unix-ci, regrtest-windows-ci"
+            description="run Python tests expected to work on Jython for CI"/>
+
     <target name="regrtest-unix-ci" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython" failonerror="true">
@@ -1580,11 +1606,14 @@ The text for an official release would continue like ...
             <arg value="network,subprocess"/>
             <!-- Exclude particular tests troublesome on the build bots -->
             <arg value="--exclude"/>
-            <arg value="test_gc"/> <!-- intermittently fails/hangs (xenial) -->
+            <arg value="test_gc"/>         <!-- intermittently fails/hangs (xenial) -->
             <arg value="test_mailbox"/>
             <arg value="test_py_compile"/> <!-- test_relative_path (on osx) -->
+            <arg value="test_select"/>     <!-- flaky (address already in use -->
             <arg value="test_select_new"/>
             <arg value="test_smtpnet"/>
+            <arg value="test_socket"/>     <!-- flaky (address already in use (even on rerun) -->
+            <arg value="test_socket_jy"/>  <!-- flaky (address already in use -->
         </exec>
     </target>
 
