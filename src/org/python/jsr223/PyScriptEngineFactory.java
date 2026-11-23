@@ -66,10 +66,8 @@ public class PyScriptEngineFactory implements ScriptEngineFactory {
 
     // presumably a unicode string
     public String getOutputStatement(String toDisplay) {
-        StringBuilder buffer = new StringBuilder(toDisplay.length() + 8);
-        buffer.append("print ");
-        buffer.append(Py.newUnicode(toDisplay).__repr__());
-        return buffer.toString();
+        return "print " +
+               Py.newUnicode(toDisplay).__repr__();
     }
 
     public String getProgram(String... statements) {
