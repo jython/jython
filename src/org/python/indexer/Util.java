@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.Set;
@@ -141,7 +142,7 @@ public class Util {
     public static String readFile(File path) throws Exception {
         // Don't use line-oriented file read -- need to retain CRLF if present
         // so the style-run and link offsets are correct.
-        return new String(getBytesFromFile(path), UTF_8);
+        return new String(getBytesFromFile(path), StandardCharsets.UTF_8);
     }
 
     public static byte[] getBytesFromFile(File file) throws IOException {
